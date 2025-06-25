@@ -1,0 +1,51 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Ignore node_modules folders
+node_modules/
+**/node_modules/
+
+# Ignore build files
+/build/
+/dist/
+
+# Ignore IntelliJ and VSCode configs
+.idea/
+.vscode/
+
+# Ignore environment files
+.env
+
+# macOS
+.DS_Store
+
+# Java-related
+*.log
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
