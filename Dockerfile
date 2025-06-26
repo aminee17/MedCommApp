@@ -1,4 +1,4 @@
-# Step 1: Build the jar using Maven wrapper inside the container
+# Step 1: Build the jar using Maven inside the container
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
@@ -20,7 +20,7 @@ COPY src ./src
 # Build the project using Maven wrapper
 RUN ./mvnw clean package -DskipTests
 
-# Step 2: Run the app with OpenJDK
+# Step 2: Run the app with Eclipse Temurin JDK
 FROM eclipse-temurin:17-jdk-alpine
 
 WORKDIR /app
