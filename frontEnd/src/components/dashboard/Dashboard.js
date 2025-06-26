@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import styles from '../medicalform/styles';
 const Dashboard = () => {
     const [forms, setForms] = useState([]);
     const [selectedForm, setSelectedForm] = useState(null);
@@ -38,6 +38,22 @@ const Dashboard = () => {
             </Text>
             <Text style={styles.formStatus}>
                 Status: {item.status || 'En attente'}
+                {/* Action buttons */}
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => alert('Fonctionnalité à venir')}
+                    >
+                        <Text style={styles.actionButtonText}>Voir réponses</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.chatButton]}
+                        onPress={() => alert('Chat à venir')}
+                    >
+                        <Text style={styles.actionButtonText}>💬</Text>
+                    </TouchableOpacity>
+                </View>
             </Text>
         </TouchableOpacity>
     );

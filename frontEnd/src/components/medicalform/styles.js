@@ -110,6 +110,33 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: '#fff',
     },
+    // Add these to your styles
+    actionButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+    },
+    actionButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+        flex: 1,
+        marginHorizontal: 5,
+        alignItems: 'center',
+    },
+    chatButton: {
+        backgroundColor: '#34C759',
+    },
+    actionButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+
 
 });
 
