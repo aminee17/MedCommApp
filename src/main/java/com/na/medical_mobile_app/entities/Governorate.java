@@ -1,13 +1,15 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "governorates")
-public class Governorate {
+public class Governorate implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -32,21 +34,67 @@ public class Governorate {
     @JsonIgnore
     private List<User> users;
 
-    public Governorate() {}
+    public Governorate() {
+    }
 
-    public List<User> getUsers() { return users; }
-    public void setUsers(List<User> users) { this.users= users; }
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public List<City> getCities() { return cities; }
-    public void setCities(List<City> cities) { this.cities = cities; }
-    public List<Patient> getPatients() { return patients; }
-    public void setPatients(List<Patient> patients) { this.patients = patients; }
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setCities(List<City> cities) {
+        this.cities = cities;
+    }
+
+    public void setPatients(List<Patient> patients) {
+        this.patients = patients;
+    }
+
+    public List<User> getUsers() {
+        return this.users;
+    }
+
+
+    public Integer getId() {
+        return this.id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getCode() {
+        return this.code;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public List<City> getCities() {
+        return this.cities;
+    }
+
+    public List<Patient> getPatients() {
+        return this.patients;
+    }
+
 }
+
+
+

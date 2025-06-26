@@ -1,11 +1,13 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_availability")
-public class UserAvailability {
+public class UserAvailability implements Serializable {
     //---------------------------Attrubutes---------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

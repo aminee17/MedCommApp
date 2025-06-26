@@ -13,4 +13,6 @@ public interface CityRepository extends JpaRepository<City, Integer> {
     City findByName(String name);
     List<City> findByNameContainingIgnoreCase(String namePattern);
     List<City> findByGovernorateAndNameContainingIgnoreCase(Governorate governorate, String namePattern);
+
+    List<City> findByGovernorateId(Integer governorateId);
 }

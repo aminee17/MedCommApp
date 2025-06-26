@@ -1,6 +1,8 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "patients")
-public class Patient {
+public class Patient implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer patientId;
@@ -22,8 +24,7 @@ public class Patient {
     @Column(unique = true)
     private Long cin;
 
-    @Column(length = 50)
-    private String medicalId;
+
 
     private LocalDate birthdate;
 
@@ -77,8 +78,6 @@ public class Patient {
     public void setPhone(String phone) { this.phone = phone; }
     public Long getCin() { return cin; }
     public void setCin(Long cin) { this.cin = cin; }
-    public String getMedicalId() { return medicalId; }
-    public void setMedicalId(String medicalId) { this.medicalId = medicalId; }
     public LocalDate getBirthdate() { return birthdate; }
     public void setBirthdate(LocalDate birthdate) { this.birthdate = birthdate; }
     public Gender getGender() { return gender; }

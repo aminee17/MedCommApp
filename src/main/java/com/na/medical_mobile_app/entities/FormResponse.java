@@ -1,6 +1,8 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "form_responses")
-public class FormResponse {
+public class FormResponse implements Serializable {
     //attributes
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

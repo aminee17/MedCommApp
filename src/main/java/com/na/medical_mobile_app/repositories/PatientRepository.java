@@ -11,7 +11,6 @@ import java.util.List;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     Patient findByCin(Long cin);
-    Patient findByMedicalId(String medicalId);
     List<Patient> findByReferringDoctor(User referringDoctor);
     List<Patient> findByGovernorate(Governorate governorate);
     List<Patient> findByCity(City city);

@@ -45,5 +45,7 @@ public class MedicalFormRequest {
     public String otherInformation;
     public String mriPhoto;
     public String seizureVideo;
-    public Long fileSize;
+    public Long videofileSize;
+    public Long mrifileSize;
+
 }

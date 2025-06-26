@@ -2,11 +2,13 @@ package com.na.medical_mobile_app.entities;
 
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "file_attachments")
-public class FileAttachment {
+public class FileAttachment implements Serializable {
 
  //---------------------------Attributes---------------------------
     @Id

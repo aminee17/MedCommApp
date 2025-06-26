@@ -96,7 +96,21 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#333',
     },
-// ...existing code...
+    pickerContainer: {
+        marginBottom: 15,
+    },
+    label: {
+        fontSize: 16,
+        marginBottom: 5,
+        color: '#333',
+    },
+    picker: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        backgroundColor: '#fff',
+    },
+
 });
 
 export default styles;

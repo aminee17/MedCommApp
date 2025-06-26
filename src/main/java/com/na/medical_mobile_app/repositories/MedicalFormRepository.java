@@ -23,4 +23,5 @@ public interface MedicalFormRepository extends JpaRepository<MedicalForm, Intege
     List<MedicalForm> findByPatientAndStatus(Patient patient, FormStatus status);
     List<MedicalForm> findByDoctorAndStatus(User doctor, FormStatus status);
     List<MedicalForm> findByAssignedToAndStatus(User assignedTo, FormStatus status);
+    List<MedicalForm> findByPatientOrderByCreatedAtDesc(Patient patient);
 }

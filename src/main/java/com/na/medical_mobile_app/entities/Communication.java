@@ -1,13 +1,15 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "communications")
-public class Communication {
+public class Communication implements Serializable {
     //-------------------------------attributes------------------------------------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

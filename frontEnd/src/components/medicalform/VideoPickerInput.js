@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Button, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Video } from 'expo-av';
+import { Video } from 'expo-video';
 
 const VideoPickerInput = ({ label, value, onChange }) => {
     const pickVideo = async () => {

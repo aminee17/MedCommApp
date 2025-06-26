@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, ScrollView, Button, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import Checkbox  from 'expo-checkbox';
 import useMedicalForm from './useMedicalForm';
 import styles from './styles';
@@ -10,12 +11,14 @@ import VideoPickerInput from './VideoPickerInput';
 
 
 const MedicalForm = () => {
-
     const {
         formData,
+        governorates,
+        cities,
         handleInputChange,
         handleCheckboxChange,
         handleNestedCheckboxChange,
+        handleGovernorateChange,
         handleSubmit,
     } = useMedicalForm();
 
@@ -88,18 +91,38 @@ const MedicalForm = () => {
                 onChangeText={(text) => handleInputChange('cinNumber', text)}
                 keyboardType="numeric"
             />
-            <TextInput
-                style={styles.input}
-                placeholder="Région"
-                value={formData.region}
-                onChangeText={(text) => handleInputChange('region', text)}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Ville"
-                value={formData.city}
-                onChangeText={(text) => handleInputChange('city', text)}
-            />
+            {/* Region Dropdown */}
+            <View style={styles.pickerContainer}>
+                <Text style={styles.label}>Région</Text>
+                <Picker
+                    selectedValue={formData.Region}
+                    onValueChange={(value) => handleGovernorateChange(value)}
+                    style={styles.picker}
+                >
+                    <Picker.Item label="Sélectionner une région" value="" />
+                    {governorates.map(gov => (
+                        <Picker.Item key={gov.id} label={gov.name} value={gov.id.toString()} />
+                    ))}
+                </Picker>
+            </View>
+
+            {/* City Dropdown */}
+            <View style={styles.pickerContainer}>
+                <Text style={styles.label}>Ville</Text>
+                <Picker
+                    selectedValue={formData.Ville}
+                    onValueChange={(value) => handleInputChange('Ville', value)}
+                    style={styles.picker}
+                    enabled={formData.Region !== ''}
+                >
+                    <Picker.Item label="Sélectionner une ville" value="" />
+                    {cities.map(city => (
+                        <Picker.Item key={city.id} label={city.name} value={city.id.toString()} />
+                    ))}
+                </Picker>
+            </View>
+
+
             <TextInput
                 style={styles.input}
                 placeholder="Adresse complète"

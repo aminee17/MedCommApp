@@ -1,11 +1,13 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "supervision_requests")
-public class SupervisionRequest {
+public class SupervisionRequest implements Serializable {
 
 //--------------------------Attributes-----------------------------------
     @Id
