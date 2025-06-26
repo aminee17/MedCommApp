@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../medicalform/styles';
 const Dashboard = () => {
     const [forms, setForms] = useState([]);
     const [selectedForm, setSelectedForm] = useState(null);
@@ -205,6 +204,34 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
+    // Add these to your styles
+    actionButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+    },
+    actionButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+        flex: 1,
+        marginHorizontal: 5,
+        alignItems: 'center',
+    },
+    chatButton: {
+        backgroundColor: '#34C759',
+    },
+    actionButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+
+
 });
 
 export default Dashboard;

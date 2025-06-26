@@ -3,7 +3,6 @@ import { View, Text, TextInput, ScrollView, Button, StyleSheet } from 'react-nat
 import { Picker } from '@react-native-picker/picker';
 import Checkbox  from 'expo-checkbox';
 import useMedicalForm from './useMedicalForm';
-import styles from './styles';
 import DatePickerInput from './DatePickerInput';
 import CounterInput from './CounterInput';
 import ImagePickerInput from './ImagePickerInput';
