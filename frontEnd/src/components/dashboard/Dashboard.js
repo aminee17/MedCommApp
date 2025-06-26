@@ -14,7 +14,7 @@ const Dashboard = () => {
 
     const fetchForms = async () => {
         try {
-            const response = await fetch('https://medical-mobile-app.onrender.com/api/medical-forms/doctor');
+            const response = await fetch('https://localhost:8080/api/medical-forms/doctor');
             const data = await response.json();
             setForms(data);
         } catch (error) {

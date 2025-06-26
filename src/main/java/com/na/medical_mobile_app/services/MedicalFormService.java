@@ -169,4 +169,11 @@ public class MedicalFormService {
 
         return medicalForm.getFormId();
     }
+
+
+    // In MedicalFormService.java
+    public List<MedicalForm> getAllMedicalForms() {
+        return medicalFormRepository.findAll();
+    }
+
 }
