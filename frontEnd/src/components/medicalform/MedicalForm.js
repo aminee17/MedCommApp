@@ -7,6 +7,7 @@ import DatePickerInput from './DatePickerInput';
 import CounterInput from './CounterInput';
 import ImagePickerInput from './ImagePickerInput';
 import VideoPickerInput from './VideoPickerInput';
+import styles from './styles';
 
 
 const MedicalForm = () => {
