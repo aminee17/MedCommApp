@@ -88,7 +88,7 @@ export default function useMedicalForm() {
 
     const fetchGovernorates = async () => {
         try {
-            const response = await fetch('http://192.168.43.254:8080/api/locations/governorates');
+            const response = await fetch('https://medical-mobile-app.onrender.com/api/locations/governorates');
             const data = await response.json();
             setGovernorates(data);
         } catch (error) {
@@ -98,7 +98,7 @@ export default function useMedicalForm() {
 
     const fetchCities = async (governorateId) => {
         try {
-            const response = await fetch(`http://192.168.43.254:8080/api/locations/cities/${governorateId}`);
+            const response = await fetch(`https://medical-mobile-app.onrender.com/api/locations/cities/${governorateId}`);
             const data = await response.json();
             setCities(data);
         } catch (error) {
@@ -227,7 +227,7 @@ export default function useMedicalForm() {
 
             console.log('Sending data:', requestData);
 
-            const response = await fetch('http://192.168.43.254:8080/api/medical-forms/submit', {
+            const response = await fetch('https://medical-mobile-app.onrender.com/api/medical-forms/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
