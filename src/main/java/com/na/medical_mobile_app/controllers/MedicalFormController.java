@@ -54,9 +54,11 @@ public class MedicalFormController {
                         data.put("status", form.getStatus().toString());
                         data.put("birthDate", form.getPatient().getBirthdate());
                         data.put("gender", form.getPatient().getGender().toString());
-                        data.put("phoneNumber", form.getPatient().getPhone());
+                        String phone = form.getPatient() != null ? form.getPatient().getPhone() : "";
+                        data.put("phoneNumber", phone);
                         data.put("address", form.getPatient().getAddress());
                         data.put("lastSeizureDate", form.getDateLastSeizure());
+
                         return data;
                     })
                     .collect(Collectors.toList());
