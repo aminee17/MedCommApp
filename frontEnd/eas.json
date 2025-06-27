@@ -20,8 +20,7 @@
       "developmentClient": false,
       "distribution": "internal",
       "channel": "production"
-    },
-    "root": "./frontEnd",
+    }
   },
   "submit": {
     "production": {}
