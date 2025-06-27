@@ -70,7 +70,7 @@ public class User implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "governorate_id")
-    private Governorate governorate;
+    public Governorate governorate;
 
 
     @ManyToOne
