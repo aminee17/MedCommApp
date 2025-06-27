@@ -19,8 +19,7 @@
       "autoIncrement": true,
       "developmentClient": false,
       "distribution": "internal",
-      "channel": "production",
-      "npm": "install"
+      "channel": "production"
     }
   },
   "submit": {
