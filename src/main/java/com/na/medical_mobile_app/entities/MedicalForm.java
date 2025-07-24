@@ -93,4 +93,6 @@ public class MedicalForm implements Serializable {
     public void setAttachments(List<FileAttachment> attachments) { this.attachments = attachments; }
     public Consultation getConsultation() { return consultation; }
     public void setConsultation(Consultation consultation) { this.consultation = consultation; }
-}
+
+    }
+

@@ -1,32 +1,24 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MedicalForm from './src/components/medicalform/MedicalForm';
-import Dashboard from './src/components/dashboard/Dashboard';
-
-const Stack = createNativeStackNavigator();
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
+import AppNavigator from './src/navigation/AppNavigator';
+import ThemeProvider from './src/context/ThemeProvider';
 
 export default function App() {
     return (
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Dashboard">
-                <Stack.Screen 
-                    name="Dashboard" 
-                    component={Dashboard}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen 
-                    name="MedicalForm" 
-                    component={MedicalForm}
-                    options={{ 
-                        title: 'Nouveau Formulaire',
-                        headerStyle: {
-                            backgroundColor: '#007AFF',
-                        },
-                        headerTintColor: '#fff',
-                    }}
-                />
-            </Stack.Navigator>
-        </NavigationContainer>
+        <GestureHandlerRootView style={styles.container}>
+            <ThemeProvider>
+                <NavigationContainer>
+                    <AppNavigator />
+                </NavigationContainer>
+            </ThemeProvider>
+        </GestureHandlerRootView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+});

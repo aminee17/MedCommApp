@@ -47,7 +47,7 @@ public class MedicalMobileAppApplication {
 
 
 
-    private void testSaveMedicalForm() {
+    /*private void testSaveMedicalForm() {
         System.out.println("=== TEST: SAVE MEDICAL FORM ===");
 
         Governorate governorate = new Governorate();
@@ -89,7 +89,7 @@ public class MedicalMobileAppApplication {
         }
 
         System.out.println("=== FIN DU TEST ===");
-    }
+    }*/
 
 }
 

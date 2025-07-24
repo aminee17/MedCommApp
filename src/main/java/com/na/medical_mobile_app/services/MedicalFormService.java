@@ -2,17 +2,19 @@ package com.na.medical_mobile_app.services;
 
 import com.na.medical_mobile_app.DTOs.MedicalFormRequest;
 import com.na.medical_mobile_app.entities.*;
-import com.na.medical_mobile_app.repositories.FileAttachmentRepository;
 import com.na.medical_mobile_app.repositories.MedicalFormRepository;
 import com.na.medical_mobile_app.repositories.PatientRepository;
-import com.na.medical_mobile_app.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+
 
 @Service
 @Transactional
@@ -24,72 +26,96 @@ public class MedicalFormService {
     @Autowired
     private MedicalFormRepository medicalFormRepository;
 
+    @Autowired
+    private PatientService patientService;
 
     @Autowired
-    private UserRepository userRepository;
+    private AttachmentService attachmentService;
 
     @Autowired
-    private FileAttachmentRepository fileAttachmentRepository;
+    private UserService userService;
 
+    @Autowired
+    private NeurologistAssignmentService neurologistAssignmentService;
+    
+    @Autowired
+    private NotificationService notificationService;
+
+ //--------------------------------------------Building symptomps for the medical form-----------------------------------------
+ private String buildSymptomsSummary(MedicalFormRequest request) {
+     StringBuilder summary = new StringBuilder();
+
+     // Seizure types
+     if (request.seizureTypes != null) {
+         request.seizureTypes.forEach((type, present) -> {
+             if (Boolean.TRUE.equals(present)) {
+                 summary.append("- ").append(type).append("\n");
+             }
+         });
+     }
+
+     // Classic symptom flags
+     if (Boolean.TRUE.equals(request.lossOfConsciousness)) summary.append("- Perte de conscience\n");
+     if (Boolean.TRUE.equals(request.bodyStiffening)) summary.append("- Raideur corporelle\n");
+     if (Boolean.TRUE.equals(request.jerkingMovements)) summary.append("- Mouvements saccadés\n");
+     if (Boolean.TRUE.equals(request.eyeDeviation)) summary.append("- Déviation oculaire\n");
+     if (Boolean.TRUE.equals(request.incontinence)) summary.append("- Incontinence\n");
+
+     if (Boolean.TRUE.equals(request.tongueBiting)) {
+         summary.append("- Morsure de la langue");
+         if (request.tongueBitingLocation != null && !request.tongueBitingLocation.isBlank()) {
+             summary.append(" (").append(request.tongueBitingLocation).append(")");
+         }
+         summary.append("\n");
+     }
+
+     // ✅ New additions
+     if (Boolean.TRUE.equals(request.isFirstSeizure)) {
+         summary.append("- Première crise\n");
+     }
+
+     if (Boolean.TRUE.equals(request.hasAura)) {
+         summary.append("- Aura présente");
+         if (request.auraDescription != null && !request.auraDescription.isBlank()) {
+             summary.append(" : ").append(request.auraDescription);
+         }
+         summary.append("\n");
+     }
+
+     // Other info
+     if (request.otherInformation != null && !request.otherInformation.isBlank()) {
+         summary.append("- Autres: ").append(request.otherInformation).append("\n");
+     }
+
+     return summary.toString().trim();
+ }
+
+
+//-----------------------------------------------Saving the medical form---------------------------------------------------
     /**
      * Saves a medical form submission including patient information and attachments
      * @param request The form data containing all fields from the medical form
      * @return The ID of the saved form submission
      */
     @Transactional
-    public Integer saveMedicalForm(MedicalFormRequest request) {
+    public Integer saveMedicalForm(
+            MedicalFormRequest request,
+            MultipartFile mriPhoto,
+            MultipartFile seizureVideo,
+            User uploadedBy
+    ) throws Exception {
         if (request == null || request.cinNumber == null) {
             throw new IllegalArgumentException("Request and CIN number cannot be null");
         }
 
-        // Find or create patient
-        Patient patient = patientRepository.findByCin(request.cinNumber);
-        if (patient == null) {
-            patient = new Patient();
-            patient.setCin(request.cinNumber);
-            patient.setName(request.fullName);
-            patient.setBirthdate(request.birthDate);
-            patient.setGender(request.gender);
-            patient.setAddress(request.address);
-            patient.setPhone(request.phoneNumber);
-            patient.setGovernorate(request.region);
-            patient.setCity(request.city);
-            patient = patientRepository.save(patient);
-        } else {
-            // Autofill the request with existing patient data
-            request.fullName = patient.getName();
-            request.birthDate = patient.getBirthdate();
-            request.gender = patient.getGender();
-            request.address = patient.getAddress();
-            request.phoneNumber = patient.getPhone();
-            request.region = patient.getGovernorate();
-            request.city = patient.getCity();
+        // Patient population
+        Patient patient = patientService.findOrCreatePatient(request);
 
-            // Get latest form data
-            MedicalForm latestForm = medicalFormRepository.findByPatientOrderByCreatedAtDesc(patient)
-                    .stream().findFirst().orElse(null);
-            if (latestForm != null) {
-                request.firstSeizureDate = latestForm.getDateFirstSeizure();
-                request.lastSeizureDate = latestForm.getDateLastSeizure();
-                request.totalSeizures = latestForm.getTotalSeizures();
-            }
-        }
-
-        // Create and save default user if needed
-        User defaultUser = new User();
-        defaultUser.setName("System User");
-        defaultUser.setEmail("system@test.com");
-        defaultUser.setRole(Role.MEDECIN);
-        defaultUser.setCreatedAt(LocalDateTime.now());
-        userRepository.save(defaultUser);
-
-        User neurologue = new User();
-        neurologue.setName("Neuro");
-        neurologue.setEmail("syneurstem@test.com");
-        neurologue.setRole(Role.NEUROLOGUE);
-        neurologue.setCreatedAt(LocalDateTime.now());
-        userRepository.save(neurologue);
-
+        // Get the current doctor (sender)
+        User defaultUser = userService.getLoggedInUser();
+        
+        // The improved neurologist assignment service
+        User neurologue = neurologistAssignmentService.assignNeurologistToForm(patient, request);
 
         // Create medical form
         MedicalForm medicalForm = new MedicalForm();
@@ -103,77 +129,82 @@ public class MedicalFormService {
         medicalForm.setStatus(FormStatus.SUBMITTED);
         medicalForm.setDoctor(defaultUser);
         medicalForm.setAssignedTo(neurologue);
+        medicalForm.setSymptoms(buildSymptomsSummary(request));
 
         // Save the form first to get an ID
         medicalForm = medicalFormRepository.save(medicalForm);
 
         // Handle attachments
-        List<FileAttachment> attachments = new ArrayList<>();
-
-        if (request.mriPhoto != null && !request.mriPhoto.isEmpty()) {
-            FileAttachment mriAttachment = new FileAttachment();
-            mriAttachment.setForm(medicalForm);
-            mriAttachment.setFileName("mri_photo.jpg");
-            mriAttachment.setFilePath(request.mriPhoto);
-            mriAttachment.setMimeType("image/jpeg");
-            mriAttachment.setIsEncrypted(false);
-            mriAttachment.setUploadedAt(LocalDateTime.now());
-            mriAttachment.setFileSize(request.mrifileSize);
-            mriAttachment.setUploadedBy(defaultUser);
-            if (request.mrifileSize != null) {
-                try {
-                    mriAttachment.setFileSize(request.mrifileSize);
-                } catch (Exception e) {
-                    // If conversion fails, set a default size
-                    mriAttachment.setFileSize(0L);
-                }
-            } else {
-                mriAttachment.setFileSize(0L);
-            }
-            mriAttachment.setFileSize(request.mrifileSize);
-            attachments.add(fileAttachmentRepository.save(mriAttachment));
-
-        }
-
-        if (request.seizureVideo != null && !request.seizureVideo.isEmpty()) {
-            FileAttachment videoAttachment = new FileAttachment();
-            videoAttachment.setForm(medicalForm);
-            videoAttachment.setFileName("seizure_video.mp4");
-            videoAttachment.setFilePath(request.seizureVideo);
-            videoAttachment.setMimeType("video/mp4");
-            videoAttachment.setIsEncrypted(false);
-            videoAttachment.setUploadedAt(LocalDateTime.now());
-            videoAttachment.setFileSize(request.videofileSize);
-
-            if (request.videofileSize != null) {
-                try {
-                    videoAttachment.setFileSize(request.videofileSize);
-                } catch (Exception e) {
-                    // If conversion fails, set a default size
-                    videoAttachment.setFileSize(0L);
-                }
-            } else {
-                videoAttachment.setFileSize(0L);
-            }
-            videoAttachment.setUploadedBy(defaultUser);
-            attachments.add(fileAttachmentRepository.save(videoAttachment));
-        }
-
-        // Update form with attachments
+        List<FileAttachment> attachments = attachmentService.saveAttachments(medicalForm,
+                mriPhoto,
+                seizureVideo,
+                uploadedBy);
         medicalForm.setAttachments(attachments);
         medicalForm = medicalFormRepository.save(medicalForm);
 
         // Update patient's referring doctor
         patient.setReferringDoctor(defaultUser);
         patientRepository.save(patient);
+        
+        // Create notification for the neurologist
+        notificationService.createNewFormNotification(medicalForm);
 
         return medicalForm.getFormId();
     }
 
-
-    // In MedicalFormService.java
+    /**
+     * Get all medical forms in the system
+     */
     public List<MedicalForm> getAllMedicalForms() {
         return medicalFormRepository.findAll();
     }
-
+    
+    /**
+     * Get medical forms created by a specific doctor
+     */
+    public List<MedicalForm> getMedicalFormsByDoctor(User doctor) {
+        return medicalFormRepository.findByDoctor(doctor);
+    }
+    
+    /**
+     * Get active (non-completed) medical forms created by a specific doctor
+     * This helps doctors focus on forms that still need attention
+     */
+    public List<MedicalForm> getActiveMedicalFormsByDoctor(User doctor) {
+        // Get all statuses except COMPLETED
+        List<FormStatus> activeStatuses = Arrays.asList(
+            FormStatus.SUBMITTED, 
+            FormStatus.UNDER_REVIEW, 
+            FormStatus.REQUIRES_SUPERVISION
+        );
+        
+        return medicalFormRepository.findByDoctorAndStatusIn(doctor, activeStatuses);
+    }
+    
+    /**
+     * Get completed medical forms created by a specific doctor
+     */
+    public List<MedicalForm> getCompletedMedicalFormsByDoctor(User doctor) {
+        return medicalFormRepository.findByDoctorAndStatus(doctor, FormStatus.COMPLETED);
+    }
+    
+    /**
+     * Get recent medical forms created by a specific doctor (last 30 days)
+     */
+    public List<MedicalForm> getRecentMedicalFormsByDoctor(User doctor) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        return medicalFormRepository.findByDoctorAndCreatedAtAfter(doctor, thirtyDaysAgo);
+    }
+    
+    /**
+     * Check if a form was created by a specific doctor
+     */
+    public boolean isFormCreatedByDoctor(Integer formId, User doctor) {
+        Optional<MedicalForm> form = medicalFormRepository.findById(formId);
+        if (form.isEmpty()) {
+            return false;
+        }
+        
+        return form.get().getDoctor().getUserId().equals(doctor.getUserId());
+    }
 }

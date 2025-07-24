@@ -2,8 +2,7 @@ package com.na.medical_mobile_app.controllers;
 
 import com.na.medical_mobile_app.entities.City;
 import com.na.medical_mobile_app.entities.Governorate;
-import com.na.medical_mobile_app.repositories.CityRepository;
-import com.na.medical_mobile_app.repositories.GovernorateRepository;
+import com.na.medical_mobile_app.services.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,18 +14,15 @@ import java.util.List;
 public class LocationController {
 
     @Autowired
-    private GovernorateRepository governorateRepository;
-
-    @Autowired
-    private CityRepository cityRepository;
+    private LocationService locationService;
 
     @GetMapping("/governorates")
     public List<Governorate> getAllGovernorates() {
-        return governorateRepository.findAll();
+        return locationService.getAllGovernorates();
     }
 
     @GetMapping("/cities/{governorateId}")
     public List<City> getCitiesByGovernorate(@PathVariable Integer governorateId) {
-        return cityRepository.findByGovernorateId(governorateId);
+        return locationService.getCitiesByGovernorate(governorateId);
     }
 }

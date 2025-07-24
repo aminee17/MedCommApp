@@ -1,13 +1,17 @@
+
 import React from 'react';
-import { View, Text, TextInput, ScrollView, Button, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import Checkbox  from 'expo-checkbox';
-import useMedicalForm from './useMedicalForm';
+import useMedicalForm from '../../hooks/useMedicalForm';
 import DatePickerInput from './DatePickerInput';
 import CounterInput from './CounterInput';
 import ImagePickerInput from './ImagePickerInput';
 import VideoPickerInput from './VideoPickerInput';
+import LabeledCheckbox from "./LabeledCheckbox";
 import styles from './styles';
+import GenderCheckboxGroup from "./GenderCheckboxGroup";
+import SeizureOccurrenceCheckboxGroup from "./SeizureOccurrenceCheckboxGroup";
 
 
 const MedicalForm = () => {
@@ -34,7 +38,7 @@ const MedicalForm = () => {
         >
             <Text style={styles.header}>Formulaire Médical pour l'Épilepsie</Text>
 
-            {/* Section 1: Informations de base */}
+
             <Text style={styles.sectionHeader}>1. Informations de base</Text>
             <TextInput
                 style={styles.input}
@@ -52,19 +56,13 @@ const MedicalForm = () => {
                 label="Date de naissance"
             />
 
-            <View>
-                <Text style={styles.sectionHeader}>Sexe</Text>
-                {genders.map((genderOption) => (
-                    <View key={genderOption} style={styles.checkboxContainer}>
-                        <Checkbox
-                            value={formData.gender === genderOption}
-                            onValueChange={() => handleInputChange('gender', genderOption)}
-                            tintColors={{ true: '#007AFF', false: '#ccc' }}
-                        />
-                        <Text style={styles.checkboxLabel}>{genderOption}</Text>
-                    </View>
-                ))}
-            </View>
+
+
+            <GenderCheckboxGroup
+                value={formData.gender}
+                onChange={(val) => handleInputChange('gender', val)}
+                options={genders}
+            />
 
             <DatePickerInput
                 style={styles.input}
@@ -74,15 +72,12 @@ const MedicalForm = () => {
                 label="Date de la première crise"
             />
 
+            <LabeledCheckbox
+                label="Est-ce la première crise ?"
+                value={formData.isFirstSeizure}
+                onValueChange={(value) => handleCheckboxChange('isFirstSeizure', value)}
+            />
 
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.isFirstSeizure}
-                    onValueChange={(value) => handleCheckboxChange('isFirstSeizure', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Est-ce la première crise ?</Text>
-            </View>
 
             <TextInput
                 style={styles.input}
@@ -91,11 +86,11 @@ const MedicalForm = () => {
                 onChangeText={(text) => handleInputChange('cinNumber', text)}
                 keyboardType="numeric"
             />
-            {/* Region Dropdown */}
+
             <View style={styles.pickerContainer}>
                 <Text style={styles.label}>Région</Text>
                 <Picker
-                    selectedValue={formData.Region}
+                    selectedValue={formData.governorate_id}
                     onValueChange={(value) => handleGovernorateChange(value)}
                     style={styles.picker}
                 >
@@ -105,15 +100,13 @@ const MedicalForm = () => {
                     ))}
                 </Picker>
             </View>
-
-            {/* City Dropdown */}
             <View style={styles.pickerContainer}>
                 <Text style={styles.label}>Ville</Text>
                 <Picker
-                    selectedValue={formData.Ville}
-                    onValueChange={(value) => handleInputChange('Ville', value)}
+                    selectedValue={formData.city_id}
+                    onValueChange={(value) => handleInputChange('city_id', value)}
                     style={styles.picker}
-                    enabled={formData.Region !== ''}
+                    enabled={formData.governorate_id !== ''}
                 >
                     <Picker.Item label="Sélectionner une ville" value="" />
                     {cities.map(city => (
@@ -121,6 +114,7 @@ const MedicalForm = () => {
                     ))}
                 </Picker>
             </View>
+
 
 
             <TextInput
@@ -137,13 +131,15 @@ const MedicalForm = () => {
                 keyboardType="phone-pad"
             />
 
-            {/* Section 2: Historique des crises */}
+
             <Text style={styles.sectionHeader}>2. Historique des crises</Text>
             <CounterInput
                 label="Nombre total de crises"
-                value={Number(formData.seizureFrequency) || 0}
-                onChange={val => handleInputChange('seizureFrequency', val.toString())}
+                value={Number(formData.totalSeizures) || 0}
+                onChange={val => handleInputChange('totalSeizures', val.toString())}
             />
+
+
 
 
             <DatePickerInput
@@ -154,19 +150,11 @@ const MedicalForm = () => {
                 label="Date de la dernière crise"
             />
 
-            <View>
-                <Text style={styles.sectionHeader}>Fréquence des crises</Text>
-                {occurrences.map((occ) => (
-                    <View key={occ} style={styles.checkboxContainer}>
-                        <Checkbox
-                            value={formData.seizureOccurrence[occ] || false}
-                            onValueChange={(newValue) => handleNestedCheckboxChange('seizureOccurrence', occ, newValue)}
-                            tintColors={{ true: '#007AFF', false: '#ccc' }}
-                        />
-                        <Text style={styles.checkboxLabel}>{occ}</Text>
-                    </View>
-                ))}
-            </View>
+            <SeizureOccurrenceCheckboxGroup
+                values={formData.seizureOccurrence}
+                onChange={(name, val) => handleNestedCheckboxChange('seizureOccurrence', name, val)}
+                options={occurrences}
+            />
 
             <Text style={styles.sectionHeader}>
                 Durée moyenne d'une crise  (en minutes) :
@@ -179,14 +167,11 @@ const MedicalForm = () => {
 
 
 
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.hasAura}
-                    onValueChange={(value) => handleCheckboxChange('hasAura', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Y a-t-il un signe avant-coureur des crises (Aura) ?</Text>
-            </View>
+            <LabeledCheckbox
+                label="Y a-t-il un signe avant-coureur des crises (Aura) ?"
+                value={formData.hasAura}
+                onValueChange={(value) => handleCheckboxChange('hasAura', value)}
+            />
             {formData.hasAura && (
                 <TextInput
                     style={[styles.input, styles.textArea]}
@@ -198,97 +183,74 @@ const MedicalForm = () => {
             )}
 
             <Text style={styles.subSectionHeader}>Type de crises (si connu):</Text>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.seizureTypes.tonicClonic}
-                    onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'tonicClonic', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Tonico-clonique généralisée (perte de conscience, convulsions)</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.seizureTypes.absence}
-                    onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'absence', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Absence (regard fixe, absence de réponse)</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.seizureTypes.focal}
-                    onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'focal', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Focale (partielle)</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.seizureTypes.myoclonic}
-                    onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'myoclonic', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Myoclonique (sursauts)</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.seizureTypes.atonic}
-                    onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'atonic', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Atonique (chute soudaine)</Text>
-            </View>
+            <LabeledCheckbox
+                label="Tonico-clonique généralisée (perte de conscience, convulsions)"
+                value={formData.seizureTypes.tonicClonic}
+                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'tonicClonic', value)}
+            />
+            <LabeledCheckbox
+                label="Absence (regard fixe, absence de réponse)"
+                value={formData.seizureTypes.absence}
+                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'absence', value)}
+            />
 
-            {/* Section 3: Pendant la crise */}
+            <LabeledCheckbox
+                label="Focale (partielle)"
+                value={formData.seizureTypes.focal}
+                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'focal', value)}
+            />
+
+            <LabeledCheckbox
+                label="Myoclonique (sursauts)"
+                value={formData.seizureTypes.myoclonic}
+                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'myoclonic', value)}
+            />
+
+            <LabeledCheckbox
+                label="Atonique (chute soudaine)"
+                value={formData.seizureTypes.atonic}
+                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'atonic', value)}
+            />
+
+
+
             <Text style={styles.sectionHeader}>3. Pendant la crise</Text>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.lossOfConsciousness}
-                    onValueChange={(value) => handleCheckboxChange('lossOfConsciousness', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Perte de conscience ?</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.bodyStiffening}
-                    onValueChange={(value) => handleCheckboxChange('bodyStiffening', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Raidissement du corps ?</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.jerkingMovements}
-                    onValueChange={(value) => handleCheckboxChange('jerkingMovements', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Mouvements saccadés ?</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.eyeDeviation}
-                    onValueChange={(value) => handleCheckboxChange('eyeDeviation', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Déviation des yeux (d'un côté) ?</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.incontinence}
-                    onValueChange={(value) => handleCheckboxChange('incontinence', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Incontinence (urine/selles) ?</Text>
-            </View>
-            <View style={styles.checkboxContainer}>
-                <Checkbox
-                    value={formData.tongueBiting}
-                    onValueChange={(value) => handleCheckboxChange('tongueBiting', value)}
-                    tintColors={{ true: '#007AFF', false: '#ccc' }}
-                />
-                <Text style={styles.checkboxLabel}>Morsure de la langue ?</Text>
-            </View>
+            <LabeledCheckbox
+                label="Perte de conscience ?"
+                value={formData.lossOfConsciousness}
+                onValueChange={(value) => handleCheckboxChange('lossOfConsciousness', value)}
+            />
+
+            <LabeledCheckbox
+                label="Raidissement du corps ?"
+                value={formData.bodyStiffening}
+                onValueChange={(value) => handleCheckboxChange('bodyStiffening', value)}
+            />
+
+            <LabeledCheckbox
+                label="Mouvements saccadés ?"
+                value={formData.jerkingMovements}
+                onValueChange={(value) => handleCheckboxChange('jerkingMovements', value)}
+            />
+
+            <LabeledCheckbox
+                label="Déviation des yeux (d'un côté) ?"
+                value={formData.eyeDeviation}
+                onValueChange={(value) => handleCheckboxChange('eyeDeviation', value)}
+            />
+
+            <LabeledCheckbox
+                label="Incontinence (urine/selles) ?"
+                value={formData.incontinence}
+                onValueChange={(value) => handleCheckboxChange('incontinence', value)}
+            />
+
+            <LabeledCheckbox
+                label="Morsure de la langue ?"
+                value={formData.tongueBiting}
+                onValueChange={(value) => handleCheckboxChange('tongueBiting', value)}
+            />
+
             {formData.tongueBiting && (
                 <View style={styles.radioContainer}>
                     <Text style={styles.radioLabel}>Partie de la langue mordue :</Text>
@@ -311,7 +273,7 @@ const MedicalForm = () => {
                 </View>
             )}
 
-            {/* Section 10: Autres informations */}
+
             <Text style={styles.sectionHeader}>10. Autres informations</Text>
             <TextInput
                 style={[styles.input, styles.textArea]}
@@ -321,18 +283,20 @@ const MedicalForm = () => {
                 value={formData.otherInformation}
                 onChangeText={(text) => handleInputChange('otherInformation', text)}
             />
-            {/*...avant le bouton de soumission... */}
+
             <ImagePickerInput
                 label="Photo IRM "
                 value={formData.mriPhoto}
-                onChange={uri => handleInputChange('mriPhoto', uri)}
+                onChange={file => handleInputChange('mriPhoto', file)}
             />
 
             <VideoPickerInput
                 label="Vidéo de crise "
                 value={formData.seizureVideo}
-                onChange={uri => handleInputChange('seizureVideo', uri)}
+                onChange={file => handleInputChange('seizureVideo', file)}
             />
+
+
             <View style={styles.submitButton}>
                 <Button
                     title="Soumettre le formulaire"

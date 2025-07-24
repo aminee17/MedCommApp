@@ -43,7 +43,10 @@ public class FileAttachment implements Serializable {
 
     public FileAttachment() {}
 
-    public Integer getAttachmentId() { return attachmentId; }
+   public FileAttachment(Integer attachmentId, String fileName, String mimeType) {
+   }
+
+   public Integer getAttachmentId() { return attachmentId; }
     public void setAttachmentId(Integer attachmentId) { this.attachmentId = attachmentId; }
     public Communication getCommunication() { return communication; }
     public void setCommunication(Communication communication) { this.communication = communication; }

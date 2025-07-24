@@ -1,5 +1,7 @@
 package com.na.medical_mobile_app.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
@@ -37,6 +39,10 @@ public class Governorate implements Serializable {
     public Governorate() {
     }
 
+    @JsonCreator //A constructor to enable deserialization
+    public Governorate(@JsonProperty("id") String id) {
+        this.id = Integer.valueOf(id);
+    }
     public void setUsers(List<User> users) {
         this.users = users;
     }

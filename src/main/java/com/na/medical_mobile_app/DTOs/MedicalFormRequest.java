@@ -4,18 +4,21 @@ import com.na.medical_mobile_app.entities.City;
 import com.na.medical_mobile_app.entities.Gender;
 import com.na.medical_mobile_app.entities.Governorate;
 import com.na.medical_mobile_app.entities.SeizureFrequency;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.Map;
-
+@Setter
+@Getter
 public class MedicalFormRequest {
     // Patient Info
     public String fullName;
     public LocalDate birthDate;
     public Gender gender;
     public Long cinNumber;
-    public Governorate region;
-    public City city;
+    public Integer governorate_id;
+    public Integer city_id;
     public String address;
     public String phoneNumber;
 
@@ -43,9 +46,5 @@ public class MedicalFormRequest {
 
     // Miscellaneous
     public String otherInformation;
-    public String mriPhoto;
-    public String seizureVideo;
-    public Long videofileSize;
-    public Long mrifileSize;
 
 }

@@ -28,7 +28,6 @@ public class User implements Serializable {
     private String specialization;
     private String hospitalAffiliation;
     private String licenseNumber;
-    private String location;
     private Boolean isActive;
     private LocalDateTime emailVerifiedAt;
     private LocalDateTime createdAt;
@@ -70,7 +69,7 @@ public class User implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "governorate_id")
-    public Governorate governorate;
+    private Governorate governorate; //yaani fin ye5dem houa tawa
 
 
     @ManyToOne
@@ -163,12 +162,6 @@ public class User implements Serializable {
     }
     public String getLicenseNumber() {
         return licenseNumber;
-    }
-    public void setLocation(String systemUser) {
-        this.location=systemUser;
-    }
-    public String getLocation() {
-        return location;
     }
     public void setIsActive(Boolean systemUser) {
         this.isActive=systemUser;

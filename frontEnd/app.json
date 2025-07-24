@@ -7,7 +7,24 @@
     },
     "owner": "nadaaouiti",
     "android": {
-      "package": "com.nadaaouiti.medcommapp"
-    }
+      "package": "com.nadaaouiti.medcommapp",
+      "permissions": ["CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+    },
+    "ios": {
+      "bundleIdentifier": "com.nadaaouiti.medcommapp",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to camera to record videos",
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photos for video selection"
+      }
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ]
+    ]
   }
 }

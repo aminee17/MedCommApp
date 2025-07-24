@@ -10,7 +10,10 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@expo/metro-runtime": "~5.0.4",
+    "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/checkbox": "^0.5.20",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-community/netinfo": "^11.4.1",
@@ -20,8 +23,8 @@
     "@react-navigation/native-stack": "^6.9.17",
     "axios": "^1.10.0",
     "expo": "53.0.13",
-    "expo-audio": "^0.4.6",
-    "expo-av": "~15.1.6",
+    "expo-audio": "^0.4.7",
+    "expo-av": "~13.10.5",
     "expo-checkbox": "~4.1.4",
     "expo-dev-client": "~5.2.1",
     "expo-image-picker": "~16.1.4",
@@ -44,7 +47,7 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-video": "^6.15.0",
+    "react-native-video": "^6.16.1",
     "react-native-web": "^0.20.0",
     "yup": "^1.6.1"
   },

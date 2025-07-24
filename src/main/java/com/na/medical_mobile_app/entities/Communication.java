@@ -27,6 +27,10 @@ public class Communication implements Serializable {
     private LocalDateTime createdAt;
 //----------------------------Relationships-------------------------------------------------
     @ManyToOne
+    @JoinColumn(name = "form_id")
+    private MedicalForm form;
+
+    @ManyToOne
     @JoinColumn(name = "consultation_id")
     private Consultation consultation;
 
@@ -55,8 +59,8 @@ public class Communication implements Serializable {
     // Getters and Setters
     public Integer getCommunicationId() { return communicationId; }
     public void setCommunicationId(Integer communicationId) { this.communicationId = communicationId; }
-    public Consultation getConsultation() { return consultation; }
-    public void setConsultation(Consultation consultation) { this.consultation = consultation; }
+    public MedicalForm getForm() { return form; }
+    public void setForm(MedicalForm form) { this.form = form; }
     public User getSender() { return sender; }
     public void setSender(User sender) { this.sender = sender; }
     public User getReceiver() { return receiver; }
