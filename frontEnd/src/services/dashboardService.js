@@ -1,5 +1,6 @@
 import {API_BASE_URL} from '../utils/constants';
 import {parseJSONResponse} from '../utils/jsonUtils';
+import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
@@ -12,11 +13,11 @@ export async function fetchMedicalFormsForDoctor(filter = 'active') {
         // Get userId from AsyncStorage
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
+            throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
         // Add userId as query parameter and header, plus the filter parameter
-        const response = await fetch(
+        const response = await fetchWithErrorHandling(
             `${API_BASE_URL}/api/medical-forms/doctor?userId=${userId}&filter=${filter}`, 
             {
                 method: 'GET',
@@ -25,7 +26,7 @@ export async function fetchMedicalFormsForDoctor(filter = 'active') {
                     'Content-Type': 'application/json',
                     'userId': userId
                 },
-                credentials: 'include' // Include credentials for session cookies
+                credentials: 'include'
             }
         );
         return await parseJSONResponse(response);

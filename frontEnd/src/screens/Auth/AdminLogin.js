@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { API_BASE_URL } from '../../utils/constants';
 import { parseJSONResponse } from '../../utils/jsonUtils';
+import { fetchWithErrorHandling } from '../../utils/errorMessages';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 import { Button, Input, Card } from '../../components/common';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,13 +26,13 @@ export default function AdminLogin({ navigation }) {
 
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetchWithErrorHandling(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email, password }),
-                credentials: 'include' // Include credentials for session cookies
+                credentials: 'include'
             });
 
             const data = await parseJSONResponse(response);
@@ -49,7 +50,7 @@ export default function AdminLogin({ navigation }) {
                 Alert.alert('Erreur', 'Accès non autorisé pour les administrateurs');
             }
         } catch (error) {
-            Alert.alert('Erreur', error.message || 'Problème de connexion au serveur');
+            Alert.alert('Erreur de connexion', error.message);
         } finally {
             setLoading(false);
         }

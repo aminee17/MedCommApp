@@ -1,4 +1,5 @@
 import {API_BASE_URL} from '../utils/constants';
+import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Get user ID from AsyncStorage
@@ -16,26 +17,21 @@ export const fetchPendingFormsForNeurologue = async () => {
     try {
         const userId = await getUserId();
         if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
+            throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/pending?userId=${userId}`;
         
-        const response = await fetch(url, {
+        const response = await fetchWithErrorHandling(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'userId': userId
             },
-            credentials: 'include' // Include credentials for session cookies
+            credentials: 'include'
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Status ${response.status}: ${errorText}`);
-        }
 
         const data = await response.json();
         return data;
@@ -50,26 +46,21 @@ export const fetchCompletedFormsForNeurologue = async () => {
     try {
         const userId = await getUserId();
         if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
+            throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/completed?userId=${userId}`;
         
-        const response = await fetch(url, {
+        const response = await fetchWithErrorHandling(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'userId': userId
             },
-            credentials: 'include' // Include credentials for session cookies
+            credentials: 'include'
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Status ${response.status}: ${errorText}`);
-        }
 
         const data = await response.json();
         return data;
@@ -84,26 +75,21 @@ export const fetchAllFormsForNeurologue = async () => {
     try {
         const userId = await getUserId();
         if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
+            throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/all-forms?userId=${userId}`;
         
-        const response = await fetch(url, {
+        const response = await fetchWithErrorHandling(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'userId': userId
             },
-            credentials: 'include' // Include credentials for session cookies
+            credentials: 'include'
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Status ${response.status}: ${errorText}`);
-        }
 
         const data = await response.json();
         return data;

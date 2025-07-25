@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../utils/constants';
+import { fetchWithErrorHandling } from '../../utils/errorMessages';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 import { Button, Input, Card, Header } from '../../components/common';
 
@@ -43,7 +44,7 @@ const NeurologueLogin = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetchWithErrorHandling(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,13 +53,8 @@ const NeurologueLogin = ({ navigation }) => {
                     email,
                     password
                 }),
-                credentials: 'include' // Include credentials for session cookies
+                credentials: 'include'
             });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Échec de la connexion');
-            }
 
             const data = await response.json();
             
@@ -72,7 +68,7 @@ const NeurologueLogin = ({ navigation }) => {
             
             navigation.replace('NeurologueDashboard');
         } catch (error) {
-            Alert.alert('Erreur de connexion', error.message || 'Échec de la connexion. Veuillez réessayer.');
+            Alert.alert('Erreur de connexion', error.message);
             console.error('Login error:', error);
         } finally {
             setLoading(false);

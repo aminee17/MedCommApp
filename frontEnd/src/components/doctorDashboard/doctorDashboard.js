@@ -32,7 +32,15 @@ const DoctorDashboard = () => {
             const data = await fetchMedicalFormsForDoctor(filter);
             setForms(data);
         } catch (error) {
-            Alert.alert('Erreur', 'Impossible de récupérer les formulaires');
+            Alert.alert('Erreur', error.message || 'Impossible de récupérer les formulaires');
+            
+            // Handle session expiry
+            if (error.message?.includes('Session expirée')) {
+                Alert.alert('Session expirée', 'Veuillez vous reconnecter.', [
+                    { text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'RoleSelection' }] }) }
+                ]);
+                return;
+            }
         } finally {
             setLoading(false);
         }

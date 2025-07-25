@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Alert } from 'react-native';
 import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
+import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function useMedecinAuth(navigation) {
@@ -11,18 +13,14 @@ export default function useMedecinAuth(navigation) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetchWithErrorHandling(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email, password}),
-                credentials: 'include' // Include credentials for session cookies
+                credentials: 'include'
             });
 
             const data = await parseJSONResponse(response);
-
-            if (!response.ok) {
-                throw new Error(data || 'Erreur lors de la connexion');
-            }
 
             // Store user data in AsyncStorage
             await AsyncStorage.setItem('userId', data.userId.toString());
@@ -43,7 +41,7 @@ export default function useMedecinAuth(navigation) {
 
         } catch (error) {
             console.error('Login error:', error);
-            alert(error.message || 'Problème de connexion au serveur');
+            Alert.alert('Erreur de connexion', error.message);
         } finally {
             setLoading(false);
         }
