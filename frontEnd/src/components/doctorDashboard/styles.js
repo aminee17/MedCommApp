@@ -37,17 +37,11 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: 'bold',
     },
-    logoutButton: {
-        backgroundColor: COLORS.danger,
-        padding: SPACING.s,
-        borderRadius: 5,
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 120,
-    },
-    logoutButtonText: {
-        color: COLORS.light,
-        fontWeight: 'bold',
+    iconButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        marginLeft: 10,
     },
     filterContainer: {
         flexDirection: 'row',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import styles from './styles';
 import FormCard from './FormCard';
 import FormPreviewModal from './FormPreviewModal';
@@ -105,10 +106,10 @@ const DoctorDashboard = () => {
                         <Text style={styles.newFormButtonText}>+ Nouveau formulaire</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={styles.logoutButton}
+                        style={styles.iconButton}
                         onPress={handleLogout}
                     >
-                        <Text style={styles.logoutButtonText}>Déconnexion</Text>
+                        <Ionicons name="log-out-outline" size={24} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>

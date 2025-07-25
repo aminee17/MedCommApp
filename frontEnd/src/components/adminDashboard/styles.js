@@ -18,18 +18,12 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.s,
         marginBottom: SPACING.m,
     },
-    logoutButton: {
+    iconButton: {
+        padding: 8,
+        borderRadius: 20,
         backgroundColor: COLORS.danger,
-        paddingVertical: SPACING.s,
-        paddingHorizontal: SPACING.m,
-        borderRadius: 6,
         alignSelf: 'flex-end',
         ...SHADOWS.small,
-    },
-    logoutText: {
-        color: COLORS.light,
-        fontWeight: 'bold',
-        fontSize: SIZES.medium,
     },
     title: {
         fontSize: width > 360 ? SIZES.xlarge : SIZES.large,

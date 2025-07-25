@@ -3,6 +3,7 @@ import styles from './styles';
 import {
     View, Text, FlatList, TouchableOpacity, Alert, Button, SafeAreaView
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
     fetchPendingRequests,
     createDoctorAccount,
@@ -102,10 +103,10 @@ export default function AdminDashboard({ navigation }) {
             <View style={styles.header}>
                 <Text style={styles.title}>Tableau de bord administrateur</Text>
                 <TouchableOpacity
-                    style={styles.logoutButton}
+                    style={styles.iconButton}
                     onPress={handleLogout}
                 >
-                    <Text style={styles.logoutText}>Déconnexion</Text>
+                    <Ionicons name="log-out-outline" size={24} color="#fff" />
                 </TouchableOpacity>
             </View>
 

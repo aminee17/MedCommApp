@@ -34,17 +34,15 @@ const styles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: 'bold',
     },
-    logoutButton: {
-        backgroundColor: '#FF3B30', // Red color for logout button
-        padding: 10,
-        borderRadius: 5,
+    headerIcons: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        width: 120,
     },
-    logoutButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
+    iconButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        marginLeft: 10,
     },
     formList: {
         padding: 10,
@@ -135,7 +133,54 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 12,
     },
-
-
+    // New styles for form card with chat
+    formCardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    formInfo: {
+        flex: 1,
+    },
+    formTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 5,
+    },
+    patientInfo: {
+        fontSize: 14,
+        color: '#666',
+    },
+    chatButtonSmall: {
+        backgroundColor: '#34C759',
+        padding: 8,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 40,
+        height: 40,
+    },
+    chatIconContainer: {
+        position: 'relative',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    unreadBadgeSmall: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: '#FF3B30',
+        borderRadius: 10,
+        minWidth: 16,
+        height: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 2,
+    },
+    unreadBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
 });
 export default styles;

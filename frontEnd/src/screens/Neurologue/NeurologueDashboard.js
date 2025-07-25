@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
+import { countUnreadMessagesForForm } from '../../services/chatService';
 import { COLORS, SPACING } from '../../utils/theme';
 import styles from './styles';
 
@@ -62,6 +64,50 @@ const NeurologueDashboard = () => {
         navigation.navigate('NeurologueFormDetails', { form });
     };
 
+    // Component for form card with chat functionality
+    const FormCardWithChat = ({ form, onPress, onChatPress }) => {
+        const [unreadCount, setUnreadCount] = useState(0);
+
+        useEffect(() => {
+            const checkUnreadMessages = async () => {
+                try {
+                    const count = await countUnreadMessagesForForm(form.formId);
+                    setUnreadCount(count);
+                } catch (error) {
+                    console.error('Error checking unread messages:', error);
+                }
+            };
+
+            checkUnreadMessages();
+            const interval = setInterval(checkUnreadMessages, 30000);
+            return () => clearInterval(interval);
+        }, [form.formId]);
+
+        return (
+            <TouchableOpacity style={styles.formCard} onPress={onPress}>
+                <View style={styles.formCardHeader}>
+                    <View style={styles.formInfo}>
+                        <Text style={styles.formTitle}>Formulaire #{form.formId}</Text>
+                        <Text style={styles.patientInfo}>{form.patientName} - {form.status}</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.chatButtonSmall}
+                        onPress={onChatPress}
+                    >
+                        <View style={styles.chatIconContainer}>
+                            <Ionicons name="chatbubbles" size={20} color={COLORS.light} />
+                            {unreadCount > 0 && (
+                                <View style={styles.unreadBadgeSmall}>
+                                    <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                                </View>
+                            )}
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
     const handleLogout = async () => {
         Alert.alert(
             'Déconnexion',
@@ -108,12 +154,14 @@ const NeurologueDashboard = () => {
                     <Text style={styles.headerTitle}>{getHeaderTitle()}</Text>
                     {userName && <Text style={styles.welcomeText}>Bienvenue, Dr. {userName}</Text>}
                 </View>
-                <TouchableOpacity 
-                    style={styles.logoutButton}
-                    onPress={handleLogout}
-                >
-                    <Text style={styles.logoutButtonText}>Déconnexion</Text>
-                </TouchableOpacity>
+                <View style={styles.headerIcons}>
+                    <TouchableOpacity 
+                        style={styles.iconButton}
+                        onPress={handleLogout}
+                    >
+                        <Ionicons name="log-out-outline" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
             
             <View style={filterStyles.filterContainer}>
@@ -146,13 +194,11 @@ const NeurologueDashboard = () => {
                     data={forms}
                     keyExtractor={(item, index) => item.formId?.toString() || index.toString()}
                     renderItem={({ item }) => (
-                        <TouchableOpacity
-                            style={styles.formCard}
+                        <FormCardWithChat 
+                            form={item} 
                             onPress={() => handleFormPress(item)}
-                        >
-                            <Text style={styles.formTitle}>Formulaire #{item.formId}</Text>
-                            <Text>{item.patientName} - {item.status}</Text>
-                        </TouchableOpacity>
+                            onChatPress={() => navigation.navigate('NeurologueChat', { formId: item.formId, doctorId: item.referringDoctorId })}
+                        />
                     )}
                 />
             ) : (
