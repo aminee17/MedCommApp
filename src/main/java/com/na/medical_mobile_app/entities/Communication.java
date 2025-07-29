@@ -81,4 +81,6 @@ public class Communication implements Serializable {
     public void setReplies(List<Communication> replies) { this.replies = replies; }
     public List<FileAttachment> getAttachments() { return attachments; }
     public void setAttachments(List<FileAttachment> attachments) { this.attachments = attachments; }
+    public Consultation getConsultation() { return consultation; }
+    public void setConsultation(Consultation consultation) { this.consultation = consultation; }
 }

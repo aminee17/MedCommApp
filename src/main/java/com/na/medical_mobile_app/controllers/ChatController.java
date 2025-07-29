@@ -7,6 +7,7 @@ import com.na.medical_mobile_app.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,50 @@ public class ChatController {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to count unread messages: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send a voice message
+     */
+    @PostMapping("/send-voice")
+    public ResponseEntity<ChatMessageDTO> sendVoiceMessage(
+            @RequestParam("formId") Integer formId,
+            @RequestParam(value = "receiverId", required = false) Integer receiverId,
+            @RequestParam("audioFile") MultipartFile audioFile,
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        try {
+            // Get the current user
+            User currentUser = userService.getLoggedInUser();
+            
+            // Send the voice message
+            ChatMessageDTO voiceMessage = communicationService.sendVoiceMessage(
+                formId, currentUser.getUserId(), receiverId, audioFile
+            );
+            
+            return ResponseEntity.ok(voiceMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send voice message: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Get audio file for a voice message
+     */
+    @GetMapping("/audio/{messageId}")
+    public ResponseEntity<org.springframework.core.io.Resource> getAudioFile(
+            @PathVariable Integer messageId,
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        try {
+            return communicationService.getAudioFile(messageId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to get audio file: " + e.getMessage());
         }
     }
 }

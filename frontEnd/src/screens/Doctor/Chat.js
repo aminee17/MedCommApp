@@ -14,6 +14,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendChatMessage, getMessagesForForm } from '../../services/chatService';
 import { COLORS, FONTS, SIZES, SHADOWS, SPACING } from '../../utils/theme';
+import VoiceRecorder from '../../components/common/VoiceRecorder';
+import VoicePlayer from '../../components/common/VoicePlayer';
 
 const Chat = ({ route, navigation }) => {
     const { formId, neurologistId } = route.params;
@@ -106,10 +108,21 @@ const Chat = ({ route, navigation }) => {
         }
     };
 
+    const handleVoiceMessageSent = async (sentMessage) => {
+        // Refresh messages after voice message is sent
+        try {
+            const updatedMessages = await getMessagesForForm(formId);
+            setMessages(updatedMessages);
+        } catch (error) {
+            console.error('Error refreshing messages after voice message:', error);
+        }
+    };
+
     const renderMessage = ({ item }) => {
         // Check if the message is from the current user
         const isCurrentUser = item.senderId === userId;
         const isMedecin = item.senderRole === 'MEDECIN';
+        const isVoiceMessage = item.messageType === 'AUDIO';
         
         return (
             <View style={[
@@ -117,7 +130,11 @@ const Chat = ({ route, navigation }) => {
                 isCurrentUser ? styles.medecinMessage : styles.neurologueMessage
             ]}>
                 <Text style={styles.senderName}>{item.senderName}</Text>
-                <Text style={styles.messageText}>{item.message || item.content}</Text>
+                {isVoiceMessage ? (
+                    <VoicePlayer messageId={item.messageId} />
+                ) : (
+                    <Text style={styles.messageText}>{item.message || item.content}</Text>
+                )}
                 <Text style={styles.timestamp}>
                     {new Date(item.timestamp || item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
@@ -163,6 +180,12 @@ const Chat = ({ route, navigation }) => {
                     placeholder="Tapez votre message..."
                     multiline
                     maxLength={500}
+                />
+                <VoiceRecorder 
+                    formId={formId}
+                    receiverId={neurologistId}
+                    onVoiceMessageSent={handleVoiceMessageSent}
+                    style={{ marginHorizontal: 8 }}
                 />
                 <TouchableOpacity 
                     style={[

@@ -121,3 +121,49 @@ export const countUnreadMessagesForForm = async (formId) => {
         return 0;
     }
 };
+
+/**
+ * Send a voice message
+ * @param {Object} voiceData - The voice message data
+ * @returns {Promise<Object>} - The sent voice message
+ */
+export const sendVoiceMessage = async (voiceData) => {
+    try {
+        const userId = await getUserId();
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+        
+        const formData = new FormData();
+        formData.append('formId', voiceData.formId.toString());
+        formData.append('audioFile', voiceData.audioFile);
+        if (voiceData.receiverId) {
+            formData.append('receiverId', voiceData.receiverId.toString());
+        }
+        
+        const url = `${API_BASE_URL}/api/chat/send-voice?userId=${userId}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'userId': userId.toString()
+            },
+            credentials: 'include',
+            body: formData
+        });
+        
+        return await parseJSONResponse(response);
+    } catch (error) {
+        console.error('Error sending voice message:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get audio URL for a voice message
+ * @param {number} messageId - The message ID
+ * @returns {string} - The audio URL
+ */
+export const getAudioUrl = (messageId) => {
+    return `${API_BASE_URL}/api/chat/audio/${messageId}`;
+};

@@ -13,12 +13,23 @@ import com.na.medical_mobile_app.repositories.CommunicationRepository;
 import com.na.medical_mobile_app.repositories.MedicalFormRepository;
 import com.na.medical_mobile_app.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -178,5 +189,110 @@ public class CommunicationService {
         }
         
         return dto;
+    }
+    
+    /**
+     * Send a voice message with audio file
+     */
+    public ChatMessageDTO sendVoiceMessage(Integer formId, Integer senderId, Integer receiverId, MultipartFile audioFile) {
+        // Validate inputs
+        MedicalForm form = medicalFormRepository.findById(formId)
+                .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
+                
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("Sender not found with ID: " + senderId));
+        
+        User receiver;
+        if (receiverId != null) {
+            receiver = userRepository.findById(receiverId)
+                    .orElseThrow(() -> new RuntimeException("Receiver not found with ID: " + receiverId));
+        } else {
+            // Find appropriate receiver based on form
+            if (form.getAssignedTo() != null) {
+                receiver = form.getAssignedTo();
+            } else if (sender.getRole().toString().equals("MEDECIN")) {
+                receiver = userRepository.findFirstByRoleIn(List.of(Role.NEUROLOGUE, Role.NEUROLOGUE_RESIDENT))
+                        .orElseThrow(() -> new RuntimeException("No neurologist found in the system"));
+            } else {
+                receiver = form.getDoctor();
+            }
+        }
+        
+        // Save audio file
+        String filePath = saveAudioFile(audioFile);
+        
+        // Create and save the communication
+        Communication communication = new Communication();
+        communication.setForm(form);
+        communication.setSender(sender);
+        communication.setReceiver(receiver);
+        communication.setContent("Voice message");
+        communication.setMessageType(MessageType.AUDIO);
+        communication.setFilePath(filePath);
+        communication.setCreatedAt(LocalDateTime.now());
+        communication.setIsRead(false);
+        
+        Communication savedCommunication = communicationRepository.save(communication);
+        
+        // Create notification for the receiver
+        notificationService.createChatNotification(savedCommunication);
+        
+        return convertToDTO(savedCommunication);
+    }
+    
+    /**
+     * Save audio file to disk
+     */
+    private String saveAudioFile(MultipartFile audioFile) {
+        try {
+            // Create audio directory if it doesn't exist
+            Path audioDir = Paths.get("audio-messages");
+            if (!Files.exists(audioDir)) {
+                Files.createDirectories(audioDir);
+            }
+            
+            // Generate unique filename
+            String originalFilename = audioFile.getOriginalFilename();
+            String extension = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".m4a";
+            String filename = "audio_" + UUID.randomUUID().toString() + extension;
+            
+            // Save file
+            Path filePath = audioDir.resolve(filename);
+            Files.copy(audioFile.getInputStream(), filePath);
+            
+            return filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save audio file: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Get audio file for a voice message
+     */
+    public ResponseEntity<Resource> getAudioFile(Integer messageId) {
+        try {
+            Communication communication = communicationRepository.findById(messageId)
+                    .orElseThrow(() -> new RuntimeException("Message not found with ID: " + messageId));
+            
+            if (communication.getMessageType() != MessageType.AUDIO || communication.getFilePath() == null) {
+                throw new RuntimeException("Message is not an audio message or file path is missing");
+            }
+            
+            Path filePath = Paths.get("audio-messages").resolve(communication.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (!resource.exists()) {
+                throw new RuntimeException("Audio file not found");
+            }
+            
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("audio/mpeg"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + communication.getFilePath() + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get audio file: " + e.getMessage());
+        }
     }
 }
