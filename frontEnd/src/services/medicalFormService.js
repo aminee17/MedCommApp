@@ -46,10 +46,35 @@ const RETRY_DELAY = 2000; // 2 seconds
 // Sleep function for retry delay
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Helper function to convert seizureOccurrence to seizureFrequency enum
+const getSeizureFrequencyFromOccurrence = (seizureOccurrence) => {
+    if (!seizureOccurrence || typeof seizureOccurrence !== 'object') {
+        return null;
+    }
+    
+    // Check which frequency is selected
+    if (seizureOccurrence.quotidienne) return 'DAILY';
+    if (seizureOccurrence.hebdomadaire) return 'WEEKLY';
+    if (seizureOccurrence.mensuelle) return 'MONTHLY';
+    
+    return null;
+};
+
 export async function submitMedicalForm(formData) {
     try {
         console.log('=== FORM SUBMISSION DEBUG ===');
         console.log('Form data keys:', Object.keys(formData));
+        console.log('=== FRONTEND FORM DATA VALUES ===');
+        console.log('progressiveFall:', formData.progressiveFall);
+        console.log('suddenFall:', formData.suddenFall);
+        console.log('clonicJerks:', formData.clonicJerks);
+        console.log('automatisms:', formData.automatisms);
+        console.log('activityStop:', formData.activityStop);
+        console.log('sensitiveDisorders:', formData.sensitiveDisorders);
+        console.log('sensoryDisorders:', formData.sensoryDisorders);
+        console.log('lateralTongueBiting:', formData.lateralTongueBiting);
+        console.log('seizureType:', formData.seizureType);
+        console.log('=== END FRONTEND VALUES ===');
 
         // Get userId from AsyncStorage
         const userId = await AsyncStorage.getItem('userId');
@@ -78,24 +103,29 @@ export async function submitMedicalForm(formData) {
             firstSeizureDate,
             lastSeizureDate,
             isFirstSeizure: formData.isFirstSeizure,
-            // Fix for empty string in seizureFrequency enum
-            seizureFrequency: formData.seizureFrequency || null,
+            // Handle seizureFrequency - convert from seizureOccurrence
+            seizureFrequency: getSeizureFrequencyFromOccurrence(formData.seizureOccurrence),
             seizureDuration: formData.seizureDuration ? parseInt(formData.seizureDuration) : null,
             totalSeizures: formData.totalSeizures ? parseInt(formData.totalSeizures) : null,
 
             // Characteristics
             hasAura: formData.hasAura,
             auraDescription: formData.auraDescription,
-            seizureTypes: formData.seizureTypes,
+            seizureType: formData.seizureType, // Changed from seizureTypes to seizureType
 
-            // Symptoms
+            // Updated "Pendant la crise" symptoms
             lossOfConsciousness: formData.lossOfConsciousness,
+            progressiveFall: formData.progressiveFall,
+            suddenFall: formData.suddenFall,
             bodyStiffening: formData.bodyStiffening,
-            jerkingMovements: formData.jerkingMovements,
+            clonicJerks: formData.clonicJerks,
+            automatisms: formData.automatisms,
             eyeDeviation: formData.eyeDeviation,
+            activityStop: formData.activityStop,
+            sensitiveDisorders: formData.sensitiveDisorders,
+            sensoryDisorders: formData.sensoryDisorders,
             incontinence: formData.incontinence,
-            tongueBiting: formData.tongueBiting,
-            tongueBitingLocation: formData.tongueBitingLocation,
+            lateralTongueBiting: formData.lateralTongueBiting,
 
             // Miscellaneous
             otherInformation: formData.otherInformation

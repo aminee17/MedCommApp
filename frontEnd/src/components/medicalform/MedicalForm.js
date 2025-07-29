@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, TextInput, ScrollView, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -64,21 +63,6 @@ const MedicalForm = () => {
                 options={genders}
             />
 
-            <DatePickerInput
-                style={styles.input}
-                placeholder="Date de la première crise"
-                value={formData.firstSeizureDate}
-                onChange={(date) => handleInputChange('firstSeizureDate', date)}
-                label="Date de la première crise"
-            />
-
-            <LabeledCheckbox
-                label="Est-ce la première crise ?"
-                value={formData.isFirstSeizure}
-                onValueChange={(value) => handleCheckboxChange('isFirstSeizure', value)}
-            />
-
-
             <TextInput
                 style={styles.input}
                 placeholder="Numéro de CIN (parent/patient)"
@@ -133,6 +117,21 @@ const MedicalForm = () => {
 
 
             <Text style={styles.sectionHeader}>2. Historique des crises</Text>
+            
+            <LabeledCheckbox
+                label="Est-ce la première crise ?"
+                value={formData.isFirstSeizure}
+                onValueChange={(value) => handleCheckboxChange('isFirstSeizure', value)}
+            />
+
+            <DatePickerInput
+                style={styles.input}
+                placeholder="Date de la première crise"
+                value={formData.firstSeizureDate}
+                onChange={(date) => handleInputChange('firstSeizureDate', date)}
+                label="Date de la première crise"
+            />
+
             <CounterInput
                 label="Nombre total de crises"
                 value={Number(formData.totalSeizures) || 0}
@@ -156,8 +155,8 @@ const MedicalForm = () => {
                 options={occurrences}
             />
 
-            <Text style={styles.sectionHeader}>
-                Durée moyenne d'une crise  (en minutes) :
+            <Text style={styles.subSectionHeader}>
+                Durée moyenne d'une crise (en minutes) :
             </Text>
             <CounterInput
                 value={Number(formData.seizureDuration) || 0}
@@ -168,7 +167,7 @@ const MedicalForm = () => {
 
 
             <LabeledCheckbox
-                label="Y a-t-il un signe avant-coureur des crises (Aura) ?"
+                label="Y a-t-il un signe qui annonce la crise ?"
                 value={formData.hasAura}
                 onValueChange={(value) => handleCheckboxChange('hasAura', value)}
             />
@@ -183,98 +182,126 @@ const MedicalForm = () => {
             )}
 
             <Text style={styles.subSectionHeader}>Type de crises (si connu):</Text>
-            <LabeledCheckbox
-                label="Tonico-clonique généralisée (perte de conscience, convulsions)"
-                value={formData.seizureTypes.tonicClonic}
-                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'tonicClonic', value)}
-            />
-            <LabeledCheckbox
-                label="Absence (regard fixe, absence de réponse)"
-                value={formData.seizureTypes.absence}
-                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'absence', value)}
-            />
+            <View style={styles.radioContainer}>
+                <View style={styles.radioOption}>
+                    <Checkbox
+                        value={formData.seizureType === 'generalizedTonicClonic'}
+                        onValueChange={() => handleInputChange('seizureType', 'generalizedTonicClonic')}
+                        tintColors={{ true: '#007AFF', false: '#ccc' }}
+                    />
+                    <Text style={styles.radioOptionLabel}>Généralisée Tonico-clonique</Text>
+                </View>
+                <View style={styles.radioOption}>
+                    <Checkbox
+                        value={formData.seizureType === 'generalizedOther'}
+                        onValueChange={() => handleInputChange('seizureType', 'generalizedOther')}
+                        tintColors={{ true: '#007AFF', false: '#ccc' }}
+                    />
+                    <Text style={styles.radioOptionLabel}>Généralisée autre (tonique, clonique, myoclonique, atonique)</Text>
+                </View>
+                <View style={styles.radioOption}>
+                    <Checkbox
+                        value={formData.seizureType === 'absence'}
+                        onValueChange={() => handleInputChange('seizureType', 'absence')}
+                        tintColors={{ true: '#007AFF', false: '#ccc' }}
+                    />
+                    <Text style={styles.radioOptionLabel}>Absence</Text>
+                </View>
+                <View style={styles.radioOption}>
+                    <Checkbox
+                        value={formData.seizureType === 'focalWithLossOfConsciousness'}
+                        onValueChange={() => handleInputChange('seizureType', 'focalWithLossOfConsciousness')}
+                        tintColors={{ true: '#007AFF', false: '#ccc' }}
+                    />
+                    <Text style={styles.radioOptionLabel}>Focale avec perte de connaissance</Text>
+                </View>
+                <View style={styles.radioOption}>
+                    <Checkbox
+                        value={formData.seizureType === 'focalWithoutLossOfConsciousness'}
+                        onValueChange={() => handleInputChange('seizureType', 'focalWithoutLossOfConsciousness')}
+                        tintColors={{ true: '#007AFF', false: '#ccc' }}
+                    />
+                    <Text style={styles.radioOptionLabel}>Focale sans perte de connaissance</Text>
+                </View>
+            </View>
 
+
+
+            <Text style={styles.subSectionHeader}>Pendant la crise</Text>
             <LabeledCheckbox
-                label="Focale (partielle)"
-                value={formData.seizureTypes.focal}
-                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'focal', value)}
-            />
-
-            <LabeledCheckbox
-                label="Myoclonique (sursauts)"
-                value={formData.seizureTypes.myoclonic}
-                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'myoclonic', value)}
-            />
-
-            <LabeledCheckbox
-                label="Atonique (chute soudaine)"
-                value={formData.seizureTypes.atonic}
-                onValueChange={(value) => handleNestedCheckboxChange('seizureTypes', 'atonic', value)}
-            />
-
-
-
-            <Text style={styles.sectionHeader}>3. Pendant la crise</Text>
-            <LabeledCheckbox
-                label="Perte de conscience ?"
+                label="Perte de connaissance"
                 value={formData.lossOfConsciousness}
                 onValueChange={(value) => handleCheckboxChange('lossOfConsciousness', value)}
             />
 
             <LabeledCheckbox
-                label="Raidissement du corps ?"
+                label="Chute progressive"
+                value={formData.progressiveFall}
+                onValueChange={(value) => handleCheckboxChange('progressiveFall', value)}
+            />
+
+            <LabeledCheckbox
+                label="Chute brusque"
+                value={formData.suddenFall}
+                onValueChange={(value) => handleCheckboxChange('suddenFall', value)}
+            />
+
+            <LabeledCheckbox
+                label="Raidissement du corps"
                 value={formData.bodyStiffening}
                 onValueChange={(value) => handleCheckboxChange('bodyStiffening', value)}
             />
 
             <LabeledCheckbox
-                label="Mouvements saccadés ?"
-                value={formData.jerkingMovements}
-                onValueChange={(value) => handleCheckboxChange('jerkingMovements', value)}
+                label="Secousses cloniques"
+                value={formData.clonicJerks}
+                onValueChange={(value) => handleCheckboxChange('clonicJerks', value)}
             />
 
             <LabeledCheckbox
-                label="Déviation des yeux (d'un côté) ?"
+                label="Automatismes"
+                value={formData.automatisms}
+                onValueChange={(value) => handleCheckboxChange('automatisms', value)}
+            />
+
+            <LabeledCheckbox
+                label="Déviation des yeux (d'un côté)"
                 value={formData.eyeDeviation}
                 onValueChange={(value) => handleCheckboxChange('eyeDeviation', value)}
             />
 
             <LabeledCheckbox
-                label="Incontinence (urine/selles) ?"
+                label="Arrêt de l'activité en cours"
+                value={formData.activityStop}
+                onValueChange={(value) => handleCheckboxChange('activityStop', value)}
+            />
+
+            <LabeledCheckbox
+                label="Troubles sensitifs"
+                value={formData.sensitiveDisorders}
+                onValueChange={(value) => handleCheckboxChange('sensitiveDisorders', value)}
+            />
+
+            <LabeledCheckbox
+                label="Troubles sensoriels"
+                value={formData.sensoryDisorders}
+                onValueChange={(value) => handleCheckboxChange('sensoryDisorders', value)}
+            />
+
+            <LabeledCheckbox
+                label="Incontinence (urine/selles)"
                 value={formData.incontinence}
                 onValueChange={(value) => handleCheckboxChange('incontinence', value)}
             />
 
             <LabeledCheckbox
-                label="Morsure de la langue ?"
-                value={formData.tongueBiting}
-                onValueChange={(value) => handleCheckboxChange('tongueBiting', value)}
+                label="Morsure latérale de la langue"
+                value={formData.lateralTongueBiting}
+                onValueChange={(value) => handleCheckboxChange('lateralTongueBiting', value)}
             />
 
-            {formData.tongueBiting && (
-                <View style={styles.radioContainer}>
-                    <Text style={styles.radioLabel}>Partie de la langue mordue :</Text>
-                    <View style={styles.radioOption}>
-                        <Checkbox
-                            value={formData.tongueBitingLocation === 'side'}
-                            onValueChange={() => handleInputChange('tongueBitingLocation', 'side')}
-                            tintColors={{ true: '#007AFF', false: '#ccc' }}
-                        />
-                        <Text style={styles.radioOptionLabel}>Côté</Text>
-                    </View>
-                    <View style={styles.radioOption}>
-                        <Checkbox
-                            value={formData.tongueBitingLocation === 'tip'}
-                            onValueChange={() => handleInputChange('tongueBitingLocation', 'tip')}
-                            tintColors={{ true: '#007AFF', false: '#ccc' }}
-                        />
-                        <Text style={styles.radioOptionLabel}>Bout</Text>
-                    </View>
-                </View>
-            )}
 
-
-            <Text style={styles.sectionHeader}>10. Autres informations</Text>
+            <Text style={styles.subSectionHeader}>Autres informations</Text>
             <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Informations supplémentaires (détails importants non couverts ci-dessus)"

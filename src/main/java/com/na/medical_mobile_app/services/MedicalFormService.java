@@ -45,35 +45,51 @@ public class MedicalFormService {
  private String buildSymptomsSummary(MedicalFormRequest request) {
      StringBuilder summary = new StringBuilder();
 
-     // Seizure types
-     if (request.seizureTypes != null) {
-         request.seizureTypes.forEach((type, present) -> {
-             if (Boolean.TRUE.equals(present)) {
-                 summary.append("- ").append(type).append("\n");
-             }
-         });
+     // Debug logging
+     System.out.println("=== DEBUG: Building symptoms summary ===");
+     System.out.println("seizureType: " + request.seizureType);
+     System.out.println("progressiveFall: " + request.progressiveFall);
+     System.out.println("suddenFall: " + request.suddenFall);
+     System.out.println("clonicJerks: " + request.clonicJerks);
+     System.out.println("automatisms: " + request.automatisms);
+     System.out.println("activityStop: " + request.activityStop);
+     System.out.println("sensitiveDisorders: " + request.sensitiveDisorders);
+     System.out.println("sensoryDisorders: " + request.sensoryDisorders);
+     System.out.println("lateralTongueBiting: " + request.lateralTongueBiting);
+
+     // Seizure type (single choice)
+     if (request.seizureType != null && !request.seizureType.isBlank()) {
+         String seizureTypeLabel = switch (request.seizureType) {
+             case "generalizedTonicClonic" -> "Généralisée Tonico-clonique";
+             case "generalizedOther" -> "Généralisée autre (tonique, clonique, myoclonique, atonique)";
+             case "absence" -> "Absence";
+             case "focalWithLossOfConsciousness" -> "Focale avec perte de connaissance";
+             case "focalWithoutLossOfConsciousness" -> "Focale sans perte de connaissance";
+             default -> request.seizureType;
+         };
+         summary.append("- Type de crise: ").append(seizureTypeLabel).append("\n");
      }
 
-     // Classic symptom flags
-     if (Boolean.TRUE.equals(request.lossOfConsciousness)) summary.append("- Perte de conscience\n");
-     if (Boolean.TRUE.equals(request.bodyStiffening)) summary.append("- Raideur corporelle\n");
-     if (Boolean.TRUE.equals(request.jerkingMovements)) summary.append("- Mouvements saccadés\n");
-     if (Boolean.TRUE.equals(request.eyeDeviation)) summary.append("- Déviation oculaire\n");
-     if (Boolean.TRUE.equals(request.incontinence)) summary.append("- Incontinence\n");
+     // Updated "Pendant la crise" symptoms
+     if (Boolean.TRUE.equals(request.lossOfConsciousness)) summary.append("- Perte de connaissance\n");
+     if (Boolean.TRUE.equals(request.progressiveFall)) summary.append("- Chute progressive\n");
+     if (Boolean.TRUE.equals(request.suddenFall)) summary.append("- Chute brusque\n");
+     if (Boolean.TRUE.equals(request.bodyStiffening)) summary.append("- Raidissement du corps\n");
+     if (Boolean.TRUE.equals(request.clonicJerks)) summary.append("- Secousses cloniques\n");
+     if (Boolean.TRUE.equals(request.automatisms)) summary.append("- Automatismes\n");
+     if (Boolean.TRUE.equals(request.eyeDeviation)) summary.append("- Déviation des yeux (d'un côté)\n");
+     if (Boolean.TRUE.equals(request.activityStop)) summary.append("- Arrêt de l'activité en cours\n");
+     if (Boolean.TRUE.equals(request.sensitiveDisorders)) summary.append("- Troubles sensitifs\n");
+     if (Boolean.TRUE.equals(request.sensoryDisorders)) summary.append("- Troubles sensoriels\n");
+     if (Boolean.TRUE.equals(request.incontinence)) summary.append("- Incontinence (urine/selles)\n");
+     if (Boolean.TRUE.equals(request.lateralTongueBiting)) summary.append("- Morsure latérale de la langue\n");
 
-     if (Boolean.TRUE.equals(request.tongueBiting)) {
-         summary.append("- Morsure de la langue");
-         if (request.tongueBitingLocation != null && !request.tongueBitingLocation.isBlank()) {
-             summary.append(" (").append(request.tongueBitingLocation).append(")");
-         }
-         summary.append("\n");
-     }
-
-     // ✅ New additions
+     // First seizure info
      if (Boolean.TRUE.equals(request.isFirstSeizure)) {
          summary.append("- Première crise\n");
      }
 
+     // Aura info
      if (Boolean.TRUE.equals(request.hasAura)) {
          summary.append("- Aura présente");
          if (request.auraDescription != null && !request.auraDescription.isBlank()) {
@@ -87,7 +103,11 @@ public class MedicalFormService {
          summary.append("- Autres: ").append(request.otherInformation).append("\n");
      }
 
-     return summary.toString().trim();
+     String result = summary.toString().trim();
+     System.out.println("Final symptoms summary: " + result);
+     System.out.println("=== END DEBUG ===");
+     
+     return result;
  }
 
 

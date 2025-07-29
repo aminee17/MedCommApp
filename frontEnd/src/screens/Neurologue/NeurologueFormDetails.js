@@ -4,6 +4,7 @@ import { View, Text, ScrollView, FlatList, Linking, TouchableOpacity, StyleSheet
 import { useNavigation } from '@react-navigation/native';
 import AttachmentItem from '../../components/neurologueDashboard/AttachmentItem';
 import { COLORS, FONTS, SIZES, SHADOWS, SPACING } from '../../utils/theme';
+import { API_BASE_URL } from '../../utils/constants';
 import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
 import { countUnreadMessagesForForm } from '../../services/chatService';
 
@@ -51,7 +52,8 @@ const NeurologueFormDetails = ({ route }) => {
 
     // Open attachment URL in device browser/viewer
     const openAttachment = (url) => {
-        Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+        Linking.openURL(fullUrl).catch(err => console.error('Failed to open URL:', err));
     };
     
     // Handle respond button press

@@ -33,16 +33,25 @@ public class MedicalFormRequest {
     // Characteristics
     public Boolean hasAura;
     public String auraDescription;
-    public Map<String, Boolean> seizureTypes;
+    public String seizureType;
 
     // Symptoms
     public Boolean lossOfConsciousness;
-    public Boolean bodyStiffening;
+    public Boolean progressiveFall;
     public Boolean jerkingMovements;
     public Boolean eyeDeviation;
     public Boolean incontinence;
     public Boolean tongueBiting;
     public String tongueBitingLocation;
+    public Boolean bodyStiffening;
+    public Boolean suddenFall;
+    public Boolean clonicJerks;
+    public Boolean automatisms;
+    public Boolean activityStop;
+    public Boolean sensitiveDisorders;
+    public Boolean sensoryDisorders;
+    public Boolean lateralTongueBiting;
+
 
     // Miscellaneous
     public String otherInformation;

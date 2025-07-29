@@ -134,23 +134,22 @@ public class NeurologistAssignmentService {
     private Set<String> extractKeywords(MedicalFormRequest request) {
         Set<String> keywords = new HashSet<>();
         
-        // Add seizure types
-        if (request.getSeizureTypes() != null) {
-            request.getSeizureTypes().forEach((type, present) -> {
-                if (Boolean.TRUE.equals(present)) {
-                    keywords.add(type.toLowerCase());
-                    
-                    // Add common medical terms for this type
-                    if (type.toLowerCase().contains("absence")) {
-                        keywords.add("petit mal");
-                        keywords.add("absence");
-                    } else if (type.toLowerCase().contains("tonic") || 
-                               type.toLowerCase().contains("clonic")) {
-                        keywords.add("grand mal");
-                        keywords.add("convulsive");
-                    }
-                }
-            });
+        // Add seizure type (single choice)
+        if (request.getSeizureType() != null && !request.getSeizureType().isBlank()) {
+            String seizureType = request.getSeizureType().toLowerCase();
+            keywords.add(seizureType);
+            
+            // Add common medical terms for this type
+            if (seizureType.contains("absence")) {
+                keywords.add("petit mal");
+                keywords.add("absence");
+            } else if (seizureType.contains("tonic") || seizureType.contains("clonic")) {
+                keywords.add("grand mal");
+                keywords.add("convulsive");
+            } else if (seizureType.contains("focal")) {
+                keywords.add("partial");
+                keywords.add("focal");
+            }
         }
         
         // Add symptoms
@@ -165,7 +164,7 @@ public class NeurologistAssignmentService {
             keywords.add("rigidity");
         }
         
-        if (Boolean.TRUE.equals(request.getJerkingMovements())) {
+        if (Boolean.TRUE.equals(request.getClonicJerks())) {
             keywords.add("clonic");
             keywords.add("jerking");
             keywords.add("convulsion");

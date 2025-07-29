@@ -1,73 +1,43 @@
 const initialMedicalFormState = {
+    // Patient Info
     fullName: '',
     birthDate: '',
     gender: '',
-    firstSeizureDate: '',
-    isFirstSeizure: false,
     cinNumber: '',
     governorate_id: '',
     city_id: '',
     address: '',
     phoneNumber: '',
-    seizureFrequency: '',
+
+    // Seizure History
+    firstSeizureDate: '',
     lastSeizureDate: '',
-    seizureOccurrence: '',
+    isFirstSeizure: false,
+    totalSeizures: '',
     seizureDuration: '',
+    seizureFrequency: '',
+    seizureOccurrence: '',
+
+    // Characteristics
     hasAura: false,
     auraDescription: '',
-    seizureTypes: {
-        tonicClonic: false,
-        absence: false,
-        focal: false,
-        myoclonic: false,
-        atonic: false
-    },
+    seizureType: '', // Single choice instead of seizureTypes object
+
+    // "Pendant la crise" symptoms
     lossOfConsciousness: false,
+    progressiveFall: false,
+    suddenFall: false,
     bodyStiffening: false,
-    jerkingMovements: false,
+    clonicJerks: false,
+    automatisms: false,
     eyeDeviation: false,
+    activityStop: false,
+    sensitiveDisorders: false,
+    sensoryDisorders: false,
     incontinence: false,
-    tongueBiting: false,
-    tongueBitingLocation: '',
-    confusion: false,
-    headache: false,
-    fatigue: false,
-    weaknessOneSide: false,
-    speechDifficulty: false,
-    recoveryDuration: '',
-    triggers: {
-        sleepDeprivation: false,
-        stress: false,
-        flashingLights: false,
-        fever: false,
-        missedMedications: false,
-        alcoholDrugUse: false
-    },
-    usualSeizureTime: '',
-    relatedToMenstrualCycle: false,
-    medicalHistory: {
-        brainInjury: false,
-        stroke: false,
-        tumor: false,
-        meningitisEncephalitis: false,
-        intellectualDisability: false
-    },
-    familyEpilepsyHistory: false,
-    onMedication: false,
-    medicationNames: '',
-    dosage: '',
-    duration: '',
-    sideEffects: '',
-    compliantWithTreatment: false,
-    previousEEG: false,
-    eegResult: '',
-    previousMRI: false,
-    mriResult: '',
-    bloodTestsDone: false,
-    canAttendSchoolWork: false,
-    injuryDueToSeizures: false,
-    psychosocialIssues: false,
-    recentHospitalizations: false,
+    lateralTongueBiting: false,
+
+    // Miscellaneous
     otherInformation: '',
     mriPhoto: null,
     seizureVideo: null

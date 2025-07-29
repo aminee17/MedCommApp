@@ -6,7 +6,7 @@ import styles from './styles';
 export default function GenderCheckboxGroup({ value, onChange, options }) {
     return (
         <View>
-            <Text style={styles.sectionHeader}>Sexe</Text>
+            <Text style={styles.subSectionHeader}>Sexe</Text>
             {options.map((option) => (
                 <LabeledCheckbox
                     key={option}

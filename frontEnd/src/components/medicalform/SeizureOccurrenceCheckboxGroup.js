@@ -6,7 +6,7 @@ import styles from './styles';
 export default function SeizureOccurrenceCheckboxGroup({ values, onChange, options }) {
     return (
         <View>
-            <Text style={styles.sectionHeader}>Fréquence des crises</Text>
+            <Text style={styles.subSectionHeader}>Fréquence des crises</Text>
             {options.map((occ) => (
                 <LabeledCheckbox
                     key={occ}
