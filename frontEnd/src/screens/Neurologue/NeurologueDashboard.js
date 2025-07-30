@@ -7,12 +7,14 @@ import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetch
 import { countUnreadMessagesForForm } from '../../services/chatService';
 import { COLORS, SPACING } from '../../utils/theme';
 import styles from './styles';
+import AIInsights from '../../components/neurologueDashboard/AIInsights';
 
 const NeurologueDashboard = () => {
     const [forms, setForms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('');
-    const [activeFilter, setActiveFilter] = useState('pending'); // 'pending', 'completed', or 'all'
+    const [activeFilter, setActiveFilter] = useState('pending'); // 'pending', 'completed', 'all', or 'ai'
+    const [patients, setPatients] = useState([]);
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -37,12 +39,27 @@ const NeurologueDashboard = () => {
                     case 'all':
                         data = await fetchAllFormsForNeurologue();
                         break;
+                    case 'ai':
+                        data = await fetchAllFormsForNeurologue();
+                        break;
                     case 'pending':
                     default:
                         data = await fetchPendingFormsForNeurologue();
                         break;
                 }
                 setForms(data);
+                
+                // Extract unique patients for AI insights
+                const uniquePatients = data.reduce((acc, form) => {
+                    if (!acc.find(p => p.patientId === form.patientId)) {
+                        acc.push({
+                            patientId: form.patientId,
+                            name: form.patientName
+                        });
+                    }
+                    return acc;
+                }, []);
+                setPatients(uniquePatients);
             } catch (error) {
                 console.error('Error fetching forms:', error);
                 if (error.message.includes('User ID not found')) {
@@ -141,6 +158,8 @@ const NeurologueDashboard = () => {
                 return 'Formulaires complétés';
             case 'all':
                 return 'Tous les formulaires';
+            case 'ai':
+                return 'AI Insights';
             case 'pending':
             default:
                 return 'Formulaires en attente';
@@ -185,9 +204,27 @@ const NeurologueDashboard = () => {
                 >
                     <Text style={[filterStyles.filterText, activeFilter === 'all' && filterStyles.activeFilterText]}>Tous</Text>
                 </TouchableOpacity>
+                
+                <TouchableOpacity 
+                    style={[filterStyles.filterButton, activeFilter === 'ai' && filterStyles.activeFilter]}
+                    onPress={() => setActiveFilter('ai')}
+                >
+                    <Text style={[filterStyles.filterText, activeFilter === 'ai' && filterStyles.activeFilterText]}>🧠 AI</Text>
+                </TouchableOpacity>
             </View>
             
-            {loading ? (
+            {activeFilter === 'ai' ? (
+                <AIInsights 
+                    patients={patients}
+                    onPatientSelect={(patientId) => {
+                        // Navigate to patient details or forms
+                        const patientForms = forms.filter(f => f.patientId === patientId);
+                        if (patientForms.length > 0) {
+                            handleFormPress(patientForms[0]);
+                        }
+                    }}
+                />
+            ) : loading ? (
                 <ActivityIndicator size="large" style={{ marginTop: 50 }} />
             ) : forms.length > 0 ? (
                 <FlatList
@@ -229,7 +266,7 @@ const filterStyles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 20,
         backgroundColor: '#f0f0f0',
-        minWidth: 100,
+        minWidth: 80,
         alignItems: 'center',
     },
     activeFilter: {

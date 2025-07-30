@@ -19,6 +19,8 @@ import NeurologueDashboard from '../screens/Neurologue/NeurologueDashboard';
 import NeurologueFormDetails from '../screens/Neurologue/NeurologueFormDetails';
 import FormResponse from '../screens/Neurologue/FormResponse';
 import NeurologueChat from '../screens/Neurologue/Chat';
+import AdminLogin from '../screens/Auth/AdminLogin';
+import AdminDashboard from "../components/adminDashboard/adminDashboard";
 
 // Common Screens
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
@@ -58,6 +60,12 @@ const AppNavigator = () => {
                 name="NeurologueLogin" 
                 component={NeurologueLogin} 
                 options={{ title: 'Connexion Neurologue' }} 
+            />
+
+            <Stack.Screen
+                name="AdminLogin"
+                component={AdminLogin}
+                options={{ title: 'Connexion Administrateur' }}
             />
 
             {/* Doctor Screens */}
@@ -121,6 +129,11 @@ const AppNavigator = () => {
             />
 
             {/* Common Screens */}
+            <Stack.Screen
+                name="AdminDashboard"
+                component={AdminDashboard}
+                options={{ title: 'Tableau de bord admin' }}
+            />
             <Stack.Screen 
                 name="Notifications" 
                 component={NotificationsScreen} 

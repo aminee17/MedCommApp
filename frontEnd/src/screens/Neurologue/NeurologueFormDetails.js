@@ -7,12 +7,14 @@ import { COLORS, FONTS, SIZES, SHADOWS, SPACING } from '../../utils/theme';
 import { API_BASE_URL } from '../../utils/constants';
 import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
 import { countUnreadMessagesForForm } from '../../services/chatService';
+import aiService from '../../services/aiService';
 
 const NeurologueFormDetails = ({ route }) => {
     const { form: initialForm, formId } = route.params;
     const [form, setForm] = useState(initialForm || null);
     const [loading, setLoading] = useState(!initialForm && formId);
     const [error, setError] = useState(null);
+    const [aiPredicting, setAiPredicting] = useState(false);
     const navigation = useNavigation();
     
     // Fetch form data if only formId is provided
@@ -64,6 +66,26 @@ const NeurologueFormDetails = ({ route }) => {
     // Handle chat button press
     const handleChat = () => {
         navigation.navigate('NeurologueChat', { formId: form.formId, doctorId: form.referringDoctorId });
+    };
+    
+    // Handle AI prediction
+    const handleAIPrediction = async () => {
+        if (!form.patientId) {
+            alert('Patient ID not available for prediction');
+            return;
+        }
+        
+        setAiPredicting(true);
+        try {
+            const prediction = await aiService.predictSeizureRisk(form.patientId);
+            const results = aiService.parseAnalysisResults(prediction.results);
+            
+            alert(`AI Seizure Risk Prediction:\n\nRisk Level: ${results.riskLevel}\nConfidence: ${Math.round(prediction.confidenceScore * 100)}%\n\nRecommendations:\n${prediction.recommendations}`);
+        } catch (error) {
+            alert('Failed to generate AI prediction. Please try again.');
+        } finally {
+            setAiPredicting(false);
+        }
     };
     
     // Count unread messages
@@ -232,6 +254,16 @@ const NeurologueFormDetails = ({ route }) => {
             
             {/* Action Buttons - Fixed at bottom */}
             <View style={styles.buttonContainer}>
+                <TouchableOpacity 
+                    style={[styles.button, styles.aiButton]} 
+                    onPress={handleAIPrediction}
+                    disabled={aiPredicting}
+                >
+                    <Text style={styles.buttonText}>
+                        {aiPredicting ? 'Analyzing...' : '🧠 AI Risk'}
+                    </Text>
+                </TouchableOpacity>
+                
                 {form.status !== 'COMPLETED' ? (
                     <TouchableOpacity 
                         style={[styles.button, styles.respondButton]} 
@@ -253,7 +285,7 @@ const NeurologueFormDetails = ({ route }) => {
                     onPress={handleChat}
                 >
                     <View style={styles.chatButtonContent}>
-                        <Text style={styles.buttonText}>Discuter avec le médecin</Text>
+                        <Text style={styles.buttonText}>Chat</Text>
                         {unreadCount > 0 && (
                             <View style={styles.unreadBadge}>
                                 <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -358,23 +390,23 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         position: 'absolute',
-        bottom: 20, // Moved up more from bottom edge
+        bottom: 20,
         left: 0,
         right: 0,
         backgroundColor: COLORS.light,
         paddingVertical: SPACING.m,
-        paddingHorizontal: SPACING.l,
+        paddingHorizontal: SPACING.s,
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
         ...SHADOWS.medium,
     },
     button: {
         flex: 1,
-        paddingVertical: SPACING.m,
+        paddingVertical: SPACING.s,
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        marginHorizontal: SPACING.s,
+        marginHorizontal: 2,
         ...SHADOWS.small,
     },
     respondButton: {
@@ -385,6 +417,9 @@ const styles = StyleSheet.create({
     },
     chatButton: {
         backgroundColor: COLORS.primary,
+    },
+    aiButton: {
+        backgroundColor: '#9C27B0',
     },
     chatButtonContent: {
         flexDirection: 'row',
@@ -412,7 +447,7 @@ const styles = StyleSheet.create({
     buttonText: {
         color: COLORS.light,
         fontWeight: 'bold',
-        fontSize: SIZES.medium,
+        fontSize: SIZES.small,
     }
 });
 
