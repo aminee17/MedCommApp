@@ -79,5 +79,3 @@ Risk Score = (Seizure Frequency × 0.4) +
 - Integration with hospital systems for automated alerts
 
 ---
-
-*This AI feature demonstrates advanced software engineering capabilities suitable for prestigious internship applications, combining machine learning, healthcare domain knowledge, and user-centered design.*
