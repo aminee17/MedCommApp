@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import {EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, EMAIL_PUBLIC_KEY } from './constants';
+import {EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, EMAIL_PUBLIC_KEY, EMAIL_PRIVATE_KEY } from './constants';
 
 /**
  * Sends the login credentials to the doctor's email after account creation.
@@ -31,7 +31,7 @@ export async function sendDoctorCredentials({ toEmail, name, password }) {
                 service_id: serviceId,
                 template_id: templateId,
                 user_id: publicKey,
-                accessToken: 'YOUR_PRIVATE_KEY', // You should replace this with your actual private key
+                accessToken: EMAIL_PRIVATE_KEY,
                 template_params: templateParams,
             }),
         });

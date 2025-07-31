@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 // Auth Screens
 import RoleSelection from '../screens/Auth/RoleSelection';
 import MedecinAuth from '../screens/Auth/MedecinAuth';
+import DoctorRegistration from '../screens/Auth/DoctorRegistration';
 import NeurologueLogin from '../screens/Auth/NeurologueLogin';
 
 // Doctor Screens
@@ -55,6 +56,11 @@ const AppNavigator = () => {
                 name="MedecinAuth"
                 component={MedecinAuth}
                 options={{ title: 'Connexion Médecin' }} 
+            />
+            <Stack.Screen 
+                name="DoctorRegistration"
+                component={DoctorRegistration}
+                options={{ title: 'Inscription Médecin' }} 
             />
             <Stack.Screen 
                 name="NeurologueLogin" 
