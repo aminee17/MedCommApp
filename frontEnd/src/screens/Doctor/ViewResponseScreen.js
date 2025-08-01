@@ -8,7 +8,8 @@ import {
     TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getFormResponse } from '../../services/formResponseService';
+import { getFormResponse, getNeurologistFormResponse } from '../../services/formResponseService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { countUnreadMessagesForForm } from '../../services/chatService';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 
@@ -18,9 +19,11 @@ const ViewResponseScreen = ({ route, navigation }) => {
     const [response, setResponse] = useState(null);
     const [error, setError] = useState(null);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
         fetchResponse();
+        loadUserRole();
         
         // Check for unread messages
         const checkUnreadMessages = async () => {
@@ -40,11 +43,30 @@ const ViewResponseScreen = ({ route, navigation }) => {
         return () => clearInterval(interval);
     }, []);
 
+    const loadUserRole = async () => {
+        try {
+            const role = await AsyncStorage.getItem('userRole');
+            setUserRole(role);
+        } catch (error) {
+            console.error('Error loading user role:', error);
+        }
+    };
+
     const fetchResponse = async () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await getFormResponse(formId);
+            
+            // Check user role to determine which endpoint to use
+            const role = await AsyncStorage.getItem('userRole');
+            let data;
+            
+            if (role === 'NEUROLOGUE' || role === 'NEUROLOGUE_RESIDENT') {
+                data = await getNeurologistFormResponse(formId);
+            } else {
+                data = await getFormResponse(formId);
+            }
+            
             setResponse(data);
         } catch (error) {
             console.error('Error fetching response:', error);
@@ -227,23 +249,25 @@ const ViewResponseScreen = ({ route, navigation }) => {
                         </View>
                     </View>
                     
-                    <TouchableOpacity 
-                        style={styles.chatButton}
-                        onPress={() => navigation.navigate('DoctorChat', { 
-                            formId: formId,
-                            neurologistId: response.neurologistId || null
-                        })}
-                    >
-                        <View style={styles.chatButtonContent}>
-                            <Ionicons name="chatbubbles" size={20} color={COLORS.light} style={styles.chatIcon} />
-                            <Text style={styles.chatButtonText}>Discuter avec le neurologue</Text>
-                            {unreadCount > 0 && (
-                                <View style={styles.unreadBadge}>
-                                    <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-                                </View>
-                            )}
-                        </View>
-                    </TouchableOpacity>
+                    {userRole !== 'NEUROLOGUE' && userRole !== 'NEUROLOGUE_RESIDENT' && (
+                        <TouchableOpacity 
+                            style={styles.chatButton}
+                            onPress={() => navigation.navigate('DoctorChat', { 
+                                formId: formId,
+                                neurologistId: response.neurologistId || null
+                            })}
+                        >
+                            <View style={styles.chatButtonContent}>
+                                <Ionicons name="chatbubbles" size={20} color={COLORS.light} style={styles.chatIcon} />
+                                <Text style={styles.chatButtonText}>Discuter avec le neurologue</Text>
+                                {unreadCount > 0 && (
+                                    <View style={styles.unreadBadge}>
+                                        <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </ScrollView>
         </View>

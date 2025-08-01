@@ -17,7 +17,7 @@ public class AIAnalysis implements Serializable {
     private String analysisType;
     private String dataSource;
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     private String results;
 
     private Float confidenceScore;

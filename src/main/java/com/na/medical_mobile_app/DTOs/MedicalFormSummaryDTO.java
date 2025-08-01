@@ -22,6 +22,7 @@ public class MedicalFormSummaryDTO {
     private LocalDateTime createdAt;
 
     // Mini patient info
+    private Integer patientId;
     private String patientName;
     private Long patientCin;
     private Integer patientAge;

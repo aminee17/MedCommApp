@@ -21,6 +21,9 @@ public class AIController {
     
     @Autowired
     private PatientRepository patientRepository;
+    
+    @Autowired
+    private com.na.medical_mobile_app.repositories.MedicalFormRepository medicalFormRepository;
 
     @PostMapping("/predict-seizure-risk/{patientId}")
     public ResponseEntity<?> predictSeizureRisk(@PathVariable Integer patientId) {
@@ -51,6 +54,31 @@ public class AIController {
             
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error fetching predictions: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/predict-seizure-risk/form/{formId}")
+    public ResponseEntity<?> predictSeizureRiskByForm(@PathVariable Integer formId) {
+        try {
+            // Get the form by formId
+            var formOpt = medicalFormRepository.findById(formId);
+            if (formOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Form not found");
+            }
+            
+            // Get the patient from the form
+            var form = formOpt.get();
+            Patient patient = form.getPatient();
+            if (patient == null) {
+                return ResponseEntity.badRequest().body("Patient not found for this form");
+            }
+
+            // Call the existing prediction logic with the patient
+            AIAnalysis prediction = aiSeizurePredictionService.predictSeizureRisk(patient);
+            return ResponseEntity.ok(prediction);
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error generating prediction: " + e.getMessage());
         }
     }
 

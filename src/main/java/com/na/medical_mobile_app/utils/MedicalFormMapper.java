@@ -18,6 +18,7 @@ public class MedicalFormMapper {
     public static Map<String, Object> toSimpleMap(MedicalForm form) {
         Map<String, Object> data = new HashMap<>();
         data.put("id", form.getFormId());
+        data.put("patientId", form.getPatient().getPatientId());
         data.put("fullName", form.getPatient().getName());
         data.put("submissionDate", form.getCreatedAt());
         data.put("status", form.getStatus().toString());

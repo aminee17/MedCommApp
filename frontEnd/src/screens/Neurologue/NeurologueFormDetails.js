@@ -70,19 +70,19 @@ const NeurologueFormDetails = ({ route }) => {
     
     // Handle AI prediction
     const handleAIPrediction = async () => {
-        if (!form.patientId) {
-            alert('Patient ID not available for prediction');
+        if (!form.formId) {
+            alert('Form ID not available for prediction');
             return;
         }
         
         setAiPredicting(true);
         try {
-            const prediction = await aiService.predictSeizureRisk(form.patientId);
+            const prediction = await aiService.predictSeizureRiskByForm(form.formId);
             const results = aiService.parseAnalysisResults(prediction.results);
             
-            alert(`AI Seizure Risk Prediction:\n\nRisk Level: ${results.riskLevel}\nConfidence: ${Math.round(prediction.confidenceScore * 100)}%\n\nRecommendations:\n${prediction.recommendations}`);
+            alert(`Prédiction IA du Risque de Crise:\n\nNiveau de Risque: ${results.riskLevel}\nConfiance: ${Math.round(prediction.confidenceScore * 100)}%\n\nRecommandations:\n${prediction.recommendations}`);
         } catch (error) {
-            alert('Failed to generate AI prediction. Please try again.');
+            alert('Erreur lors de la génération de la prédiction IA. Veuillez réessayer.');
         } finally {
             setAiPredicting(false);
         }

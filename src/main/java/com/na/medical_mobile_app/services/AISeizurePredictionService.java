@@ -27,7 +27,7 @@ public class AISeizurePredictionService {
             List<MedicalForm> patientForms = medicalFormRepository.findByPatient(patient);
             
             if (patientForms.isEmpty()) {
-                return createLowRiskAnalysis(patient, "Insufficient data for prediction");
+                return createLowRiskAnalysis(patient, "Données insuffisantes pour la prédiction");
             }
 
             // Calculate risk factors
@@ -56,7 +56,7 @@ public class AISeizurePredictionService {
             return aiAnalysisRepository.save(analysis);
             
         } catch (Exception e) {
-            return createErrorAnalysis(patient, "Error in prediction: " + e.getMessage());
+            return createErrorAnalysis(patient, "Erreur dans la prédiction: " + e.getMessage());
         }
     }
 
@@ -152,31 +152,31 @@ public class AISeizurePredictionService {
         
         switch (riskLevel) {
             case "HIGH":
-                recommendations.add("Immediate neurologist consultation recommended");
-                recommendations.add("Consider medication adjustment");
-                recommendations.add("Implement strict seizure monitoring");
+                recommendations.add("Consultation neurologique immédiate recommandée");
+                recommendations.add("Envisager un ajustement de la médication");
+                recommendations.add("Mettre en place une surveillance stricte des crises");
                 break;
             case "MEDIUM":
-                recommendations.add("Schedule follow-up within 2 weeks");
-                recommendations.add("Monitor seizure patterns closely");
-                recommendations.add("Review current treatment plan");
+                recommendations.add("Programmer un suivi dans les 2 semaines");
+                recommendations.add("Surveiller étroitement les patterns de crises");
+                recommendations.add("Réviser le plan de traitement actuel");
                 break;
             case "LOW":
-                recommendations.add("Continue current treatment");
-                recommendations.add("Regular monitoring recommended");
-                recommendations.add("Maintain seizure diary");
+                recommendations.add("Continuer le traitement actuel");
+                recommendations.add("Surveillance régulière recommandée");
+                recommendations.add("Maintenir un journal des crises");
                 break;
         }
         
         // Additional specific recommendations
         Long daysSince = (Long) factors.get("daysSinceLastSeizure");
         if (daysSince != null && daysSince < 7) {
-            recommendations.add("Recent seizure activity - increase monitoring");
+            recommendations.add("Activité de crise récente - augmenter la surveillance");
         }
         
         Boolean hasSymptoms = (Boolean) factors.get("hasSymptoms");
         if (hasSymptoms != null && hasSymptoms) {
-            recommendations.add("Document and analyze current symptoms");
+            recommendations.add("Documenter et analyser les symptômes actuels");
         }
         
         return recommendations;
@@ -216,12 +216,12 @@ public class AISeizurePredictionService {
             analysis.setDataSource("MEDICAL_FORMS");
             analysis.setResults(objectMapper.writeValueAsString(results));
             analysis.setConfidenceScore(0.1f);
-            analysis.setRecommendations("Collect more patient data for better prediction accuracy");
+            analysis.setRecommendations("Collecter plus de données patient pour une meilleure précision de prédiction");
             analysis.setCreatedAt(LocalDateTime.now());
 
             return aiAnalysisRepository.save(analysis);
         } catch (Exception e) {
-            return createErrorAnalysis(patient, "Failed to create low risk analysis");
+            return createErrorAnalysis(patient, "Échec de création de l'analyse à faible risque");
         }
     }
 
@@ -232,7 +232,7 @@ public class AISeizurePredictionService {
         analysis.setDataSource("ERROR");
         analysis.setResults("{\"error\":\"" + error + "\"}");
         analysis.setConfidenceScore(0.0f);
-        analysis.setRecommendations("Manual review required");
+        analysis.setRecommendations("Révision manuelle requise");
         analysis.setCreatedAt(LocalDateTime.now());
         
         return aiAnalysisRepository.save(analysis);

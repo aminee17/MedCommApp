@@ -9,6 +9,15 @@ const AIInsights = ({ patients, onPatientSelect }) => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientPredictions, setPatientPredictions] = useState([]);
 
+  const translateRiskLevel = (riskLevel) => {
+    switch (riskLevel?.toUpperCase()) {
+      case 'HIGH': return 'ÉLEVÉ';
+      case 'MEDIUM': return 'MODÉRÉ';
+      case 'LOW': return 'FAIBLE';
+      default: return 'INCONNU';
+    }
+  };
+
   useEffect(() => {
     loadDashboardInsights();
   }, []);
@@ -19,20 +28,25 @@ const AIInsights = ({ patients, onPatientSelect }) => {
       const data = await aiService.getDashboardInsights();
       setInsights(data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load AI insights');
+      Alert.alert('Erreur', 'Échec du chargement des analyses IA');
     } finally {
       setLoading(false);
     }
   };
 
   const generatePrediction = async (patientId) => {
+    console.log('Patient ID received:', patientId);
+    if (!patientId || patientId === 'undefined' || patientId === undefined) {
+      Alert.alert('Erreur', 'ID patient invalide');
+      return;
+    }
     setLoading(true);
     try {
       await aiService.predictSeizureRisk(patientId);
-      Alert.alert('Success', 'AI prediction generated successfully');
+      Alert.alert('Succès', 'Prédiction IA générée avec succès');
       loadDashboardInsights();
     } catch (error) {
-      Alert.alert('Error', 'Failed to generate prediction');
+      Alert.alert('Erreur', 'Échec de la génération de prédiction');
     } finally {
       setLoading(false);
     }
@@ -45,38 +59,38 @@ const AIInsights = ({ patients, onPatientSelect }) => {
       setPatientPredictions(predictions);
       setSelectedPatient(patientId);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load patient predictions');
+      Alert.alert('Erreur', 'Échec du chargement des prédictions patient');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderInsightCard = (analysis) => {
+  const renderInsightCard = (analysis, index) => {
     const results = aiService.parseAnalysisResults(analysis.results);
     const riskColor = aiService.getRiskColor(results.riskLevel);
     const riskIcon = aiService.getRiskIcon(results.riskLevel);
 
     return (
-      <View key={analysis.analysisId} style={[styles.card, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}>
+      <View key={analysis.analysisId || `insight-${index}`} style={[styles.card, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>
-            {riskIcon} {analysis.patient?.name || 'Unknown Patient'}
+            {riskIcon} {analysis.patient?.name || 'Patient Inconnu'}
           </Text>
           <Text style={[styles.riskBadge, { backgroundColor: riskColor }]}>
-            {results.riskLevel} RISK
+            RISQUE {translateRiskLevel(results.riskLevel)}
           </Text>
         </View>
         
         <View style={styles.cardContent}>
           <Text style={styles.confidenceText}>
-            Confidence: {Math.round(analysis.confidenceScore * 100)}%
+            Confiance: {Math.round(analysis.confidenceScore * 100)}%
           </Text>
           <Text style={styles.dateText}>
-            Generated: {new Date(analysis.createdAt).toLocaleDateString()}
+            Généré le: {new Date(analysis.createdAt).toLocaleDateString('fr-FR')}
           </Text>
           
           <View style={styles.recommendationsContainer}>
-            <Text style={styles.recommendationsTitle}>Recommendations:</Text>
+            <Text style={styles.recommendationsTitle}>Recommandations:</Text>
             <Text style={styles.recommendationsText}>
               {analysis.recommendations}
             </Text>
@@ -87,7 +101,7 @@ const AIInsights = ({ patients, onPatientSelect }) => {
           style={styles.viewDetailsButton}
           onPress={() => viewPatientPredictions(analysis.patient?.patientId)}
         >
-          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Text style={styles.viewDetailsText}>Voir Détails</Text>
         </TouchableOpacity>
       </View>
     );
@@ -95,17 +109,21 @@ const AIInsights = ({ patients, onPatientSelect }) => {
 
   const renderPatientSelector = () => (
     <View style={styles.patientSelector}>
-      <Text style={styles.sectionTitle}>Generate New Prediction</Text>
+      <Text style={styles.sectionTitle}>Générer Nouvelle Prédiction</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {patients.map(patient => (
-          <TouchableOpacity
-            key={patient.patientId}
-            style={styles.patientChip}
-            onPress={() => generatePrediction(patient.patientId)}
-          >
-            <Text style={styles.patientChipText}>{patient.name}</Text>
-          </TouchableOpacity>
-        ))}
+        {patients.map((patient, index) => {
+          console.log('Patient object:', patient);
+          const patientId = patient.patientId || patient.formId;
+          return (
+            <TouchableOpacity
+              key={patientId || `patient-${index}`}
+              style={styles.patientChip}
+              onPress={() => generatePrediction(patientId)}
+            >
+              <Text style={styles.patientChipText}>{patient.fullName}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -115,21 +133,21 @@ const AIInsights = ({ patients, onPatientSelect }) => {
 
     return (
       <View style={styles.historyContainer}>
-        <Text style={styles.sectionTitle}>Prediction History</Text>
+        <Text style={styles.sectionTitle}>Historique des Prédictions</Text>
         {patientPredictions.map(prediction => {
           const results = aiService.parseAnalysisResults(prediction.results);
           return (
             <View key={prediction.analysisId} style={styles.historyItem}>
               <View style={styles.historyHeader}>
                 <Text style={styles.historyDate}>
-                  {new Date(prediction.createdAt).toLocaleDateString()}
+                  {new Date(prediction.createdAt).toLocaleDateString('fr-FR')}
                 </Text>
                 <Text style={[styles.historyRisk, { color: aiService.getRiskColor(results.riskLevel) }]}>
-                  {results.riskLevel}
+                  {translateRiskLevel(results.riskLevel)}
                 </Text>
               </View>
               <Text style={styles.historyScore}>
-                Risk Score: {Math.round(prediction.confidenceScore * 100)}%
+                Score de Risque: {Math.round(prediction.confidenceScore * 100)}%
               </Text>
             </View>
           );
@@ -141,14 +159,14 @@ const AIInsights = ({ patients, onPatientSelect }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🧠 AI Seizure Risk Insights</Text>
+        <Text style={styles.title}>🧠 Analyses IA du Risque de Crise</Text>
         <TouchableOpacity 
           style={styles.refreshButton}
           onPress={loadDashboardInsights}
           disabled={loading}
         >
           <Text style={styles.refreshText}>
-            {loading ? 'Loading...' : 'Refresh'}
+            {loading ? 'Chargement...' : 'Actualiser'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -156,14 +174,14 @@ const AIInsights = ({ patients, onPatientSelect }) => {
       {renderPatientSelector()}
 
       <View style={styles.insightsContainer}>
-        <Text style={styles.sectionTitle}>Recent High-Risk Predictions</Text>
+        <Text style={styles.sectionTitle}>Prédictions Récentes à Haut Risque</Text>
         {insights.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No recent high-risk predictions</Text>
-            <Text style={styles.emptySubtext}>Generate predictions for your patients to see AI insights</Text>
+            <Text style={styles.emptyText}>Aucune prédiction récente à haut risque</Text>
+            <Text style={styles.emptySubtext}>Générez des prédictions pour vos patients pour voir les analyses IA</Text>
           </View>
         ) : (
-          insights.map(renderInsightCard)
+          insights.map((insight, index) => renderInsightCard(insight, index))
         )}
       </View>
 

@@ -8,17 +8,41 @@ class AIService {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json'
-        },
-        body: JSON.stringify({ patientId })
+        }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       return await response.json();
     } catch (error) {
       console.error('Error predicting seizure risk:', error);
+      throw error;
+    }
+  }
+
+  async predictSeizureRiskByForm(formId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/ai/predict-seizure-risk/form/${formId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error predicting seizure risk by form:', error);
       throw error;
     }
   }

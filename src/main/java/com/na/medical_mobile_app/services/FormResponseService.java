@@ -166,6 +166,7 @@ public class FormResponseService {
         for (MedicalForm form : forms) {
             MedicalFormSummaryDTO summary = new MedicalFormSummaryDTO();
             summary.setFormId(form.getFormId());
+            summary.setPatientId(form.getPatient().getPatientId());
             summary.setPatientName(form.getPatient().getName());
             summary.setPatientCin(form.getPatient().getCin());
             summary.setPatientAge(calculateAge(form.getPatient().getBirthdate()));

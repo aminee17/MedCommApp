@@ -72,6 +72,40 @@ export async function getFormResponse(formId) {
 }
 
 /**
+ * Get the neurologist's own response for a form (for neurologists)
+ * @param {number} formId - The ID of the medical form
+ * @returns {Promise<Object>} - The form response data
+ */
+export async function getNeurologistFormResponse(formId) {
+    try {
+        // Get userId from AsyncStorage
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+        
+        // Use the neurologist endpoint to get the response
+        const response = await fetch(
+            `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`, 
+            {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'userId': userId
+                },
+                credentials: 'include'
+            }
+        );
+        
+        return await parseJSONResponse(response);
+    } catch (error) {
+        console.error('Error getting neurologist form response:', error);
+        throw error;
+    }
+}
+
+/**
  * Submit a neurologist's response to a form (for neurologists)
  * @param {Object} responseData - The form response data
  * @returns {Promise<Object>} - The result of the submission

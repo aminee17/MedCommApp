@@ -50,15 +50,20 @@ const NeurologueDashboard = () => {
                 setForms(data);
                 
                 // Extract unique patients for AI insights
+                console.log('Sample form object:', data[0]);
                 const uniquePatients = data.reduce((acc, form) => {
+                    const patientName = form.patientName || 'Unknown Patient';
+                    
                     if (!acc.find(p => p.patientId === form.patientId)) {
                         acc.push({
                             patientId: form.patientId,
-                            name: form.patientName
+                            fullName: patientName,
+                            formId: form.formId
                         });
                     }
                     return acc;
                 }, []);
+                console.log('Extracted patients:', uniquePatients);
                 setPatients(uniquePatients);
             } catch (error) {
                 console.error('Error fetching forms:', error);
