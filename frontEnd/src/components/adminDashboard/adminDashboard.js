@@ -76,23 +76,39 @@ export default function AdminDashboard({ navigation }) {
 
     const renderItem = ({ item }) => (
         <View style={styles.card}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text>Email: {item.email}</Text>
-            <Text>CIN: {item.cin}</Text>
-            <Text>Rôle: {item.role}</Text>
-            <Text>Spécialisation: {item.specialization || 'Non spécifié'}</Text>
+            <View style={styles.cardHeader}>
+                <Text style={styles.name}>{item.name}</Text>
+                <View style={[styles.roleBadge, { backgroundColor: item.role === 'MEDECIN' ? '#E8F4F8' : '#F5E8F0' }]}>
+                    <Text style={styles.roleBadgeText}>{item.role}</Text>
+                </View>
+            </View>
+            
+            <View style={styles.infoContainer}>
+                <View style={styles.infoRow}>
+                    <Ionicons name="mail-outline" size={16} color="#7F8C8D" />
+                    <Text style={styles.infoText}>{item.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="card-outline" size={16} color="#7F8C8D" />
+                    <Text style={styles.infoText}>{item.cin}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="medical-outline" size={16} color="#7F8C8D" />
+                    <Text style={styles.infoText}>{item.specialization || 'Non spécifié'}</Text>
+                </View>
+            </View>
 
             <View style={styles.buttonContainer}>
                 <Button
                     title="Créer le compte"
                     onPress={() => handleCreateAccount(item)}
-                    color="#4CAF50"
+                    color="#27AE60"
                 />
                 <View style={{ width: 10 }} />
                 <Button
-                    title="Supprimer"
+                    title="Rejeter"
                     onPress={() => handleRejectRequest(item.userId)}
-                    color="#F44336"
+                    color="#E74C3C"
                 />
             </View>
         </View>

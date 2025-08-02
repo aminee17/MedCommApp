@@ -1,21 +1,27 @@
 export const COLORS = {
-    primary: '#007AFF',      // Blue
-    secondary: '#5856D6',    // Purple
-    tertiary: '#FF2D55',     // Pink
+    primary: '#2E86AB',      // Medical Blue
+    secondary: '#A23B72',    // Medical Purple
+    tertiary: '#F18F01',     // Medical Orange
     
-    success: '#34C759',      // Green
-    warning: '#FF9500',      // Orange
-    danger: '#FF3B30',       // Red
+    success: '#27AE60',      // Professional Green
+    warning: '#F39C12',      // Professional Orange
+    danger: '#E74C3C',       // Professional Red
     
-    dark: '#1C1C1E',         // Almost black
-    grey: '#8E8E93',         // Medium grey
-    lightGrey: '#F2F2F7',    // Light grey
-    border: '#D1D1D6',       // Border color
+    dark: '#2C3E50',         // Professional Dark
+    grey: '#7F8C8D',         // Professional Grey
+    lightGrey: '#ECF0F1',    // Very Light Grey
+    border: '#E5E8EB',       // Subtle Border
     light: '#FFFFFF',        // White
+    background: '#FAFBFC',   // App Background
+    surface: '#FFFFFF',      // Card Background
     
-    lightBlue: '#E3F2FD',    // Light blue background
-    lightPurple: '#F3E5F5',  // Light purple background
-    lightPink: '#FCE4EC',    // Light pink background
+    lightBlue: '#E8F4F8',    // Light blue background
+    lightPurple: '#F5E8F0',  // Light purple background
+    lightPink: '#FDEDEC',    // Light pink background
+    
+    textPrimary: '#2C3E50',  // Primary text
+    textSecondary: '#7F8C8D', // Secondary text
+    textInverse: '#FFFFFF',  // White text
 };
 
 export const SPACING = {
@@ -37,33 +43,43 @@ export const SIZES = {
 
 export const SHADOWS = {
     small: {
-        shadowColor: '#000',
+        shadowColor: '#2C3E50',
         shadowOffset: {
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
         elevation: 2,
     },
     medium: {
-        shadowColor: '#000',
+        shadowColor: '#2C3E50',
         shadowOffset: {
             width: 0,
             height: 4,
         },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
         elevation: 4,
     },
     large: {
-        shadowColor: '#000',
+        shadowColor: '#2C3E50',
         shadowOffset: {
             width: 0,
-            height: 6,
+            height: 8,
         },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
         elevation: 8,
     },
+};
+
+export const BORDER_RADIUS = {
+    xs: 4,
+    sm: 6,
+    md: 8,
+    lg: 12,
+    xl: 16,
+    xxl: 20,
+    full: 9999,
 };

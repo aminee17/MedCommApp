@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: SPACING.m,
         paddingTop: SPACING.s,
-        backgroundColor: COLORS.lightGrey,
+        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
@@ -32,10 +32,11 @@ const styles = StyleSheet.create({
         flexShrink: 1,
     },
     subtitle: {
-        fontSize: SIZES.medium,
-        marginBottom: SPACING.m,
+        fontSize: SIZES.large,
+        fontWeight: '600',
+        marginBottom: SPACING.xl,
         textAlign: 'center',
-        color: COLORS.grey,
+        color: COLORS.textSecondary,
     },
     loading: {
         textAlign: 'center',
@@ -52,17 +53,19 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.m,
     },
     card: {
-        backgroundColor: COLORS.light,
-        borderRadius: 8,
-        padding: SPACING.m,
+        backgroundColor: COLORS.surface,
+        borderRadius: 12,
+        padding: SPACING.l,
         marginVertical: SPACING.s,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...SHADOWS.medium,
     },
     name: {
-        fontSize: SIZES.large,
+        fontSize: SIZES.xlarge,
         fontWeight: 'bold',
         marginBottom: SPACING.s,
-        color: COLORS.dark,
+        color: COLORS.textPrimary,
     },
     buttonContainer: {
         flexDirection: 'row',
@@ -85,8 +88,37 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.danger,
     },
     buttonText: {
-        color: COLORS.light,
+        color: COLORS.textInverse,
         fontWeight: 'bold',
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: SPACING.m,
+    },
+    roleBadge: {
+        paddingHorizontal: SPACING.s,
+        paddingVertical: SPACING.xs,
+        borderRadius: 12,
+    },
+    roleBadgeText: {
+        fontSize: SIZES.small,
+        fontWeight: '600',
+        color: COLORS.textPrimary,
+    },
+    infoContainer: {
+        marginBottom: SPACING.m,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.s,
+    },
+    infoText: {
+        fontSize: SIZES.medium,
+        color: COLORS.textSecondary,
+        marginLeft: SPACING.s,
     },
 });
 
