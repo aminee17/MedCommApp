@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 /**
  * Get all notifications for the current user
@@ -69,13 +70,10 @@ export async function countUnreadNotifications() {
             throw new Error('User ID not found. Please log in again.');
         }
         
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/notifications/count?userId=${userId}`, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
+            headers,
             credentials: 'include'
         });
         

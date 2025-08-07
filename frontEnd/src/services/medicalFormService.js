@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../utils/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 // Get a medical form by ID
 export async function getMedicalFormById(formId) {
@@ -9,12 +10,10 @@ export async function getMedicalFormById(formId) {
             throw new Error('User ID not found. Please log in again.');
         }
 
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/medical-forms/${formId}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
+            headers,
             credentials: 'include'
         });
 
@@ -157,46 +156,27 @@ export async function submitMedicalForm(formData) {
             });
         }
 
-        // Use XMLHttpRequest for better multipart handling
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            // Add userId as query parameter
-            xhr.open('POST', `${API_BASE_URL}/api/medical-forms/submit?userId=${userId}`);
-            
-            // Set withCredentials to true for session cookies
-            xhr.withCredentials = true;
-            
-            // Add userId as header as well
-            xhr.setRequestHeader('userId', userId);
-            
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        console.log('Form submitted successfully:', data);
-                        resolve(data);
-                    } catch (e) {
-                        console.error('Error parsing response:', e);
-                        reject(new Error('Error parsing server response'));
-                    }
-                } else {
-                    console.error('Server response:', xhr.status, xhr.responseText);
-                    reject(new Error('File upload error. Please try again.'));
-                }
-            };
-            
-            xhr.onerror = function() {
-                console.error('Network error during form submission');
-                reject(new Error('Network error. Please check your connection and try again.'));
-            };
-            
-            xhr.timeout = TIMEOUT_DURATION;
-            xhr.ontimeout = function() {
-                reject(new Error('Request timed out. Please try again.'));
-            };
-            
-            xhr.send(form);
+        // Use fetch with proper JWT headers
+        const headers = await getAuthHeaders();
+        // Remove Content-Type to let browser set it for multipart/form-data
+        delete headers['Content-Type'];
+        
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/submit?userId=${userId}`, {
+            method: 'POST',
+            headers,
+            body: form,
+            credentials: 'include'
         });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response:', response.status, errorText);
+            throw new Error('File upload error. Please try again.');
+        }
+        
+        const data = await response.json();
+        console.log('Form submitted successfully:', data);
+        return data;
     } catch (error) {
         console.error('=== FORM SUBMISSION ERROR ===');
         console.error('Error type:', error.name);

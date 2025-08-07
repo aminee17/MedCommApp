@@ -1,17 +1,16 @@
 import { API_BASE_URL } from '../utils/constants';
 import { sendDoctorCredentials } from '../utils/sendEmail';
 import { parseJSONResponse } from '../utils/jsonUtils';
+import { getAuthHeaders } from './authService';
 
 export async function fetchPendingRequests() {
     console.log('📡 Fetching pending requests...');
     try {
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/admin/pending-requests`, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include' // Add credentials for session cookies
+            headers,
+            credentials: 'include'
         });
         console.log('🌐 Response status:', response.status);
 
@@ -26,11 +25,12 @@ export async function fetchPendingRequests() {
 }
 
 export async function createDoctorAccount(request) {
+    const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/api/admin/create-doctor`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(request),
-        credentials: 'include' // Add credentials for session cookies
+        credentials: 'include'
     });
 
     const data = await parseJSONResponse(response);
@@ -57,9 +57,11 @@ export async function createDoctorAccount(request) {
 }
 
 export async function rejectRequest(userId) {
+    const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/api/admin/reject-request/${userId}`, {
         method: 'DELETE',
-        credentials: 'include' // Add credentials for session cookies
+        headers,
+        credentials: 'include'
     });
     if (!response.ok) throw new Error(await response.text());
 }

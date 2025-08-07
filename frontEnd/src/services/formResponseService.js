@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 /**
  * Check if a form has a neurologist response (for doctors)
@@ -15,16 +16,12 @@ export async function checkFormResponse(formId) {
             throw new Error('User ID not found. Please log in again.');
         }
         
-        // Use the doctor endpoint to check for responses
+        const headers = await getAuthHeaders();
         const response = await fetch(
             `${API_BASE_URL}/api/medical-forms/responses/check/${formId}?userId=${userId}`, 
             {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'userId': userId
-                },
+                headers,
                 credentials: 'include'
             }
         );
@@ -50,16 +47,12 @@ export async function getFormResponse(formId) {
             throw new Error('User ID not found. Please log in again.');
         }
         
-        // Use the doctor endpoint to get the response
+        const headers = await getAuthHeaders();
         const response = await fetch(
             `${API_BASE_URL}/api/medical-forms/responses/${formId}?userId=${userId}`, 
             {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'userId': userId
-                },
+                headers,
                 credentials: 'include'
             }
         );
@@ -84,16 +77,12 @@ export async function getNeurologistFormResponse(formId) {
             throw new Error('User ID not found. Please log in again.');
         }
         
-        // Use the neurologist endpoint to get the response
+        const headers = await getAuthHeaders();
         const response = await fetch(
             `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`, 
             {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'userId': userId
-                },
+                headers,
                 credentials: 'include'
             }
         );
@@ -118,16 +107,12 @@ export async function submitFormResponse(responseData) {
             throw new Error('User ID not found. Please log in again.');
         }
         
-        // Use the neurologist endpoint to submit the response
+        const headers = await getAuthHeaders();
         const response = await fetch(
             `${API_BASE_URL}/api/neurologue/form-response?userId=${userId}`, 
             {
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'userId': userId
-                },
+                headers,
                 body: JSON.stringify(responseData),
                 credentials: 'include'
             }

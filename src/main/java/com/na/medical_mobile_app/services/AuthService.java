@@ -6,8 +6,11 @@ import com.na.medical_mobile_app.DTOs.LoginResponse;
 import com.na.medical_mobile_app.entities.Role;
 import com.na.medical_mobile_app.entities.User;
 import com.na.medical_mobile_app.repositories.UserRepository;
+import com.na.medical_mobile_app.security.JwtTokenUtil;
+import com.na.medical_mobile_app.security.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +29,12 @@ public class AuthService {
     @Autowired
     private DoctorHelperService doctorHelperService;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private JwtUserDetailsService userDetailsService;
+
 
     public ResponseEntity<?> login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail());
@@ -37,12 +46,17 @@ public class AuthService {
             return ResponseEntity.status(401).body("Email ou mot de passe invalide");
         }
 
+        // Generate JWT token
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String token = jwtTokenUtil.generateToken(userDetails);
+
         LoginResponse response = new LoginResponse(
                 "Connexion réussie",
                 user.getUserId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                token
         );
 
         // TODO : MOT DE PASSE OUBLIE FEATURE

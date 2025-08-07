@@ -8,18 +8,20 @@ public class LoginResponse {
     private String name;
     private String email;
     private Role role;
+    private String token;
 
     // Default constructor
     public LoginResponse() {
     }
 
     // Constructor with all fields
-    public LoginResponse(String message, Integer userId, String name, String email, Role role) {
+    public LoginResponse(String message, Integer userId, String name, String email, Role role, String token) {
         this.message = message;
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.role = role;
+        this.token = token;
     }
 
     // Getters and setters
@@ -61,5 +63,13 @@ public class LoginResponse {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

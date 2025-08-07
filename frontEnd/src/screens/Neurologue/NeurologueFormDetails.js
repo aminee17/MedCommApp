@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, FlatList, Linking, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AttachmentItem from '../../components/neurologueDashboard/AttachmentItem';
+import AttachmentViewer from '../../components/neurologueDashboard/AttachmentViewer';
 import { COLORS, FONTS, SIZES, SHADOWS, SPACING } from '../../utils/theme';
 import { API_BASE_URL } from '../../utils/constants';
-import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
+import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue, fetchAttachmentsForForm } from '../../services/neurologueService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { countUnreadMessagesForForm } from '../../services/chatService';
 import aiService from '../../services/aiService';
 
@@ -15,11 +16,25 @@ const NeurologueFormDetails = ({ route }) => {
     const [loading, setLoading] = useState(!initialForm && formId);
     const [error, setError] = useState(null);
     const [aiPredicting, setAiPredicting] = useState(false);
+    const [attachments, setAttachments] = useState([]);
     const navigation = useNavigation();
     
-    // Fetch form data if only formId is provided
+    // Fetch form data and attachments
     useEffect(() => {
-        if (!initialForm && formId) {
+        const fetchAttachments = async (formId) => {
+            try {
+                const attachmentData = await fetchAttachmentsForForm(formId);
+                console.log('Fetched attachments:', attachmentData);
+                setAttachments(attachmentData);
+            } catch (attachError) {
+                console.error('Error fetching attachments:', attachError);
+            }
+        };
+        
+        if (initialForm) {
+            // If form is provided, just fetch attachments
+            fetchAttachments(initialForm.formId);
+        } else if (formId) {
             const fetchFormData = async () => {
                 try {
                     setLoading(true);
@@ -37,6 +52,9 @@ const NeurologueFormDetails = ({ route }) => {
                     if (matchingForm) {
                         setForm(matchingForm);
                         setError(null);
+                        
+                        // Fetch attachments
+                        await fetchAttachments(matchingForm.formId);
                     } else {
                         setError('Formulaire non trouvé. Il a peut-être été supprimé ou vous n\'avez pas les permissions nécessaires.');
                     }
@@ -52,11 +70,7 @@ const NeurologueFormDetails = ({ route }) => {
         }
     }, [initialForm, formId]);
 
-    // Open attachment URL in device browser/viewer
-    const openAttachment = (url) => {
-        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-        Linking.openURL(fullUrl).catch(err => console.error('Failed to open URL:', err));
-    };
+
     
     // Handle respond button press
     const handleRespond = () => {
@@ -226,22 +240,25 @@ const NeurologueFormDetails = ({ route }) => {
                 <View style={styles.card}>
                     <SectionTitle>Pièces jointes</SectionTitle>
                     <SectionContent>
-                        {form.attachmentUrls && form.attachmentUrls.length > 0 ? (
+                        {attachments && attachments.length > 0 ? (
                             <FlatList
                                 horizontal
-                                data={form.attachmentUrls.map((url, index) => ({
-                                    url,
-                                    mimeType: url.includes('mri_photo') ? 'image/jpeg' : 'video/mp4',
+                                data={attachments.map((attachment, index) => ({
+                                    attachmentId: attachment.attachmentId,
+                                    mimeType: attachment.mimeType,
                                     id: index
                                 }))}
                                 keyExtractor={(item) => item.id.toString()}
-                                renderItem={({ item }) => (
-                                    <AttachmentItem
-                                        uri={item.url}
-                                        mimeType={item.mimeType}
-                                        onPress={() => openAttachment(item.url)}
-                                    />
-                                )}
+                                renderItem={({ item }) => {
+                                    console.log('Attachment ID:', item.attachmentId, 'MimeType:', item.mimeType);
+                                    console.log('Full attachment object:', attachments[item.id]);
+                                    return (
+                                        <AttachmentViewer
+                                            attachmentId={item.attachmentId}
+                                            mimeType={item.mimeType}
+                                        />
+                                    );
+                                }}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={styles.attachmentList}
                             />

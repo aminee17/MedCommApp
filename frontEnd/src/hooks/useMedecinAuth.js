@@ -27,6 +27,7 @@ export default function useMedecinAuth(navigation) {
             await AsyncStorage.setItem('userName', data.name);
             await AsyncStorage.setItem('userEmail', data.email);
             await AsyncStorage.setItem('userRole', data.role.toString());
+            await AsyncStorage.setItem('token', data.token);
 
             // Role-based navigation here:
             if (data.role === 'ADMIN') {

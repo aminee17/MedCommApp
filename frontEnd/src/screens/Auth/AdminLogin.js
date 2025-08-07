@@ -43,6 +43,7 @@ export default function AdminLogin({ navigation }) {
                 await AsyncStorage.setItem('userName', data.name);
                 await AsyncStorage.setItem('userEmail', data.email);
                 await AsyncStorage.setItem('userRole', data.role.toString());
+                await AsyncStorage.setItem('token', data.token);
                 
                 Alert.alert('Succès', 'Connexion réussie');
                 navigation.navigate('AdminDashboard', { userId: data.userId });

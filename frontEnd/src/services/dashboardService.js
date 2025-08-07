@@ -2,6 +2,7 @@ import {API_BASE_URL} from '../utils/constants';
 import {parseJSONResponse} from '../utils/jsonUtils';
 import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 /**
  * Fetch medical forms for the current doctor with optional filtering
@@ -16,16 +17,12 @@ export async function fetchMedicalFormsForDoctor(filter = 'active') {
             throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
-        // Add userId as query parameter and header, plus the filter parameter
+        const headers = await getAuthHeaders();
         const response = await fetchWithErrorHandling(
             `${API_BASE_URL}/api/medical-forms/doctor?userId=${userId}&filter=${filter}`, 
             {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'userId': userId
-                },
+                headers,
                 credentials: 'include'
             }
         );

@@ -63,6 +63,7 @@ const NeurologueLogin = ({ navigation }) => {
             await AsyncStorage.setItem('userName', data.name);
             await AsyncStorage.setItem('userEmail', data.email);
             await AsyncStorage.setItem('userRole', data.role.toString());
+            await AsyncStorage.setItem('token', data.token);
             
             console.log('Login successful:', data.message);
             

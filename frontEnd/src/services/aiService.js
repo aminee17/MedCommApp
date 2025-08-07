@@ -1,14 +1,13 @@
 import { API_BASE_URL } from '../utils/constants';
+import { getAuthHeaders } from './authService';
 
 class AIService {
   async predictSeizureRisk(patientId) {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/api/ai/predict-seizure-risk/${patientId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        }
+        headers
       });
 
       if (!response.ok) {
@@ -26,12 +25,10 @@ class AIService {
 
   async predictSeizureRiskByForm(formId) {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`${API_BASE_URL}/api/ai/predict-seizure-risk/form/${formId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        }
+        headers
       });
 
       if (!response.ok) {
@@ -49,7 +46,10 @@ class AIService {
 
   async getPatientPredictions(patientId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/patient-predictions/${patientId}`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/ai/patient-predictions/${patientId}`, {
+        headers
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -64,7 +64,10 @@ class AIService {
 
   async getDashboardInsights() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/dashboard-insights`);
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/api/ai/dashboard-insights`, {
+        headers
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -152,16 +152,10 @@ public class AttachmentService {
     public List<FileAttachment> getAttachmentsByFormId(Integer formId) {
         Optional<MedicalForm> medicalFormOpt = medicalFormRepository.findById(formId);
         if (medicalFormOpt.isEmpty()) {
-            // handle form not found, maybe return empty list or throw exception
             return Collections.emptyList();
         }
         MedicalForm medicalForm = medicalFormOpt.get();
-        List<FileAttachment> attachments = fileAttachmentRepository.findByForm(medicalForm);
-
-        // Return simplified list if you want DTO-like objects:
-        return attachments.stream()
-                .map(att -> new FileAttachment(att.getAttachmentId(), att.getFileName(), att.getMimeType()))
-                .collect(Collectors.toList());
+        return fileAttachmentRepository.findByForm(medicalForm);
     }
 
 }

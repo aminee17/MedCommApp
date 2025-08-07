@@ -47,8 +47,20 @@ public class NeurologueController {
 
 
     @GetMapping("/forms/{formId}/attachments")
-    public List<FileAttachment> getAttachmentsForForm(@PathVariable Integer formId) {
-        return attachmentService.getAttachmentsByFormId(formId);
+    public List<FileAttachment> getAttachmentsForForm(
+            @PathVariable Integer formId,
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader) {
+        
+        // Validate user access
+        getUserFromParams(userId, userIdHeader);
+        
+        List<FileAttachment> attachments = attachmentService.getAttachmentsByFormId(formId);
+        System.out.println("Found " + attachments.size() + " attachments for form " + formId);
+        for (FileAttachment attachment : attachments) {
+            System.out.println("Attachment ID: " + attachment.getAttachmentId() + ", MimeType: " + attachment.getMimeType() + ", FileName: " + attachment.getFileName());
+        }
+        return attachments;
     }
 
 

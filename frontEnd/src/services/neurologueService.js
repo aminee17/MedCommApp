@@ -1,6 +1,7 @@
 import {API_BASE_URL} from '../utils/constants';
 import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 // Get user ID from AsyncStorage
 const getUserId = async () => {
@@ -23,13 +24,10 @@ export const fetchPendingFormsForNeurologue = async () => {
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/pending?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetchWithErrorHandling(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
+            headers,
             credentials: 'include'
         });
 
@@ -52,13 +50,10 @@ export const fetchCompletedFormsForNeurologue = async () => {
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/completed?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetchWithErrorHandling(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
+            headers,
             credentials: 'include'
         });
 
@@ -81,13 +76,10 @@ export const fetchAllFormsForNeurologue = async () => {
         // Build URL with userId parameter
         const url = `${API_BASE_URL}/api/neurologue/all-forms?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetchWithErrorHandling(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
+            headers,
             credentials: 'include'
         });
 
@@ -109,14 +101,11 @@ export const submitFormResponse = async (formResponseData) => {
         
         const url = `${API_BASE_URL}/api/neurologue/form-response?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'userId': userId
-            },
-            credentials: 'include', // Include credentials for session cookies
+            headers,
+            credentials: 'include',
             body: JSON.stringify(formResponseData)
         });
         
@@ -201,6 +190,65 @@ export const sendChatMessage = async (formId, message, senderId, receiverId) => 
         return response.json();
     } catch (error) {
         console.error("Error sending message:", error.message || error);
+        throw error;
+    }
+};
+
+// Fetch attachments for a form with JWT authentication
+export const fetchAttachmentsForForm = async (formId) => {
+    try {
+        const userId = await getUserId();
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+        
+        const url = `${API_BASE_URL}/api/neurologue/forms/${formId}/attachments?userId=${userId}`;
+        
+        const headers = await getAuthHeaders();
+        const response = await fetch(url, {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Status ${response.status}: ${errorText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching attachments:", error.message || error);
+        throw error;
+    }
+};
+
+// Fetch a specific attachment with JWT authentication
+export const fetchAttachment = async (attachmentId) => {
+    try {
+        const userId = await getUserId();
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+        
+        const url = `${API_BASE_URL}/api/neurologue/attachments/${attachmentId}?userId=${userId}`;
+        
+        const headers = await getAuthHeaders();
+        const response = await fetch(url, {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        });
+        
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Status ${response.status}: ${errorText}`);
+        }
+        
+        return response.blob();
+    } catch (error) {
+        console.error("Error fetching attachment:", error.message || error);
         throw error;
     }
 };
