@@ -92,7 +92,7 @@ export default function AdminRegistration({ navigation }) {
                 { text: 'OK', onPress: () => navigation.navigate('AdminLogin') },
             ]);
         } catch (error) {
-            Alert.alert('Erreur', error.message || 'CIN non reconnu ou non autorisé pour un compte admin');
+            Alert.alert('Erreur', error.message);
         } finally {
             setLoading(false);
         }
@@ -106,7 +106,6 @@ export default function AdminRegistration({ navigation }) {
         >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <Text style={styles.title}>Création de Compte Administrateur</Text>
-            <Text style={styles.subtitle}>Seuls les administrateurs pré-enregistrés peuvent créer un compte</Text>
 
             <TextInput
                 placeholder="Nom complet *"
@@ -141,7 +140,7 @@ export default function AdminRegistration({ navigation }) {
             />
 
             <TextInput
-                placeholder="CIN * (doit être pré-enregistré comme ADMIN)"
+                placeholder="CIN *"
                 value={formData.cin}
                 onChangeText={(value) => handleInputChange('cin', value)}
                 style={styles.input}

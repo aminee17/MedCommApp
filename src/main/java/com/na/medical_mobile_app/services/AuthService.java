@@ -64,26 +64,31 @@ public class AuthService {
     }
 
     public ResponseEntity<?> registerAdmin(AdminRegistrationRequest request) {
-        User existing = userRepository.findByCin(request.cin);
-
-        if (existing == null || existing.getRole() == null || !existing.getRole().name().equals("ADMIN")) {
-            return ResponseEntity.badRequest().body("CIN non reconnu ou non autorisé pour un compte admin.");
+        // Check if email already exists
+        User existingByEmail = userRepository.findByEmail(request.email);
+        if (existingByEmail != null) {
+            return ResponseEntity.badRequest().body("Un compte existe déjà avec cette adresse email.");
         }
 
-        if (existing.getEmail() != null && !existing.getEmail().isEmpty()) {
-            return ResponseEntity.badRequest().body("Un compte est déjà créé avec cet administrateur.");
+        // Check if CIN already exists
+        User existingByCin = userRepository.findByCin(request.cin);
+        if (existingByCin != null) {
+            return ResponseEntity.badRequest().body("Un compte existe déjà avec ce CIN.");
         }
 
-        existing.setName(request.name);
-        existing.setEmail(request.email);
-        existing.setPassword(passwordEncoder.encode(request.password));
-        existing.setPhone(request.phone);
-        existing.setIsActive(true);
-        existing.setRole(Role.ADMIN);
-        existing.setEmailVerifiedAt(null); // Can be modifed later this is why it is null now (a reminder)
-        doctorHelperService.setLocation(existing, request.getGovernorate_id(), request.getCity_id());
-        existing.setCreatedAt(LocalDateTime.now());
-        userRepository.save(existing);
+        // Create new admin user
+        User newAdmin = new User();
+        newAdmin.setCin(request.cin);
+        newAdmin.setName(request.name);
+        newAdmin.setEmail(request.email);
+        newAdmin.setPassword(passwordEncoder.encode(request.password));
+        newAdmin.setPhone(request.phone);
+        newAdmin.setIsActive(true);
+        newAdmin.setRole(Role.ADMIN);
+        newAdmin.setEmailVerifiedAt(null);
+        doctorHelperService.setLocation(newAdmin, request.getGovernorate_id(), request.getCity_id());
+        newAdmin.setCreatedAt(LocalDateTime.now());
+        userRepository.save(newAdmin);
 
         return ResponseEntity.ok("Compte admin créé avec succès.");
     }
