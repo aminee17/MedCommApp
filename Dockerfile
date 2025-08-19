@@ -25,15 +25,32 @@ FROM eclipse-temurin:17-jdk-alpine
 
 WORKDIR /app
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Create directories for uploads and audio files
+RUN mkdir -p /app/encrypted-uploads /app/audio-messages && \
+    chown -R appuser:appgroup /app
+
 # Copy the jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
+RUN chown appuser:appgroup app.jar
 
 # Environment variables for Spring profiles and JVM options
 ENV SPRING_PROFILES_ACTIVE=prod
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
+ENV JAVA_OPTS="-Xmx1024m -Xms512m -XX:+UseG1GC -XX:+UseContainerSupport"
+ENV SERVER_PORT=8080
 
-# Expose port 8080 (default Spring Boot port)
+# Expose port 8080
 EXPOSE 8080
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Switch to non-root user
+USER appuser
 
 # Run the jar file
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]

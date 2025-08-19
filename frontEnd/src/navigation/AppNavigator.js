@@ -8,6 +8,7 @@ import RoleSelection from '../screens/Auth/RoleSelection';
 import MedecinAuth from '../screens/Auth/MedecinAuth';
 import DoctorRegistration from '../screens/Auth/DoctorRegistration';
 import NeurologueLogin from '../screens/Auth/NeurologueLogin';
+import AdminRegistration from '../screens/Auth/AdminRegistration';
 
 // Doctor Screens
 import DoctorDashboard from '../components/doctorDashboard/doctorDashboard';
@@ -72,6 +73,11 @@ const AppNavigator = () => {
                 name="AdminLogin"
                 component={AdminLogin}
                 options={{ title: 'Connexion Administrateur' }}
+            />
+            <Stack.Screen
+                name="AdminRegistration"
+                component={AdminRegistration}
+                options={{ title: 'Inscription Administrateur' }}
             />
 
             {/* Doctor Screens */}
