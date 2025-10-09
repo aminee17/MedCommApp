@@ -19,14 +19,4 @@ public class TestController {
     public List<String> getPatients() {
         return Arrays.asList("Test Patient 1", "Test Patient 2", "Test Patient 3");
     }
-    
-    @GetMapping("/doctors")
-    public List<String> getDoctors() {
-        return Arrays.asList("Doctor Smith", "Doctor Johnson");
-    }
-    
-    @GetMapping("/health")
-    public String health() {
-        return "API is healthy!";
-    }
 }
