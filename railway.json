@@ -3,7 +3,7 @@
     "builder": "nixpacks"
   },
   "deploy": {
-    "startCommand": "mvn spring-boot:run",
+    "startCommand": "./mvnw spring-boot:run",
     "restartPolicyType": "ON_FAILURE"
   }
 }
