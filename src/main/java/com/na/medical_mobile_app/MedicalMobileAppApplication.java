@@ -26,7 +26,7 @@ public class MedicalMobileAppApplication {
 
     @Autowired
     private MedicalFormService medicalFormService;
-
+    
     @Autowired
     private GovernorateRepository governorateRepository;
 

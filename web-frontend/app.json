@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e557bec9-00f7-408f-96b8-2d67fdb402f2"
+      }
+    },
+    "owner": "nadaaouiti",
+    "android": {
+      "package": "com.nadaaouiti.medcommapp",
+      "permissions": ["CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+    },
+    "ios": {
+      "bundleIdentifier": "com.nadaaouiti.medcommapp",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to camera to record videos",
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photos for video selection"
+      }
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ]
+    ]
+  }
+}

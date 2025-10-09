@@ -1,0 +1,199 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+// Auth Screens
+import RoleSelection from '../screens/Auth/RoleSelection';
+import MedecinAuth from '../screens/Auth/MedecinAuth';
+import DoctorRegistration from '../screens/Auth/DoctorRegistration';
+import NeurologueLogin from '../screens/Auth/NeurologueLogin';
+import AdminRegistration from '../screens/Auth/AdminRegistration';
+
+// Doctor Screens
+import DoctorDashboard from '../components/doctorDashboard/doctorDashboard';
+import MedicalForm from '../components/medicalform/MedicalForm';
+import ViewResponseScreen from '../screens/Doctor/ViewResponseScreen';
+import DoctorChat from '../screens/Doctor/Chat';
+
+// Neurologue Screens
+import NeurologueDashboard from '../screens/Neurologue/NeurologueDashboard';
+import NeurologueFormDetails from '../screens/Neurologue/NeurologueFormDetails';
+import FormResponse from '../screens/Neurologue/FormResponse';
+import NeurologueChat from '../screens/Neurologue/Chat';
+import AdminLogin from '../screens/Auth/AdminLogin';
+import AdminDashboard from "../components/adminDashboard/adminDashboard";
+
+// Common Screens
+import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
+
+// Components
+import NotificationBell from '../components/common/NotificationBell';
+import { COLORS } from '../utils/theme';
+
+const Stack = createNativeStackNavigator();
+
+// Custom header with logout button
+const createHeaderRight = (navigation, handleLogout) => () => (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <NotificationBell 
+            onPress={() => navigation.navigate('Notifications')}
+            style={{ marginRight: 10 }}
+        />
+        <TouchableOpacity
+            onPress={() => handleLogout(true)} // true = show confirmation
+            style={{ 
+                padding: 8,
+                borderRadius: 20,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                marginLeft: 10
+            }}
+        >
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+    </View>
+);
+
+const AppNavigator = () => {
+    return (
+        <Stack.Navigator
+            initialRouteName="RoleSelection"
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: COLORS.primary,
+                },
+                headerTintColor: COLORS.light,
+                headerTitleStyle: {
+                    fontWeight: 'bold',
+                },
+            }}
+        >
+            {/* Auth Screens */}
+            <Stack.Screen 
+                name="RoleSelection" 
+                component={RoleSelection} 
+                options={{ title: 'Sélection du rôle' }} 
+            />
+            <Stack.Screen 
+                name="MedecinAuth"
+                component={MedecinAuth}
+                options={{ title: 'Connexion Médecin' }} 
+            />
+            <Stack.Screen 
+                name="DoctorRegistration"
+                component={DoctorRegistration}
+                options={{ title: 'Inscription Médecin' }} 
+            />
+            <Stack.Screen 
+                name="NeurologueLogin" 
+                component={NeurologueLogin} 
+                options={{ title: 'Connexion Neurologue' }} 
+            />
+
+            <Stack.Screen
+                name="AdminLogin"
+                component={AdminLogin}
+                options={{ title: 'Connexion Administrateur' }}
+            />
+            <Stack.Screen
+                name="AdminRegistration"
+                component={AdminRegistration}
+                options={{ title: 'Inscription Administrateur' }}
+            />
+
+            {/* Doctor Screens */}
+            <Stack.Screen 
+                name="DoctorDashboard" 
+                component={DoctorDashboard} 
+                options={({ navigation }) => ({
+                    title: 'Tableau de bord',
+                    headerRight: createHeaderRight(navigation, () => {
+                        // This will be passed to the component and used properly
+                        navigation.setParams({ forceLogout: Date.now() });
+                    })
+                })}
+            />
+            <Stack.Screen 
+                name="MedicalForm" 
+                component={MedicalForm} 
+                options={{ title: 'Formulaire Médical' }} 
+            />
+            <Stack.Screen 
+                name="ViewResponse" 
+                component={ViewResponseScreen} 
+                options={{ title: 'Réponse du Neurologue' }} 
+            />
+
+            {/* Neurologue Screens */}
+            <Stack.Screen 
+                name="NeurologueDashboard" 
+                component={NeurologueDashboard} 
+                options={({ navigation }) => ({
+                    title: 'Tableau de bord',
+                    headerRight: createHeaderRight(navigation, () => {
+                        navigation.setParams({ forceLogout: Date.now() });
+                    })
+                })}
+            />
+            <Stack.Screen 
+                name="NeurologueFormDetails" 
+                component={NeurologueFormDetails} 
+                options={{ title: 'Détails du Formulaire' }} 
+            />
+            <Stack.Screen 
+                name="FormResponse" 
+                component={FormResponse} 
+                options={{ title: 'Réponse au Formulaire' }} 
+            />
+            <Stack.Screen 
+                name="NeurologueChat" 
+                component={NeurologueChat} 
+                options={{ title: 'Discussion' }} 
+            />
+            <Stack.Screen 
+                name="DoctorChat" 
+                component={DoctorChat} 
+                options={{ title: 'Discussion' }} 
+            />
+
+            {/* Admin Screens */}
+            <Stack.Screen
+                name="AdminDashboard"
+                component={AdminDashboard}
+                options={({ navigation }) => ({
+                    title: 'Tableau de bord admin',
+                    headerRight: createHeaderRight(navigation, () => {
+                        navigation.setParams({ forceLogout: Date.now() });
+                    })
+                })}
+            />
+
+            {/* Common Screens */}
+            <Stack.Screen 
+                name="Notifications" 
+                component={NotificationsScreen} 
+                options={({ navigation }) => ({ 
+                    title: 'Notifications',
+                    headerRight: () => (
+                        <TouchableOpacity 
+                            onPress={async () => {
+                                try {
+                                    const { markAllNotificationsAsRead } = require('../services/notificationService');
+                                    await markAllNotificationsAsRead();
+                                    navigation.goBack();
+                                } catch (error) {
+                                    console.error('Error marking all as read:', error);
+                                }
+                            }} 
+                            style={{ marginRight: 10 }}
+                        >
+                            <Ionicons name="checkmark-done" size={24} color={COLORS.light} />
+                        </TouchableOpacity>
+                    ),
+                })} 
+            />
+        </Stack.Navigator>
+    );
+};
+
+export default AppNavigator;

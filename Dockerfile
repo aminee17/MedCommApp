@@ -3,9 +3,9 @@ FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copy Maven wrapper files
+# Copy Maven wrapper files and pom.xml
 COPY .mvn/ .mvn/
-COPY mvnw mvnw.cmd ./
+COPY mvnw mvnw.cmd .
 COPY pom.xml .
 
 # Make the Maven wrapper executable
@@ -14,7 +14,7 @@ RUN chmod +x mvnw
 # Download dependencies
 RUN ./mvnw dependency:go-offline
 
-# Copy source code
+# Copy all source code (this ensures all Java files, including the updated ones, are in the build context)
 COPY src ./src
 
 # Build the project using Maven wrapper

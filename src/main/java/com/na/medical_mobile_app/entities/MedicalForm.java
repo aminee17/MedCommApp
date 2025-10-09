@@ -1,7 +1,6 @@
 package com.na.medical_mobile_app.entities;
 
 import jakarta.persistence.*;
-
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +31,19 @@ public class MedicalForm implements Serializable {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // PDF related fields
+    @Column(name = "pdf_generated")
+    private Boolean pdfGenerated = false;
+    
+    @Column(name = "pdf_generated_at")
+    private LocalDateTime pdfGeneratedAt;
+    
+    @Column(name = "pdf_file_name")
+    private String pdfFileName;
+    
+    @Column(name = "pdf_file_path")
+    private String pdfFilePath;
+
     //Relationships
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
@@ -44,7 +56,6 @@ public class MedicalForm implements Serializable {
     @ManyToOne
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
-
 
     @OneToMany(mappedBy = "form", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -93,6 +104,17 @@ public class MedicalForm implements Serializable {
     public void setAttachments(List<FileAttachment> attachments) { this.attachments = attachments; }
     public Consultation getConsultation() { return consultation; }
     public void setConsultation(Consultation consultation) { this.consultation = consultation; }
-
-    }
-
+    
+    // PDF fields getters and setters
+    public Boolean getPdfGenerated() { return pdfGenerated; }
+    public void setPdfGenerated(Boolean pdfGenerated) { this.pdfGenerated = pdfGenerated; }
+    
+    public LocalDateTime getPdfGeneratedAt() { return pdfGeneratedAt; }
+    public void setPdfGeneratedAt(LocalDateTime pdfGeneratedAt) { this.pdfGeneratedAt = pdfGeneratedAt; }
+    
+    public String getPdfFileName() { return pdfFileName; }
+    public void setPdfFileName(String pdfFileName) { this.pdfFileName = pdfFileName; }
+    
+    public String getPdfFilePath() { return pdfFilePath; }
+    public void setPdfFilePath(String pdfFilePath) { this.pdfFilePath = pdfFilePath; }
+}

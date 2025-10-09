@@ -65,7 +65,7 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.7</version>
         </dependency>
-
+        
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -105,6 +105,13 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.11.5</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- PDF Generation Dependencies - PDFBox Only -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.2</version>
         </dependency>
     </dependencies>
 

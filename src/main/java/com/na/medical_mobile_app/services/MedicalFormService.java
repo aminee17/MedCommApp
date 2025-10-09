@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 @Transactional
 public class MedicalFormService {
@@ -41,77 +40,83 @@ public class MedicalFormService {
     @Autowired
     private NotificationService notificationService;
 
- //--------------------------------------------Building symptomps for the medical form-----------------------------------------
- private String buildSymptomsSummary(MedicalFormRequest request) {
-     StringBuilder summary = new StringBuilder();
+    @Autowired
+    private PdfGenerationService pdfGenerationService;
 
-     // Debug logging
-     System.out.println("=== DEBUG: Building symptoms summary ===");
-     System.out.println("seizureType: " + request.seizureType);
-     System.out.println("progressiveFall: " + request.progressiveFall);
-     System.out.println("suddenFall: " + request.suddenFall);
-     System.out.println("clonicJerks: " + request.clonicJerks);
-     System.out.println("automatisms: " + request.automatisms);
-     System.out.println("activityStop: " + request.activityStop);
-     System.out.println("sensitiveDisorders: " + request.sensitiveDisorders);
-     System.out.println("sensoryDisorders: " + request.sensoryDisorders);
-     System.out.println("lateralTongueBiting: " + request.lateralTongueBiting);
+    @Autowired
+    private PdfStorageService pdfStorageService;
 
-     // Seizure type (single choice)
-     if (request.seizureType != null && !request.seizureType.isBlank()) {
-         String seizureTypeLabel = switch (request.seizureType) {
-             case "generalizedTonicClonic" -> "Généralisée Tonico-clonique";
-             case "generalizedOther" -> "Généralisée autre (tonique, clonique, myoclonique, atonique)";
-             case "absence" -> "Absence";
-             case "focalWithLossOfConsciousness" -> "Focale avec perte de connaissance";
-             case "focalWithoutLossOfConsciousness" -> "Focale sans perte de connaissance";
-             default -> request.seizureType;
-         };
-         summary.append("- Type de crise: ").append(seizureTypeLabel).append("\n");
-     }
+    // ... existing buildSymptomsSummary method (keep it as is) ...
 
-     // Updated "Pendant la crise" symptoms
-     if (Boolean.TRUE.equals(request.lossOfConsciousness)) summary.append("- Perte de connaissance\n");
-     if (Boolean.TRUE.equals(request.progressiveFall)) summary.append("- Chute progressive\n");
-     if (Boolean.TRUE.equals(request.suddenFall)) summary.append("- Chute brusque\n");
-     if (Boolean.TRUE.equals(request.bodyStiffening)) summary.append("- Raidissement du corps\n");
-     if (Boolean.TRUE.equals(request.clonicJerks)) summary.append("- Secousses cloniques\n");
-     if (Boolean.TRUE.equals(request.automatisms)) summary.append("- Automatismes\n");
-     if (Boolean.TRUE.equals(request.eyeDeviation)) summary.append("- Déviation des yeux (d'un côté)\n");
-     if (Boolean.TRUE.equals(request.activityStop)) summary.append("- Arrêt de l'activité en cours\n");
-     if (Boolean.TRUE.equals(request.sensitiveDisorders)) summary.append("- Troubles sensitifs\n");
-     if (Boolean.TRUE.equals(request.sensoryDisorders)) summary.append("- Troubles sensoriels\n");
-     if (Boolean.TRUE.equals(request.incontinence)) summary.append("- Incontinence (urine/selles)\n");
-     if (Boolean.TRUE.equals(request.lateralTongueBiting)) summary.append("- Morsure latérale de la langue\n");
+    private String buildSymptomsSummary(MedicalFormRequest request) {
+        StringBuilder summary = new StringBuilder();
 
-     // First seizure info
-     if (Boolean.TRUE.equals(request.isFirstSeizure)) {
-         summary.append("- Première crise\n");
-     }
+        // Debug logging
+        System.out.println("=== DEBUG: Building symptoms summary ===");
+        System.out.println("seizureType: " + request.seizureType);
+        System.out.println("progressiveFall: " + request.progressiveFall);
+        System.out.println("suddenFall: " + request.suddenFall);
+        System.out.println("clonicJerks: " + request.clonicJerks);
+        System.out.println("automatisms: " + request.automatisms);
+        System.out.println("activityStop: " + request.activityStop);
+        System.out.println("sensitiveDisorders: " + request.sensitiveDisorders);
+        System.out.println("sensoryDisorders: " + request.sensoryDisorders);
+        System.out.println("lateralTongueBiting: " + request.lateralTongueBiting);
 
-     // Aura info
-     if (Boolean.TRUE.equals(request.hasAura)) {
-         summary.append("- Aura présente");
-         if (request.auraDescription != null && !request.auraDescription.isBlank()) {
-             summary.append(" : ").append(request.auraDescription);
-         }
-         summary.append("\n");
-     }
+        // Seizure type (single choice)
+        if (request.seizureType != null && !request.seizureType.isBlank()) {
+            String seizureTypeLabel = switch (request.seizureType) {
+                case "generalizedTonicClonic" -> "Généralisée Tonico-clonique";
+                case "generalizedOther" -> "Généralisée autre (tonique, clonique, myoclonique, atonique)";
+                case "absence" -> "Absence";
+                case "focalWithLossOfConsciousness" -> "Focale avec perte de connaissance";
+                case "focalWithoutLossOfConsciousness" -> "Focale sans perte de connaissance";
+                default -> request.seizureType;
+            };
+            summary.append("- Type de crise: ").append(seizureTypeLabel).append("\n");
+        }
 
-     // Other info
-     if (request.otherInformation != null && !request.otherInformation.isBlank()) {
-         summary.append("- Autres: ").append(request.otherInformation).append("\n");
-     }
+        // Updated "Pendant la crise" symptoms
+        if (Boolean.TRUE.equals(request.lossOfConsciousness)) summary.append("- Perte de connaissance\n");
+        if (Boolean.TRUE.equals(request.progressiveFall)) summary.append("- Chute progressive\n");
+        if (Boolean.TRUE.equals(request.suddenFall)) summary.append("- Chute brusque\n");
+        if (Boolean.TRUE.equals(request.bodyStiffening)) summary.append("- Raidissement du corps\n");
+        if (Boolean.TRUE.equals(request.clonicJerks)) summary.append("- Secousses cloniques\n");
+        if (Boolean.TRUE.equals(request.automatisms)) summary.append("- Automatismes\n");
+        if (Boolean.TRUE.equals(request.eyeDeviation)) summary.append("- Déviation des yeux (d'un côté)\n");
+        if (Boolean.TRUE.equals(request.activityStop)) summary.append("- Arrêt de l'activité en cours\n");
+        if (Boolean.TRUE.equals(request.sensitiveDisorders)) summary.append("- Troubles sensitifs\n");
+        if (Boolean.TRUE.equals(request.sensoryDisorders)) summary.append("- Troubles sensoriels\n");
+        if (Boolean.TRUE.equals(request.incontinence)) summary.append("- Incontinence (urine/selles)\n");
+        if (Boolean.TRUE.equals(request.lateralTongueBiting)) summary.append("- Morsure latérale de la langue\n");
 
-     String result = summary.toString().trim();
-     System.out.println("Final symptoms summary: " + result);
-     System.out.println("=== END DEBUG ===");
-     
-     return result;
- }
+        // First seizure info
+        if (Boolean.TRUE.equals(request.isFirstSeizure)) {
+            summary.append("- Première crise\n");
+        }
 
+        // Aura info
+        if (Boolean.TRUE.equals(request.hasAura)) {
+            summary.append("- Aura présente");
+            if (request.auraDescription != null && !request.auraDescription.isBlank()) {
+                summary.append(" : ").append(request.auraDescription);
+            }
+            summary.append("\n");
+        }
 
-//-----------------------------------------------Saving the medical form---------------------------------------------------
+        // Other info
+        if (request.otherInformation != null && !request.otherInformation.isBlank()) {
+            summary.append("- Autres: ").append(request.otherInformation).append("\n");
+        }
+
+        String result = summary.toString().trim();
+        System.out.println("Final symptoms summary: " + result);
+        System.out.println("=== END DEBUG ===");
+        
+        return result;
+    }
+
+    //-----------------------------------------------Saving the medical form---------------------------------------------------
     /**
      * Saves a medical form submission including patient information and attachments
      * @param request The form data containing all fields from the medical form
@@ -169,8 +174,81 @@ public class MedicalFormService {
         // Create notification for the neurologist
         notificationService.createNewFormNotification(medicalForm);
 
+        // Generate and save PDF automatically
+        generateAndSavePdf(medicalForm);
+
         return medicalForm.getFormId();
     }
+
+    /**
+     * Generate PDF for a medical form and save it to file system
+     */
+    public void generateAndSavePdf(MedicalForm form) {
+        try {
+            System.out.println("Starting PDF generation for form ID: " + form.getFormId());
+            
+            // Generate PDF
+            byte[] pdfData = pdfGenerationService.generateMedicalFormPdf(form);
+            System.out.println("PDF generated successfully, size: " + pdfData.length + " bytes");
+            
+            // Generate filename
+            String fileName = pdfGenerationService.generatePdfFileName(form);
+            System.out.println("Generated PDF filename: " + fileName);
+            
+            // Save to file system
+            String filePath = pdfStorageService.savePdfToFileSystem(pdfData, fileName);
+            System.out.println("PDF saved to: " + filePath);
+            
+            // Update form with PDF information
+            form.setPdfGenerated(true);
+            form.setPdfGeneratedAt(LocalDateTime.now());
+            form.setPdfFileName(fileName);
+            form.setPdfFilePath(filePath);
+            
+            medicalFormRepository.save(form);
+            
+            System.out.println("PDF generation completed successfully for form ID: " + form.getFormId());
+            
+        } catch (Exception e) {
+            System.err.println("Error generating PDF for form ID: " + form.getFormId());
+            e.printStackTrace();
+            // Don't throw exception to avoid breaking form submission
+        }
+    }
+
+    /**
+     * Get PDF data for a medical form
+     */
+    public byte[] getPdfData(Integer formId) throws Exception {
+        MedicalForm form = medicalFormRepository.findById(formId)
+                .orElseThrow(() -> new Exception("Form not found with ID: " + formId));
+        
+        if (!form.getPdfGenerated() || form.getPdfFilePath() == null) {
+            System.out.println("PDF not found for form ID: " + formId + ", generating now...");
+            // Generate PDF if not already generated
+            generateAndSavePdf(form);
+        }
+        
+        try {
+            return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
+        } catch (Exception e) {
+            System.err.println("Error loading PDF for form ID: " + formId);
+            // Try to regenerate PDF if loading fails
+            generateAndSavePdf(form);
+            return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
+        }
+    }
+
+    /**
+     * Get all medical forms with PDF information for admin
+     */
+    public List<MedicalForm> getAllMedicalFormsWithPdf() {
+        List<MedicalForm> forms = medicalFormRepository.findAll();
+        System.out.println("Retrieved " + forms.size() + " medical forms for admin");
+        return forms;
+    }
+
+    // ... keep all other existing methods as they are ...
 
     /**
      * Get all medical forms in the system
