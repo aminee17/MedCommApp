@@ -1,20 +1,10 @@
 package com.na.medical_mobile_app.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        // registry.addMapping("/api/**")
-        //         // Explicitly allow your front-end origin
-        //         .allowedOrigins("http://localhost:8081") 
-        //         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        //         .allowedHeaders("*")
-        //         // Allow credentials to be sent
-        //         .allowCredentials(true) 
-        //         .maxAge(3600);
-    }
+    // REMOVE THE EMPTY addCorsMappings METHOD COMPLETELY
+    // Your CorsConfig.java will handle CORS
 }
