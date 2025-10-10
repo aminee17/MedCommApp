@@ -1,4 +1,4 @@
-package com.yourpackage.config;
+package com.na.medical_mobile_app.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
