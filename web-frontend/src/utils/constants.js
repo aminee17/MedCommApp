@@ -1,9 +1,13 @@
 // Use environment variable if available, otherwise fallback to development URL
-// The URL has been updated to use localhost, as the backend Docker container
-// is exposing its port 8080 to the host machine's localhost.
+// Updated for production deployment
 import { Platform } from 'react-native';
 
-const guessLocalBackend = () => {
+const getApiBaseUrl = () => {
+    // Production URL - your Railway backend
+    if (process.env.NODE_ENV === 'production') {
+        return 'https://web-production-c46dd.railway.app';
+    }
+    
     // Web: reuse current host (useful for Expo web dev server on LAN)
     if (typeof window !== 'undefined' && window.location?.hostname) {
         const host = window.location.hostname;
@@ -18,9 +22,7 @@ const guessLocalBackend = () => {
     return 'http://localhost:8080';
 };
 
-export const API_BASE_URL = (
-    process.env.EXPO_PUBLIC_API_BASE_URL || guessLocalBackend()
-).trim().replace(/\/+$/, '');
+export const API_BASE_URL = getApiBaseUrl().trim().replace(/\/+$/, '');
 
 export const EMAIL_SERVICE_ID = 'service_9zv6eyt';
 export const EMAIL_TEMPLATE_ID = 'template_n54dytm';
