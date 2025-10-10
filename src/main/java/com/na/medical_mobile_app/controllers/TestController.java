@@ -12,11 +12,21 @@ public class TestController {
     
     @GetMapping("/test")
     public String test() {
-        return "Medical App API is working! " + new java.util.Date();
+        return "Medical App API is working! Database connected successfully. Time: " + new java.util.Date();
     }
     
     @GetMapping("/patients")
     public List<String> getPatients() {
         return Arrays.asList("Test Patient 1", "Test Patient 2", "Test Patient 3");
+    }
+    
+    @GetMapping("/doctors")
+    public List<String> getDoctors() {
+        return Arrays.asList("Doctor Smith", "Doctor Johnson", "Doctor Williams");
+    }
+    
+    @GetMapping("/health")
+    public String health() {
+        return "API is healthy and running!";
     }
 }
