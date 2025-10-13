@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
 import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getApiUrl } from '../services/corsProxy';
+import { getApiUrl, fetchDirect } from '../services/corsProxy';
 
 export default function useMedecinAuth(navigation) {
     const [email, setEmail] = useState('');
@@ -14,7 +13,7 @@ export default function useMedecinAuth(navigation) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            const response = await fetchWithErrorHandling(getApiUrl('/api/auth/login'), {
+            const response = await fetchDirect('/api/auth/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email, password}),

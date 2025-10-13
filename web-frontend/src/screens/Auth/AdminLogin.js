@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
-import { API_BASE_URL } from '../../utils/constants';
 import { parseJSONResponse } from '../../utils/jsonUtils';
-import { fetchWithErrorHandling } from '../../utils/errorMessages';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 import { Button, Input, Card } from '../../components/common';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getApiUrl } from '../../services/corsProxy';
+import { fetchDirect } from '../../services/corsProxy';
+
 export default function AdminLogin({ navigation }) {
     const [showLogin, setShowLogin] = useState(false);
     const [email, setEmail] = useState('');
@@ -26,7 +25,7 @@ export default function AdminLogin({ navigation }) {
 
         setLoading(true);
         try {
-            const response = await fetchWithErrorHandling(getApiUrl('/api/auth/login'), {
+            const response = await fetchDirect('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 // src/hooks/useLocations.js
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../utils/constants';
-import { getApiUrl, fetchWithProxy } from '../services/corsProxy';
+import { fetchDirect } from '../services/corsProxy';
+
 export default function useLocations() {
     const [governorates, setGovernorates] = useState([]);
     const [cities, setCities] = useState([]);
@@ -24,16 +24,17 @@ export default function useLocations() {
 
     const fetchGovernorates = async () => {
         try {
-            const response = await fetchWithProxy('/api/locations/governorates', {
+            const response = await fetchDirect('/api/locations/governorates', {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 }
             });
+            
             if (!response.ok) {
                 throw new Error(`Failed to load governorates: ${response.status}`);
             }
+            
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
                 setGovernorates(data);
@@ -50,16 +51,17 @@ export default function useLocations() {
 
     const fetchCities = async (governorateId) => {
         try {
-            const response = await fetchWithProxy(`/api/locations/cities/${governorateId}`, {
+            const response = await fetchDirect(`/api/locations/cities/${governorateId}`, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 }
             });
+            
             if (!response.ok) {
                 throw new Error(`Failed to load cities: ${response.status}`);
             }
+            
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
                 setCities(data);
