@@ -8,11 +8,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
 @Configuration
 public class CorsConfig {
     
@@ -34,45 +29,11 @@ public class CorsConfig {
                 
                 registry.addMapping("/**")
                         .allowedOrigins(origins)
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+                        .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true)
                         .maxAge(3600);
             }
-        };
-    }
-    
-    // Add a filter to ensure CORS headers are set
-    @Bean
-    public Filter corsFilter() {
-        return new Filter() {
-            @Override
-            public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-                    throws IOException, ServletException {
-                HttpServletResponse response = (HttpServletResponse) res;
-                HttpServletRequest request = (HttpServletRequest) req;
-                
-                String origin = request.getHeader("Origin");
-                if (origin != null && allowedOrigins.contains(origin)) {
-                    response.setHeader("Access-Control-Allow-Origin", origin);
-                }
-                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
-                response.setHeader("Access-Control-Allow-Headers", "*");
-                response.setHeader("Access-Control-Allow-Credentials", "true");
-                response.setHeader("Access-Control-Max-Age", "3600");
-                
-                if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-                    response.setStatus(HttpServletResponse.SC_OK);
-                } else {
-                    chain.doFilter(req, res);
-                }
-            }
-            
-            @Override
-            public void init(FilterConfig filterConfig) {}
-            
-            @Override
-            public void destroy() {}
         };
     }
 }
