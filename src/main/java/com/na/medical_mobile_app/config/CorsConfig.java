@@ -8,6 +8,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 @Configuration
 public class CorsConfig {
     
@@ -21,17 +23,19 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                String[] origins = allowedOrigins.split(",");
+                
                 logger.info("=== CORS CONFIGURATION ===");
-                logger.info("Allowed Origins: {}", allowedOrigins);
-                logger.info("Frontend URL: https://quiet-douhua-cb85eb.netlify.app");
+                logger.info("Allowed Origins: {}", Arrays.toString(origins));
                 logger.info("=== END CORS CONFIG ===");
                 
-                String[] origins = allowedOrigins.split(",");
+                
                 registry.addMapping("/**")
                         .allowedOrigins(origins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowCredentials(true)
+                        .maxAge(3600); // 1 hour
             }
         };
     }

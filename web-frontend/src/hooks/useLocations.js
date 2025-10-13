@@ -1,7 +1,7 @@
 // src/hooks/useLocations.js
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../utils/constants';
-
+import { getApiUrl, fetchWithProxy } from '../services/corsProxy';
 export default function useLocations() {
     const [governorates, setGovernorates] = useState([]);
     const [cities, setCities] = useState([]);
@@ -24,7 +24,7 @@ export default function useLocations() {
 
     const fetchGovernorates = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/locations/governorates`, {
+            const response = await fetchWithProxy('/api/locations/governorates', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -50,7 +50,7 @@ export default function useLocations() {
 
     const fetchCities = async (governorateId) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/locations/cities/${governorateId}`, {
+            const response = await fetchWithProxy(`/api/locations/cities/${governorateId}`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',

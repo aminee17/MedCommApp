@@ -6,7 +6,7 @@ import { fetchWithErrorHandling } from '../../utils/errorMessages';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 import { Button, Input, Card } from '../../components/common';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { getApiUrl } from '../../services/corsProxy';
 export default function AdminLogin({ navigation }) {
     const [showLogin, setShowLogin] = useState(false);
     const [email, setEmail] = useState('');
@@ -26,7 +26,7 @@ export default function AdminLogin({ navigation }) {
 
         setLoading(true);
         try {
-            const response = await fetchWithErrorHandling(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetchWithErrorHandling(getApiUrl('/api/auth/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

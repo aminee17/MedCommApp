@@ -6,6 +6,7 @@ import { Picker } from "@react-native-picker/picker";
 import { isStrongPassword } from '../../utils/validation';
 import useLocations from '../../hooks/useLocations';
 import { parseJSONResponse } from '../../utils/jsonUtils';
+import { getApiUrl } from '../../services/corsProxy';
 
 import styles from './styles';
 
@@ -78,7 +79,7 @@ export default function AdminRegistration({ navigation }) {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/register-admin`, {
+            const response = await fetch(getApiUrl('/api/auth/register-admin'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -11,7 +11,7 @@ import { API_BASE_URL } from '../../utils/constants';
 import { fetchWithErrorHandling } from '../../utils/errorMessages';
 import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
 import { Button, Input, Card, Header } from '../../components/common';
-
+import { getApiUrl } from '../../services/corsProxy';
 const NeurologueLogin = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -44,7 +44,7 @@ const NeurologueLogin = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const response = await fetchWithErrorHandling(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetchWithErrorHandling(getApiUrl('/api/auth/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
