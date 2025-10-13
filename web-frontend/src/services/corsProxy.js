@@ -1,7 +1,7 @@
 // src/services/corsProxy.js
 
 // Direct API calls - no proxy needed since CORS is configured
-const API_BASE_URL = 'https://web-production-c46dd.railway.app';
+const API_BASE_URL = 'https://medcommapp.onrender.com';
 
 // For direct API calls (use this instead of fetchWithProxy)
 export const fetchDirect = async (endpoint, options = {}) => {

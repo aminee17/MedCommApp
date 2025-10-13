@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 const getApiBaseUrl = () => {
     // Production URL - your Railway backend
     if (process.env.NODE_ENV === 'production') {
-        return 'https://web-production-c46dd.railway.app';
+        return 'https://medcommapp.onrender.com';
     }
     
     // Web: reuse current host (useful for Expo web dev server on LAN)
