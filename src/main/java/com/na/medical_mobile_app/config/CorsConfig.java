@@ -1,6 +1,5 @@
 package com.na.medical_mobile_app.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -13,26 +12,28 @@ public class CorsConfig {
     
     private static final Logger logger = LoggerFactory.getLogger(CorsConfig.class);
     
-    @Value("${cors.allowed-origins:https://quiet-douhua-cb85eb.netlify.app}")
-    private String allowedOrigins;
-    
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                String[] origins = allowedOrigins.split(",");
-                
-                logger.info("=== CORS CONFIGURATION ===");
-                logger.info("Allowed Origins: {}", java.util.Arrays.toString(origins));
-                logger.info("=== END CORS CONFIG ===");
+                logger.info("=== UPDATED CORS CONFIGURATION ===");
                 
                 registry.addMapping("/**")
-                        .allowedOrigins(origins)
-                        .allowedMethods("*")
+                        .allowedOrigins(
+                            "https://medcommapp-frontend.onrender.com", // YOUR EXACT FRONTEND URL
+                            "https://medcommapp.onrender.com",
+                            "http://localhost:3000",
+                            "http://localhost:19006",
+                            "http://localhost:8080"
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD")
                         .allowedHeaders("*")
                         .allowCredentials(true)
                         .maxAge(3600);
+                
+                logger.info("CORS configured with frontend: https://medcommapp-frontend.onrender.com");
+                logger.info("=== END CORS CONFIG ===");
             }
         };
     }
