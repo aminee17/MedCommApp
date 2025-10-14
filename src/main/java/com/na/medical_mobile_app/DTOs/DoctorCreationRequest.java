@@ -1,10 +1,13 @@
 package com.na.medical_mobile_app.DTOs;
 
-
 import com.na.medical_mobile_app.entities.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
-public class DoctorCreationRequest {
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+public class DoctorCreationRequest {
 
     @JsonProperty("name")
     private String name;
@@ -16,19 +19,19 @@ public class DoctorCreationRequest {
     private String phone;
     
     @JsonProperty("cin")
-    private String cin;  // Changed from Long to String
+    private String cin;
     
     @JsonProperty("role")
-    private String role; // Changed from Role enum to String
+    private String role;
     
     @JsonProperty("licenseNumber")
     private String licenseNumber;
     
     @JsonProperty("governorate_id")
-    private Integer governorateId;
+    private Integer governorateId; // Note: changed from governorate_id to governorateId
     
     @JsonProperty("city_id")
-    private Integer cityId;
+    private Integer cityId; // Note: changed from city_id to cityId
     
     @JsonProperty("specialization")
     private String specialization;
@@ -39,42 +42,7 @@ public class DoctorCreationRequest {
     @JsonProperty("userId")
     private Integer userId;
 
-    // Default constructor
     public DoctorCreationRequest() {}
-
-    // Getters and setters
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public String getCin() { return cin; }
-    public void setCin(String cin) { this.cin = cin; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
-
-    public String getLicenseNumber() { return licenseNumber; }
-    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
-
-    public Integer getGovernorateId() { return governorateId; }
-    public void setGovernorateId(Integer governorateId) { this.governorateId = governorateId; }
-
-    public Integer getCityId() { return cityId; }
-    public void setCityId(Integer cityId) { this.cityId = cityId; }
-
-    public String getSpecialization() { return specialization; }
-    public void setSpecialization(String specialization) { this.specialization = specialization; }
-
-    public String getHospitalAffiliation() { return hospitalAffiliation; }
-    public void setHospitalAffiliation(String hospitalAffiliation) { this.hospitalAffiliation = hospitalAffiliation; }
-
-    public Integer getUserId() { return userId; }
-    public void setUserId(Integer userId) { this.userId = userId; }
 
     @Override
     public String toString() {

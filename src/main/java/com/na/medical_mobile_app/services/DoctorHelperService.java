@@ -3,6 +3,7 @@ package com.na.medical_mobile_app.services;
 import com.na.medical_mobile_app.DTOs.DoctorCreationRequest;
 import com.na.medical_mobile_app.entities.City;
 import com.na.medical_mobile_app.entities.Governorate;
+import com.na.medical_mobile_app.entities.Role;
 import com.na.medical_mobile_app.entities.User;
 import com.na.medical_mobile_app.repositories.CityRepository;
 import com.na.medical_mobile_app.repositories.GovernorateRepository;
@@ -22,25 +23,36 @@ public class DoctorHelperService {
     @Autowired
     private CityRepository cityRepository;
 
-
-//------------------------------------------Populating a doctor---------------------------------------------------------
-
+    //------------------------------------------Populating a doctor---------------------------------------------------------
     public void populateDoctorFields(User doctor, DoctorCreationRequest request) {
-        doctor.setName(request.name);
-        doctor.setPhone(request.phone);
-        doctor.setCin(request.cin);
-        doctor.setRole(request.role);
-        doctor.setLicenseNumber(request.licenseNumber);
-        doctor.setSpecialization(request.specialization);
-        doctor.setEmailVerifiedAt(null);// Later
-        doctor.setHospitalAffiliation(request.hospitalAffiliation);
+        // Use getter methods instead of direct field access
+        doctor.setName(request.getName());
+        doctor.setPhone(request.getPhone());
+        doctor.setCin(request.getCin());
+        
+        // Convert String role to Role enum
+        if (request.getRole() != null) {
+            try {
+                Role roleEnum = Role.valueOf(request.getRole().toUpperCase());
+                doctor.setRole(roleEnum);
+            } catch (IllegalArgumentException e) {
+                doctor.setRole(Role.MEDECIN); // Default role
+                logger.warn("Invalid role '{}', defaulting to MEDECIN", request.getRole());
+            }
+        } else {
+            doctor.setRole(Role.MEDECIN); // Default role
+        }
+        
+        doctor.setLicenseNumber(request.getLicenseNumber());
+        doctor.setSpecialization(request.getSpecialization());
+        doctor.setEmailVerifiedAt(null); // Later
+        doctor.setHospitalAffiliation(request.getHospitalAffiliation());
 
-        this.setLocation(doctor, request.getGovernorate_id(), request.getCity_id());
-
+        // Use getter methods for location
+        this.setLocation(doctor, request.getGovernorateId(), request.getCityId());
     }
     
     //-------------------------------Making a good location & governorate ------------------------------------------------------
-
     public void setLocation(User user, Integer governorateId, Integer cityId) {
         logger.info("Setting location - Governorate ID: {}, City ID: {}", governorateId, cityId);
         
@@ -73,6 +85,3 @@ public class DoctorHelperService {
         logger.info("Location set successfully");
     }
 }
-
-
-
