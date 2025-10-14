@@ -1,11 +1,11 @@
 // src/services/corsProxy.js
+import { API_BASE_URL } from '../utils/constants';
 
-// Direct API calls - no proxy needed since CORS is configured
-const API_BASE_URL = 'https://medcommapp.onrender.com';
-
-// For direct API calls (use this instead of fetchWithProxy)
+// For direct API calls
 export const fetchDirect = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  console.log('API Call:', url);
   
   const response = await fetch(url, {
     ...options,
@@ -17,15 +17,17 @@ export const fetchDirect = async (endpoint, options = {}) => {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorText = await response.text();
+    console.error('API Error:', response.status, errorText);
+    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
   }
 
   return response;
 };
 
-// Keep this for backward compatibility, but it now makes direct calls
+// Backward compatibility
 export const fetchWithProxy = async (endpoint, options = {}) => {
-  console.log('Making direct API call to:', endpoint);
+  console.log('Making API call to:', `${API_BASE_URL}${endpoint}`);
   return fetchDirect(endpoint, options);
 };
 
@@ -34,7 +36,7 @@ export const getApiUrl = (endpoint) => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
-// For making direct fetch calls without the proxy wrapper
+// Direct fetch
 export const directFetch = (endpoint, options = {}) => {
   return fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,

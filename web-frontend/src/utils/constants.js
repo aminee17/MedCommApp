@@ -1,24 +1,16 @@
-// Use environment variable if available, otherwise fallback to development URL
-// Updated for production deployment
+// constants.js
 import { Platform } from 'react-native';
 
 const getApiBaseUrl = () => {
-    // Production URL - your Railway backend
-    if (process.env.NODE_ENV === 'production') {
+    // Always use production URL when deployed
+    if (typeof window !== 'undefined' && window.location?.hostname !== 'localhost') {
         return 'https://medcommapp.onrender.com';
     }
     
-    // Web: reuse current host (useful for Expo web dev server on LAN)
-    if (typeof window !== 'undefined' && window.location?.hostname) {
-        const host = window.location.hostname;
-        const protocol = window.location.protocol || 'http:';
-        return `${protocol}//${host}:8080`;
-    }
-    // Android emulator localhost mapping
+    // Development URLs
     if (Platform.OS === 'android') {
         return 'http://10.0.2.2:8080';
     }
-    // iOS simulator or default
     return 'http://localhost:8080';
 };
 
