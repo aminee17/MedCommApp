@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/medical-forms")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class MedicalFormController {
 
     @Autowired

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/doctor")
-@CrossOrigin(origins = "*") // si tu fais appel depuis mobile/web
+// @CrossOrigin(origins = "*") // si tu fais appel depuis mobile/web
 public class DoctorController {
 
     @Autowired

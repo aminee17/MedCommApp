@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pdf")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class PdfController {
 
     @Autowired
