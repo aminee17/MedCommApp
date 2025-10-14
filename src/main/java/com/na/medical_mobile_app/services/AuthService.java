@@ -15,7 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 @Service
@@ -28,7 +29,7 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
+
 
     @Autowired
     private DoctorHelperService doctorHelperService;
@@ -118,14 +119,20 @@ public class AuthService {
             userRepository.save(newAdmin);
             
             logger.info("Admin registration successful for: {}", request.email);
-            return ResponseEntity.ok("Compte admin créé avec succès.");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Compte admin créé avec succès.");
+            return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {
             logger.error("Validation error during admin registration: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         } catch (Exception e) {
             logger.error("Error during admin registration: ", e);
-            return ResponseEntity.status(500).body("Erreur lors de la création du compte: " + e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Erreur lors de la création du compte: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
         }
     }
 }
