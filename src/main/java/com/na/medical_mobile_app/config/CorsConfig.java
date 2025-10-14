@@ -35,6 +35,14 @@ public class CorsConfig {
             "Access-Control-Request-Headers"
         ));
         
+        // Explicitly expose the allowed headers to the frontend
+        config.setExposedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "userid",
+            "userId"
+        ));
+        
         // Allow all methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         
@@ -45,7 +53,7 @@ public class CorsConfig {
         config.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/**", config); // Changed to /** to cover all endpoints
         
         return new CorsFilter(source);
     }
