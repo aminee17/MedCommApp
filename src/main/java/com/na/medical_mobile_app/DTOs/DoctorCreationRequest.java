@@ -19,7 +19,7 @@ public class DoctorCreationRequest {
     private String phone;
     
     @JsonProperty("cin")
-    private String cin;
+    private Long cin; // Changed back to Long
     
     @JsonProperty("role")
     private String role;
@@ -28,10 +28,10 @@ public class DoctorCreationRequest {
     private String licenseNumber;
     
     @JsonProperty("governorate_id")
-    private Integer governorateId; // Note: changed from governorate_id to governorateId
+    private Integer governorateId;
     
     @JsonProperty("city_id")
-    private Integer cityId; // Note: changed from city_id to cityId
+    private Integer cityId;
     
     @JsonProperty("specialization")
     private String specialization;
@@ -50,7 +50,7 @@ public class DoctorCreationRequest {
                 "name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
-                ", cin='" + cin + '\'' +
+                ", cin=" + cin +
                 ", role='" + role + '\'' +
                 ", licenseNumber='" + licenseNumber + '\'' +
                 ", governorateId=" + governorateId +
