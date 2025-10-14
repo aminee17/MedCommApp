@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = {"https://medcommapp-frontend.onrender.com", "http://localhost:3000", "http://localhost:19006"})
+//@CrossOrigin(origins = {"https://medcommapp-frontend.onrender.com", "http://localhost:3000", "http://localhost:19006"})
 public class AdminController {
 
     @Autowired
