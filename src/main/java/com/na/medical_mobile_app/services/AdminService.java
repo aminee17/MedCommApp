@@ -88,9 +88,27 @@ public ResponseEntity<?> createDoctor(DoctorCreationRequest request) {
 
     //-------------------------------Get pending requests-------------------------------------------------------------------------
     public ResponseEntity<?> getPendingRequests() {
-        List<Role> medicalRoles = List.of(Role.MEDECIN, Role.NEUROLOGUE, Role.NEUROLOGUE_RESIDENT);
-        List<User> demandes = userRepository.findPendingRequestsByRoles(medicalRoles);
-        return ResponseEntity.ok(demandes);
+        try {
+            List<Role> medicalRoles = List.of(Role.MEDECIN, Role.NEUROLOGUE, Role.NEUROLOGUE_RESIDENT);
+            List<User> demandes = userRepository.findPendingRequestsByRoles(medicalRoles);
+        
+            System.out.println("📊 Found " + demandes.size() + " pending doctor requests");
+        
+            // Debug: Print each pending request
+            for (User user : demandes) {
+                System.out.println("🩺 Pending: " + user.getName() + " - " + user.getEmail() + 
+                                 " - Role: " + user.getRole() + " - Active: " + user.getIsActive());
+            }
+        
+            if (demandes.isEmpty()) {
+                return ResponseEntity.ok().body("No pending requests");
+            }
+        
+            return ResponseEntity.ok(demandes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error fetching pending requests: " + e.getMessage());
+        }
     }
 //--------------------------------------------Reject a doctor---------------------------------------------------------------
     public ResponseEntity<?> rejectDoctorRequest(Integer id) {
