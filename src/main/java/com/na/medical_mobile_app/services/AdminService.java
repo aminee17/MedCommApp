@@ -35,54 +35,64 @@ public class AdminService {
 
 //-----------------------------------Creating a doctor--------------------------------------------------------------------
 public ResponseEntity<?> createDoctor(DoctorCreationRequest request) {
-    User existingUser = userRepository.findByEmail(request.email);
+    try {
+        System.out.println("🩺 Processing doctor creation for: " + request.getEmail());
+        System.out.println("📋 Request details - Name: " + request.getName() + ", Role: " + request.getRole());
+        
+        User existingUser = userRepository.findByEmail(request.getEmail());
 
-    if (existingUser != null) {
-        if (existingUser.getIsActive()) {
-            return ResponseEntity.badRequest().body("Email déjà utilisé");
+        if (existingUser != null) {
+            if (existingUser.getIsActive()) {
+                System.out.println("❌ Email already in use: " + request.getEmail());
+                return ResponseEntity.badRequest().body("Email déjà utilisé");
+            }
+
+            // Reactivate inactive doctor
+            String rawPassword = PasswordGenerator.generateSecurePassword();
+            String hashedPassword = passwordEncoder.encode(rawPassword);
+
+            doctorHelperService.populateDoctorFields(existingUser, request);
+            existingUser.setPassword(hashedPassword);
+            existingUser.setIsActive(true);
+            existingUser.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(existingUser);
+
+            DoctorResponseDTO responseDTO = new DoctorResponseDTO(
+                    existingUser.getName(),
+                    existingUser.getEmail(),
+                    rawPassword
+            );
+            
+            System.out.println("✅ Reactivated doctor: " + existingUser.getEmail());
+            return ResponseEntity.ok(Map.of("doctor", responseDTO));
         }
 
-        // Reactivate inactive doctor
+        // Create new doctor
         String rawPassword = PasswordGenerator.generateSecurePassword();
         String hashedPassword = passwordEncoder.encode(rawPassword);
 
-        doctorHelperService.populateDoctorFields(existingUser, request);
-        existingUser.setPassword(hashedPassword);
-        existingUser.setIsActive(true);
-        existingUser.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(existingUser);
+        User doctor = new User();
+        doctor.setEmail(request.getEmail());
+        doctorHelperService.populateDoctorFields(doctor, request);
+        doctor.setPassword(hashedPassword);
+        doctor.setIsActive(true);
+        doctor.setCreatedAt(LocalDateTime.now());
+        userRepository.save(doctor);
 
         DoctorResponseDTO responseDTO = new DoctorResponseDTO(
-                existingUser.getName(),
-                existingUser.getEmail(),
+                doctor.getName(),
+                doctor.getEmail(),
                 rawPassword
         );
+
+        System.out.println("✅ Created new doctor: " + doctor.getEmail());
         return ResponseEntity.ok(Map.of("doctor", responseDTO));
 
+    } catch (Exception e) {
+        System.out.println("❌ Error in createDoctor service: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body("Error creating doctor: " + e.getMessage());
     }
-
-    // Create new doctor
-    String rawPassword = PasswordGenerator.generateSecurePassword();
-    String hashedPassword = passwordEncoder.encode(rawPassword);
-
-    User doctor = new User();
-    doctor.setEmail(request.email); // Needed before populating for lookup logic
-    doctorHelperService.populateDoctorFields(doctor, request);
-    doctor.setPassword(hashedPassword);
-    doctor.setIsActive(true);
-    doctor.setCreatedAt(LocalDateTime.now());
-    userRepository.save(doctor);
-
-    DoctorResponseDTO responseDTO = new DoctorResponseDTO(
-            doctor.getName(),
-            doctor.getEmail(),
-            rawPassword
-    );
-
-
-// Return wrapped object
-    return ResponseEntity.ok(Map.of("doctor", responseDTO));
-
 }
 
 
