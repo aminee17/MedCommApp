@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
-// @CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"https://medcommapp-frontend.onrender.com", "http://localhost:3000", "http://localhost:19006"})
 public class AdminController {
 
     @Autowired
@@ -16,18 +16,29 @@ public class AdminController {
 
     @PostMapping("/create-doctor")
     public ResponseEntity<?> createDoctor(@RequestBody DoctorCreationRequest request) {
-        // 💌 Envoi de l'email avec le mot de passe se fait à partir du front
-        return adminService.createDoctor(request);
+        try {
+            return adminService.createDoctor(request);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating doctor: " + e.getMessage());
+        }
     }
 
     @GetMapping("/pending-requests")
     public ResponseEntity<?> getPendingRequests() {
-        return adminService.getPendingRequests();
+        try {
+            return adminService.getPendingRequests();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error fetching pending requests: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/reject-request/{id}")
     public ResponseEntity<?> rejectDoctorRequest(@PathVariable Integer id) {
-        return adminService.rejectDoctorRequest(id);
+        try {
+            return adminService.rejectDoctorRequest(id);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error rejecting request: " + e.getMessage());
+        }
     }
 }
 
