@@ -13,18 +13,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
+    
 
     @Autowired
     private DoctorHelperService doctorHelperService;
@@ -37,59 +41,91 @@ public class AuthService {
 
 
     public ResponseEntity<?> login(LoginRequest loginRequest) {
-        User user = userRepository.findByEmail(loginRequest.getEmail());
-        if (user == null) {
-            return ResponseEntity.status(401).body("Aucun utilisateur n'est enregistré avec cette adresse mail");
+        logger.info("Login attempt for email: {}", loginRequest.getEmail());
+        
+        try {
+            User user = userRepository.findByEmail(loginRequest.getEmail());
+            if (user == null) {
+                logger.warn("User not found with email: {}", loginRequest.getEmail());
+                return ResponseEntity.status(401).body("Aucun utilisateur n'est enregistré avec cette adresse mail");
+            }
+
+            if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                logger.warn("Invalid password for email: {}", loginRequest.getEmail());
+                return ResponseEntity.status(401).body("Email ou mot de passe invalide");
+            }
+
+            // Generate JWT token
+            UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+            String token = jwtTokenUtil.generateToken(userDetails);
+
+            LoginResponse response = new LoginResponse(
+                    "Connexion réussie",
+                    user.getUserId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    token
+            );
+
+            logger.info("Login successful for user: {}", user.getEmail());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error during login for email {}: ", loginRequest.getEmail(), e);
+            return ResponseEntity.status(500).body("Erreur lors de la connexion: " + e.getMessage());
         }
-
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401).body("Email ou mot de passe invalide");
-        }
-
-        // Generate JWT token
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        String token = jwtTokenUtil.generateToken(userDetails);
-
-        LoginResponse response = new LoginResponse(
-                "Connexion réussie",
-                user.getUserId(),
-                user.getName(),
-                user.getEmail(),
-                user.getRole(),
-                token
-        );
-
-        // TODO : MOT DE PASSE OUBLIE FEATURE
-        return ResponseEntity.ok(response);
     }
 
     public ResponseEntity<?> registerAdmin(AdminRegistrationRequest request) {
-        // Check if email already exists
-        User existingByEmail = userRepository.findByEmail(request.email);
-        if (existingByEmail != null) {
-            return ResponseEntity.badRequest().body("Un compte existe déjà avec cette adresse email.");
+        logger.info("Starting admin registration for email: {}", request.email);
+        
+        try {
+            // Check if email already exists
+            User existingByEmail = userRepository.findByEmail(request.email);
+            if (existingByEmail != null) {
+                logger.warn("Email already exists: {}", request.email);
+                return ResponseEntity.badRequest().body("Un compte existe déjà avec cette adresse email.");
+            }
+
+            // Check if CIN already exists
+            User existingByCin = userRepository.findByCin(request.cin);
+            if (existingByCin != null) {
+                logger.warn("CIN already exists: {}", request.cin);
+                return ResponseEntity.badRequest().body("Un compte existe déjà avec ce CIN.");
+            }
+
+            logger.info("Creating new admin user...");
+            
+            // Create new admin user
+            User newAdmin = new User();
+            newAdmin.setCin(request.cin);
+            newAdmin.setName(request.name);
+            newAdmin.setEmail(request.email);
+            newAdmin.setPassword(passwordEncoder.encode(request.password));
+            newAdmin.setPhone(request.phone);
+            newAdmin.setIsActive(true);
+            newAdmin.setRole(Role.ADMIN);
+            newAdmin.setEmailVerifiedAt(null);
+            
+            logger.info("Setting location - Governorate ID: {}, City ID: {}", 
+                        request.getGovernorate_id(), request.getCity_id());
+            doctorHelperService.setLocation(newAdmin, request.getGovernorate_id(), request.getCity_id());
+            
+            newAdmin.setCreatedAt(LocalDateTime.now());
+            
+            logger.info("Saving admin user to database...");
+            userRepository.save(newAdmin);
+            
+            logger.info("Admin registration successful for: {}", request.email);
+            return ResponseEntity.ok("Compte admin créé avec succès.");
+            
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error during admin registration: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error during admin registration: ", e);
+            return ResponseEntity.status(500).body("Erreur lors de la création du compte: " + e.getMessage());
         }
-
-        // Check if CIN already exists
-        User existingByCin = userRepository.findByCin(request.cin);
-        if (existingByCin != null) {
-            return ResponseEntity.badRequest().body("Un compte existe déjà avec ce CIN.");
-        }
-
-        // Create new admin user
-        User newAdmin = new User();
-        newAdmin.setCin(request.cin);
-        newAdmin.setName(request.name);
-        newAdmin.setEmail(request.email);
-        newAdmin.setPassword(passwordEncoder.encode(request.password));
-        newAdmin.setPhone(request.phone);
-        newAdmin.setIsActive(true);
-        newAdmin.setRole(Role.ADMIN);
-        newAdmin.setEmailVerifiedAt(null);
-        doctorHelperService.setLocation(newAdmin, request.getGovernorate_id(), request.getCity_id());
-        newAdmin.setCreatedAt(LocalDateTime.now());
-        userRepository.save(newAdmin);
-
-        return ResponseEntity.ok("Compte admin créé avec succès.");
     }
 }

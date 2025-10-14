@@ -8,9 +8,13 @@ import com.na.medical_mobile_app.repositories.CityRepository;
 import com.na.medical_mobile_app.repositories.GovernorateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class DoctorHelperService {
+
+    private static final Logger logger = LoggerFactory.getLogger(DoctorHelperService.class);
 
     @Autowired
     private GovernorateRepository governorateRepository;
@@ -34,20 +38,39 @@ public class DoctorHelperService {
         this.setLocation(doctor, request.getGovernorate_id(), request.getCity_id());
 
     }
+    
     //-------------------------------Making a good location & governorate ------------------------------------------------------
 
     public void setLocation(User user, Integer governorateId, Integer cityId) {
+        logger.info("Setting location - Governorate ID: {}, City ID: {}", governorateId, cityId);
+        
         if (governorateId != null) {
+            logger.debug("Looking up governorate with ID: {}", governorateId);
             Governorate gov = governorateRepository.findById(governorateId)
-                    .orElseThrow(() -> new RuntimeException("Governorate not found"));
+                    .orElseThrow(() -> {
+                        logger.error("Governorate not found with ID: {}", governorateId);
+                        return new IllegalArgumentException("Gouvernorat introuvable avec l'ID: " + governorateId);
+                    });
             user.setGovernorate(gov);
+            logger.debug("Governorate set: {}", gov.getName());
+        } else {
+            logger.warn("Governorate ID is null");
         }
 
         if (cityId != null) {
+            logger.debug("Looking up city with ID: {}", cityId);
             City city = cityRepository.findById(cityId)
-                    .orElseThrow(() -> new RuntimeException("City not found"));
+                    .orElseThrow(() -> {
+                        logger.error("City not found with ID: {}", cityId);
+                        return new IllegalArgumentException("Ville introuvable avec l'ID: " + cityId);
+                    });
             user.setCity(city);
+            logger.debug("City set: {}", city.getName());
+        } else {
+            logger.warn("City ID is null");
         }
+        
+        logger.info("Location set successfully");
     }
 }
 
