@@ -182,7 +182,7 @@ public class MedicalFormService {
         Patient patient;
         try {
             patient = patientService.findOrCreatePatient(request);
-            System.out.println("✅ Patient processed: " + patient.getFullName());
+            System.out.println("✅ Patient processed: " + patient.getName());
         } catch (Exception e) {
             System.err.println("❌ Error processing patient: " + e.getMessage());
             throw new Exception("Error processing patient: " + e.getMessage());
@@ -335,7 +335,7 @@ public class MedicalFormService {
         System.out.println("Retrieved " + forms.size() + " medical forms for admin");
         return forms;
     }
-    
+
 
     /**
      * Get all medical forms in the system
