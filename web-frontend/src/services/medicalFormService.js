@@ -228,3 +228,87 @@ export async function submitMedicalForm(formData) {
         throw error; // Re-throw the original error to preserve the message
     }
 }
+
+// Get form response for a specific form
+export const getFormResponse = async (formId) => {
+    try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/${formId}/response?userId=${userId}`, {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        });
+
+        console.log('📥 Form response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Error fetching form response: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Form response data:', data);
+        return data;
+    } catch (error) {
+        console.error('Error fetching form response:', error);
+        throw error;
+    }
+};
+
+// Check if a form has a response
+export const checkFormResponse = async (formId) => {
+    try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+            throw new Error('User ID not found. Please log in again.');
+        }
+
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/responses/check/${formId}?userId=${userId}`, {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error checking form response: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.hasResponse;
+    } catch (error) {
+        console.error('Error checking form response:', error);
+        return false;
+    }
+};
+
+// Test function to debug form responses
+export const debugFormResponse = async (formId) => {
+    try {
+        console.log('🔍 Debugging form response for form:', formId);
+        
+        const userId = await AsyncStorage.getItem('userId');
+        console.log('👤 User ID:', userId);
+        
+        // Check if form has response
+        const hasResponse = await checkFormResponse(formId);
+        console.log('📋 Form has response:', hasResponse);
+        
+        if (hasResponse) {
+            const response = await getFormResponse(formId);
+            console.log('✅ Form response details:', response);
+            return response;
+        } else {
+            console.log('❌ No response found for form');
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+        throw error;
+    }
+};

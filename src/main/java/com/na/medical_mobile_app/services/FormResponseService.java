@@ -40,12 +40,16 @@ public class FormResponseService {
      * Submit a neurologist's response to a medical form
      */
     public FormResponse saveFormResponse(FormResponseRequest request) {
+        System.out.println("🔄 Starting form response submission for form ID: " + request.getFormId());
+        
         // Get the current user (neurologist)
         User neurologist = userService.getLoggedInUser();
+        System.out.println("👤 Neurologist: " + neurologist.getName() + " (" + neurologist.getRole() + ")");
 
         // Find the medical form
         MedicalForm form = medicalFormRepository.findById(request.getFormId())
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + request.getFormId()));
+        System.out.println("📋 Found form for patient: " + form.getPatient().getName());
 
         // Create new form response
         FormResponse response = new FormResponse();
@@ -68,19 +72,30 @@ public class FormResponseService {
             User supervisionDoctor = userRepository.findById(request.getSupervisionDoctorId())
                     .orElse(null);
             response.setSupervisionDoctor(supervisionDoctor);
+            System.out.println("👥 Supervision doctor set: " + (supervisionDoctor != null ? supervisionDoctor.getName() : "null"));
         }
 
         // Update the form status based on the neurologist's role and the response
         updateFormStatus(form, neurologist, request);
 
+        // Save the form first
         medicalFormRepository.save(form);
+        System.out.println("✅ Form status updated to: " + form.getStatus());
 
         // Save the response
         FormResponse savedResponse = formResponseRepository.save(response);
+        System.out.println("✅ Form response saved with ID: " + savedResponse.getResponseId());
 
         // Create notification for the doctor
-        notificationService.createFormResponseNotification(savedResponse);
+        try {
+            notificationService.createFormResponseNotification(savedResponse);
+            System.out.println("✅ Notification created for doctor");
+        } catch (Exception e) {
+            System.err.println("⚠️ Failed to create notification: " + e.getMessage());
+            // Don't throw exception for notification failures
+        }
 
+        System.out.println("🎉 Form response submission completed successfully");
         return savedResponse;
     }
 
@@ -88,18 +103,31 @@ public class FormResponseService {
      * Update the form status based on the neurologist's role and the response
      */
     private void updateFormStatus(MedicalForm form, User neurologist, FormResponseRequest request) {
+        System.out.println("🔄 Updating form status for neurologist: " + neurologist.getName() + " (" + neurologist.getRole() + ")");
+        System.out.println("📋 Form current status: " + form.getStatus());
+        System.out.println("📋 Requires supervision: " + request.getRequiresSupervision());
+        
         // If the neurologist is a resident, set status to UNDER_REVIEW or REQUIRES_SUPERVISION
         if (neurologist.getRole() == Role.NEUROLOGUE_RESIDENT) {
             if (Boolean.TRUE.equals(request.getRequiresSupervision())) {
                 form.setStatus(FormStatus.REQUIRES_SUPERVISION);
+                System.out.println("✅ Form status updated to: REQUIRES_SUPERVISION");
             } else {
                 form.setStatus(FormStatus.UNDER_REVIEW);
+                System.out.println("✅ Form status updated to: UNDER_REVIEW");
             }
         }
         // If the neurologist is a full neurologist, set status to COMPLETED
         else if (neurologist.getRole() == Role.NEUROLOGUE) {
             form.setStatus(FormStatus.COMPLETED);
+            System.out.println("✅ Form status updated to: COMPLETED");
+        } else {
+            // Default fallback
+            form.setStatus(FormStatus.UNDER_REVIEW);
+            System.out.println("⚠️ Unknown neurologist role, defaulting to: UNDER_REVIEW");
         }
+        
+        System.out.println("📋 Form new status: " + form.getStatus());
     }
 
     /**

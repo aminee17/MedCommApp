@@ -114,6 +114,56 @@ public class MedicalFormController {
     }
     
     /**
+     * Get form response for a specific form - for doctors to view neurologist responses
+     */
+    @GetMapping("/{formId}/response")
+    public ResponseEntity<?> getFormResponseForDoctor(@PathVariable Integer formId) {
+        try {
+            User currentDoctor = userService.getLoggedInUser();
+            System.out.println("👤 Doctor requesting response for form: " + formId);
+            
+            // Verify that this form belongs to the doctor
+            boolean isOwnForm = medicalFormService.isFormCreatedByDoctor(formId, currentDoctor);
+            if (!isOwnForm) {
+                return ResponseEntity.status(403).body(Map.of("error", "You don't have permission to access this form"));
+            }
+            
+            Optional<FormResponse> response = formResponseService.getLatestResponseForForm(formId);
+            
+            if (response.isPresent()) {
+                Map<String, Object> responseData = new HashMap<>();
+                FormResponse r = response.get();
+                
+                responseData.put("responseId", r.getResponseId());
+                responseData.put("responseType", r.getResponseType());
+                responseData.put("diagnosis", r.getDiagnosis());
+                responseData.put("recommendations", r.getRecommendations());
+                responseData.put("treatmentSuggestions", r.getTreatmentSuggestions());
+                responseData.put("medicationChanges", r.getMedicationChanges());
+                responseData.put("followUpInstructions", r.getFollowUpInstructions());
+                responseData.put("requiresSupervision", r.getRequiresSupervision());
+                responseData.put("urgencyLevel", r.getUrgencyLevel());
+                responseData.put("followUpRequired", r.getFollowUpRequired());
+                responseData.put("followUpDate", r.getFollowUpDate());
+                responseData.put("createdAt", r.getCreatedAt());
+                responseData.put("neurologistName", r.getResponder().getName());
+                responseData.put("neurologistEmail", r.getResponder().getEmail());
+                responseData.put("neurologistRole", r.getResponder().getRole());
+                
+                System.out.println("✅ Returning response for form: " + formId);
+                return ResponseEntity.ok(responseData);
+            } else {
+                System.out.println("ℹ️ No response found for form: " + formId);
+                return ResponseEntity.ok(Map.of("message", "No response found for this form"));
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error getting form response: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    /**
      * Check if a form has any responses - for doctors to check their forms
      */
     @GetMapping("/responses/check/{formId}")
@@ -129,6 +179,7 @@ public class MedicalFormController {
             }
             
             boolean hasResponse = formResponseService.hasResponse(formId);
+            System.out.println("🔍 Form " + formId + " has response: " + hasResponse);
             return ResponseEntity.ok(Map.of("hasResponse", hasResponse));
         } catch (Exception e) {
             e.printStackTrace();

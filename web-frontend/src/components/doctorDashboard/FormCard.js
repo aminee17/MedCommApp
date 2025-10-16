@@ -12,7 +12,7 @@ export default function FormCard({ form, onPress, onViewResponse, onChatPress })
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        // Check if this form has a response from a neurologist
+
         const checkResponse = async () => {
             try {
                 const hasResp = await checkFormResponse(form.id);
@@ -24,7 +24,7 @@ export default function FormCard({ form, onPress, onViewResponse, onChatPress })
             }
         };
 
-        // Check for unread messages
+
         const checkUnreadMessages = async () => {
             try {
                 const count = await countUnreadMessagesForForm(form.id);
@@ -36,20 +36,12 @@ export default function FormCard({ form, onPress, onViewResponse, onChatPress })
 
         checkResponse();
         checkUnreadMessages();
-        
-        // Set up polling for unread messages every 30 seconds
+
         const interval = setInterval(checkUnreadMessages, 30000);
-        
+
         return () => clearInterval(interval);
     }, [form.id]);
-
-    const handleViewResponse = () => {
-        if (hasResponse) {
-            onViewResponse(form.id);
-        } else {
-            alert('Aucune réponse disponible pour ce formulaire');
-        }
-    };
+    
 
     return (
         <TouchableOpacity style={styles.formCard} onPress={() => onPress(form)}>
@@ -60,23 +52,24 @@ export default function FormCard({ form, onPress, onViewResponse, onChatPress })
             <Text style={styles.formStatus}>
                 Status: {form.status || 'En attente'}
             </Text>
-            <View style={styles.actionButtons}>
-                <TouchableOpacity
-                    style={[
-                        styles.actionButton,
-                        hasResponse && styles.responseAvailableButton
-                    ]}
-                    onPress={handleViewResponse}
-                >
-                    {checking ? (
-                        <ActivityIndicator size="small" color={COLORS.light} />
-                    ) : (
-                        <Text style={styles.actionButtonText}>
-                            {hasResponse ? 'Voir réponse' : 'Aucune réponse'}
-                        </Text>
-                    )}
-                </TouchableOpacity>
 
+            <View style={styles.actionButtons}>
+                {/* Bouton Voir la réponse (seulement si hasResponse est vrai) */}
+                {checking ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : hasResponse ? (
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.responseAvailableButton]}
+                        onPress={() => onViewResponse(form.id)}
+                    >
+                        <Ionicons name="eye-outline" size={16} color={COLORS.light} />
+                        <Text style={styles.actionButtonText}>Voir la réponse</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <Text style={styles.noResponseText}>Aucune réponse disponible</Text>
+                )}
+
+                {/* Bouton Chat */}
                 <TouchableOpacity
                     style={[styles.actionButton, styles.chatButton]}
                     onPress={() => onChatPress(form.id, form.neurologistId || null)}
