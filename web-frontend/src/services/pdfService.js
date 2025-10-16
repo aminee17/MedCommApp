@@ -1,6 +1,7 @@
 // services/pdfService.js
 import { API_BASE_URL } from '../utils/constants';
 import { getAuthHeaders } from './authService';
+import * as FileSystem from 'expo-file-system';
 
 export const fetchMedicalFormsForAdmin = async () => {
     try {
@@ -33,20 +34,21 @@ export const downloadPdf = async (formId, fileName) => {
             throw new Error('Erreur lors du téléchargement du PDF');
         }
 
-        // For React Native, you might need to handle the file download differently
-        // This is a basic implementation - you might want to use a file download library
+        
         const blob = await response.blob();
-        
-        // Create a temporary link to download the file
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName || `formulaire_${formId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
+
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        return new Promise((resolve, reject) => {
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const uri = `${FileSystem.documentDirectory}${fileName}`;
+                await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+                console.log('PDF saved to:', uri);
+                resolve(uri);
+            };
+            reader.onerror = reject;
+        });
     } catch (error) {
         console.error('Error downloading PDF:', error);
         throw error;

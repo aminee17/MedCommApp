@@ -1,11 +1,10 @@
-// service/PdfStorageService.java
+// services/PdfStorageService.java
 package com.na.medical_mobile_app.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.na.medical_mobile_app.entities.MedicalForm;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +14,7 @@ import java.nio.file.Paths;
 @Service
 public class PdfStorageService {
 
-    @Value("${pdf.storage.directory:./pdf-storage}")
+    @Value("${pdf.storage.directory:/data/pdf-storage}") // Use Render's persistent disk mount path
     private String storageDirectory;
 
     public String savePdfToFileSystem(byte[] pdfData, String fileName) throws IOException {

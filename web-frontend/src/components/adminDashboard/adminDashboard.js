@@ -1,3 +1,4 @@
+// adminDashboard.js
 import React, { useState, useEffect } from 'react';
 import styles from './styles';
 import {
@@ -11,19 +12,20 @@ import {
     rejectRequest,
 } from '../../services/adminService';
 import { useLogout } from '../../hooks/useLogout';
-import { fetchMedicalFormsForAdmin, downloadPdf } from '../../services/pdfService';
+import { fetchMedicalFormsForAdmin, downloadPdf, regeneratePdf } from '../../services/pdfService';
 
 export default function AdminDashboard({ navigation }) {
     const [pendingRequests, setPendingRequests] = useState([]);
     const [medicalForms, setMedicalForms] = useState([]);
-    const [activeTab, setActiveTab] = useState('requests'); // 'requests' or 'forms'
+    const [activeTab, setActiveTab] = useState('requests');
     const [loading, setLoading] = useState(true);
     const [formsLoading, setFormsLoading] = useState(false);
     const handleLogout = useLogout();
     const route = useRoute();
 
-    // React to header-triggered logout param changes
+    
     useEffect(() => {
+
         if (route.params?.triggerLogout) {
             navigation.setParams({ triggerLogout: null });
             handleLogout();
@@ -92,6 +94,17 @@ export default function AdminDashboard({ navigation }) {
             Alert.alert('Succès', 'PDF téléchargé avec succès');
         } catch (error) {
             Alert.alert('Erreur', 'Erreur lors du téléchargement du PDF');
+        }
+    };
+
+    const handleRegeneratePdf = async (formId) => {
+        try {
+            Alert.alert('Régénération', 'Régénération du PDF en cours...');
+            await regeneratePdf(formId);
+            Alert.alert('Succès', 'PDF régénéré avec succès');
+            loadMedicalForms();
+        } catch (error) {
+            Alert.alert('Erreur', 'Erreur lors de la régénération du PDF');
         }
     };
 
@@ -172,15 +185,17 @@ export default function AdminDashboard({ navigation }) {
             </View>
 
             <View style={styles.buttonContainer}>
-                {item.pdfGenerated ? (
-                    <Button
-                        title="Télécharger PDF"
-                        onPress={() => handleDownloadPdf(item.formId, item.pdfFileName)}
-                        color="#3498DB"
-                    />
-                ) : (
-                    <Text style={styles.noPdfText}>PDF non disponible</Text>
-                )}
+                <Button
+                    title="Télécharger PDF"
+                    onPress={() => handleDownloadPdf(item.formId, item.pdfFileName || `formulaire_${item.formId}.pdf`)}
+                    color="#3498DB"
+                />
+                <View style={{ width: 10 }} />
+                <Button
+                    title="Régénérer PDF"
+                    onPress={() => handleRegeneratePdf(item.formId)}
+                    color="#F39C12"
+                />
             </View>
         </View>
     );

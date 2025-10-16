@@ -1,9 +1,12 @@
+// services/MedicalFormService.java
 package com.na.medical_mobile_app.services;
 
 import com.na.medical_mobile_app.DTOs.MedicalFormRequest;
 import com.na.medical_mobile_app.entities.*;
 import com.na.medical_mobile_app.repositories.MedicalFormRepository;
 import com.na.medical_mobile_app.repositories.PatientRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +21,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class MedicalFormService {
+
+    private static final Logger logger = LoggerFactory.getLogger(MedicalFormService.class);
 
     @Autowired
     private PatientRepository patientRepository;
@@ -36,7 +41,7 @@ public class MedicalFormService {
 
     @Autowired
     private NeurologistAssignmentService neurologistAssignmentService;
-    
+
     @Autowired
     private NotificationService notificationService;
 
@@ -61,7 +66,7 @@ public class MedicalFormService {
                 throw new Exception("MRI photo must be an image file. Received: " + contentType);
             }
             
-            System.out.println("✅ MRI photo validated: " + mriPhoto.getOriginalFilename() + " (" + mriPhoto.getSize() + " bytes)");
+            logger.info("✅ MRI photo validated: {} ({} bytes)", mriPhoto.getOriginalFilename(), mriPhoto.getSize());
         }
 
         // Validate seizure video
@@ -77,26 +82,26 @@ public class MedicalFormService {
                 throw new Exception("Seizure video must be a video file. Received: " + contentType);
             }
             
-            System.out.println("✅ Seizure video validated: " + seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)");
+            logger.info("✅ Seizure video validated: {} ({} bytes)", seizureVideo.getOriginalFilename(), seizureVideo.getSize());
         }
     }
 
-    // ... existing buildSymptomsSummary method (keep it as is) ...
+
 
     private String buildSymptomsSummary(MedicalFormRequest request) {
         StringBuilder summary = new StringBuilder();
 
         // Debug logging
-        System.out.println("=== DEBUG: Building symptoms summary ===");
-        System.out.println("seizureType: " + request.seizureType);
-        System.out.println("progressiveFall: " + request.progressiveFall);
-        System.out.println("suddenFall: " + request.suddenFall);
-        System.out.println("clonicJerks: " + request.clonicJerks);
-        System.out.println("automatisms: " + request.automatisms);
-        System.out.println("activityStop: " + request.activityStop);
-        System.out.println("sensitiveDisorders: " + request.sensitiveDisorders);
-        System.out.println("sensoryDisorders: " + request.sensoryDisorders);
-        System.out.println("lateralTongueBiting: " + request.lateralTongueBiting);
+        logger.info("=== Building symptoms summary ===");
+        logger.info("seizureType: {}", request.seizureType);
+        logger.info("progressiveFall: {}", request.progressiveFall);
+        logger.info("suddenFall: {}", request.suddenFall);
+        logger.info("clonicJerks: {}", request.clonicJerks);
+        logger.info("automatisms: {}", request.automatisms);
+        logger.info("activityStop: {}", request.activityStop);
+        logger.info("sensitiveDisorders: {}", request.sensitiveDisorders);
+        logger.info("sensoryDisorders: {}", request.sensoryDisorders);
+        logger.info("lateralTongueBiting: {}", request.lateralTongueBiting);
 
         // Seizure type (single choice)
         if (request.seizureType != null && !request.seizureType.isBlank()) {
@@ -141,100 +146,54 @@ public class MedicalFormService {
 
         // Other info
         if (request.otherInformation != null && !request.otherInformation.isBlank()) {
-            summary.append("- Autres: ").append(request.otherInformation).append("\n");
+            summary.append("- Informations supplémentaires: ").append(request.otherInformation).append("\n");
         }
 
-        String result = summary.toString().trim();
-        System.out.println("Final symptoms summary: " + result);
-        System.out.println("=== END DEBUG ===");
-        
-        return result;
+        return summary.toString();
     }
 
-    //-----------------------------------------------Saving the medical form---------------------------------------------------
-    /**
-     * Saves a medical form submission including patient information and attachments
-     * @param request The form data containing all fields from the medical form
-     * @return The ID of the saved form submission
-     */
-    @Transactional
-    public Integer saveMedicalForm(
-            MedicalFormRequest request,
-            MultipartFile mriPhoto,
-            MultipartFile seizureVideo,
-            User uploadedBy
-    ) throws Exception {
-        if (request == null || request.cinNumber == null) {
-            throw new IllegalArgumentException("Request and CIN number cannot be null");
-        }
+    public Integer saveMedicalForm(MedicalFormRequest request, MultipartFile mriPhoto, MultipartFile seizureVideo, User defaultUser) throws Exception {
+        logger.info("Starting medical form submission for user: {}", defaultUser.getEmail());
 
-        System.out.println("🩺 Starting medical form save process...");
+        // Validate files
+        validateFiles(mriPhoto, seizureVideo);
 
-        // Validate files first
-        try {
-            validateFiles(mriPhoto, seizureVideo);
-        } catch (Exception e) {
-            System.err.println("❌ File validation failed: " + e.getMessage());
-            throw new Exception("File validation failed: " + e.getMessage());
-        }
+        // Create or find patient
+        Patient patient = patientService.findOrCreatePatient(
+            request.cin,
+            request.patientName,
+            request.patientPhone,
+            request.patientAddress,
+            request.patientGender,
+            request.patientBirthdate
+        );
+        logger.info("Patient processed: {}", patient.getCin());
 
-        // Patient population
-        Patient patient;
-        try {
-            patient = patientService.findOrCreatePatient(request);
-            System.out.println("✅ Patient processed: " + patient.getName());
-        } catch (Exception e) {
-            System.err.println("❌ Error processing patient: " + e.getMessage());
-            throw new Exception("Error processing patient: " + e.getMessage());
-        }
-
-        // Get the current doctor (sender)
-        User defaultUser = userService.getLoggedInUser();
-        
-        // The improved neurologist assignment service
-        User neurologue;
-        try {
-            neurologue = neurologistAssignmentService.assignNeurologistToForm(patient, request);
-            System.out.println("✅ Neurologist assigned: " + (neurologue != null ? neurologue.getName() : "None"));
-        } catch (Exception e) {
-            System.err.println("❌ Error assigning neurologist: " + e.getMessage());
-            throw new Exception("Error assigning neurologist: " + e.getMessage());
-        }
-
-        // Create medical form
+        // Build MedicalForm entity
         MedicalForm medicalForm = new MedicalForm();
         medicalForm.setPatient(patient);
-        medicalForm.setDateFirstSeizure(request.firstSeizureDate);
-        medicalForm.setDateLastSeizure(request.lastSeizureDate);
-        medicalForm.setTotalSeizures(request.totalSeizures);
-        medicalForm.setAverageSeizureDuration(request.seizureDuration);
-        medicalForm.setSeizureFrequency(request.seizureFrequency);
-        medicalForm.setCreatedAt(LocalDateTime.now());
-        medicalForm.setStatus(FormStatus.SUBMITTED);
         medicalForm.setDoctor(defaultUser);
-        medicalForm.setAssignedTo(neurologue);
+        medicalForm.setDateFirstSeizure(request.dateFirstSeizure);
+        medicalForm.setDateLastSeizure(request.dateLastSeizure);
+        medicalForm.setTotalSeizures(request.totalSeizures);
+        medicalForm.setAverageSeizureDuration(request.averageSeizureDuration);
+        medicalForm.setSeizureFrequency(SeizureFrequency.fromString(request.seizureFrequency));
         medicalForm.setSymptoms(buildSymptomsSummary(request));
+        medicalForm.setStatus(FormStatus.SUBMITTED);
+        medicalForm.setCreatedAt(LocalDateTime.now());
 
-        // Save the form first to get an ID
-        try {
-            medicalForm = medicalFormRepository.save(medicalForm);
-            System.out.println("✅ Medical form saved with ID: " + medicalForm.getFormId());
-        } catch (Exception e) {
-            System.err.println("❌ Error saving medical form: " + e.getMessage());
-            throw new Exception("Error saving medical form: " + e.getMessage());
-        }
+        // Save the form
+        medicalForm = medicalFormRepository.save(medicalForm);
+        logger.info("Medical form saved with ID: {}", medicalForm.getFormId());
 
-        // Handle attachments
+        // Save attachments
+        List<Attachment> attachments = attachmentService.saveFormAttachments(medicalForm, mriPhoto, seizureVideo);
         try {
-            List<FileAttachment> attachments = attachmentService.saveAttachments(medicalForm,
-                    mriPhoto,
-                    seizureVideo,
-                    uploadedBy);
             medicalForm.setAttachments(attachments);
             medicalForm = medicalFormRepository.save(medicalForm);
-            System.out.println("✅ Attachments saved: " + attachments.size() + " files");
+            logger.info("✅ Attachments saved: {} files", attachments.size());
         } catch (Exception e) {
-            System.err.println("❌ Error saving attachments: " + e.getMessage());
+            logger.error("Error saving attachments: {}", e.getMessage());
             throw new Exception("Failed to save file attachments: " + e.getMessage());
         }
 
@@ -242,157 +201,135 @@ public class MedicalFormService {
         try {
             patient.setReferringDoctor(defaultUser);
             patientRepository.save(patient);
+            logger.info("Updated patient's referring doctor: {}", defaultUser.getEmail());
         } catch (Exception e) {
-            System.err.println("⚠️ Warning: Failed to update patient's referring doctor: " + e.getMessage());
-            // Continue execution as this is not critical
+            logger.warn("Failed to update patient's referring doctor: {}", e.getMessage());
         }
-        
+
         // Create notification for the neurologist
         try {
             notificationService.createNewFormNotification(medicalForm);
-            System.out.println("✅ Notification created");
+            logger.info("Notification created for form ID: {}", medicalForm.getFormId());
         } catch (Exception e) {
-            System.err.println("⚠️ Warning: Failed to create notification: " + e.getMessage());
-            // Continue execution as this is not critical
+            logger.warn("Failed to create notification: {}", e.getMessage());
         }
 
-        // Generate and save PDF automatically (in background)
+        // Generate and save PDF automatically
         try {
             generateAndSavePdf(medicalForm);
         } catch (Exception e) {
-            System.err.println("⚠️ PDF generation failed but form was saved: " + e.getMessage());
-            // Don't throw exception for PDF generation failures
+            logger.error("PDF generation failed for form ID: {}, but form was saved", medicalForm.getFormId(), e);
         }
 
-        System.out.println("✅ Medical form submission completed successfully");
+        logger.info("Medical form submission completed successfully for form ID: {}", medicalForm.getFormId());
         return medicalForm.getFormId();
     }
 
-    /**
-     * Generate PDF for a medical form and save it to file system
-     */
+
     public void generateAndSavePdf(MedicalForm form) {
+
         try {
-            System.out.println("Starting PDF generation for form ID: " + form.getFormId());
+            logger.info("Starting PDF generation for form ID: {}", form.getFormId());
             
-            // Generate PDF
+
             byte[] pdfData = pdfGenerationService.generateMedicalFormPdf(form);
-            System.out.println("PDF generated successfully, size: " + pdfData.length + " bytes");
+
+            logger.info("PDF generated successfully, size: {} bytes", pdfData.length);
             
-            // Generate filename
+
             String fileName = pdfGenerationService.generatePdfFileName(form);
-            System.out.println("Generated PDF filename: " + fileName);
+
+            logger.info("Generated PDF filename: {}", fileName);
             
-            // Save to file system
+
             String filePath = pdfStorageService.savePdfToFileSystem(pdfData, fileName);
-            System.out.println("PDF saved to: " + filePath);
+
+            logger.info("PDF saved to: {}", filePath);
             
-            // Update form with PDF information
+
             form.setPdfGenerated(true);
+
             form.setPdfGeneratedAt(LocalDateTime.now());
             form.setPdfFileName(fileName);
             form.setPdfFilePath(filePath);
             
             medicalFormRepository.save(form);
             
-            System.out.println("PDF generation completed successfully for form ID: " + form.getFormId());
+            logger.info("PDF generation completed successfully for form ID: {}", form.getFormId());
             
         } catch (Exception e) {
-            System.err.println("Error generating PDF for form ID: " + form.getFormId());
-            e.printStackTrace();
-            // Don't throw exception to avoid breaking form submission
+            logger.error("Error generating PDF for form ID: {}", form.getFormId(), e);
         }
     }
 
-    /**
-     * Get PDF data for a medical form
-     */
+
     public byte[] getPdfData(Integer formId) throws Exception {
+
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new Exception("Form not found with ID: " + formId));
         
         if (!form.getPdfGenerated() || form.getPdfFilePath() == null) {
-            System.out.println("PDF not found for form ID: " + formId + ", generating now...");
-            // Generate PDF if not already generated
+            logger.info("PDF not found for form ID: {}, generating now...", formId);
             generateAndSavePdf(form);
         }
         
         try {
             return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
         } catch (Exception e) {
-            System.err.println("Error loading PDF for form ID: " + formId);
-            // Try to regenerate PDF if loading fails
+            logger.error("Error loading PDF for form ID: {}, regenerating...", formId, e);
             generateAndSavePdf(form);
             return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
         }
     }
 
-    /**
-     * Get all medical forms with PDF information for admin
-     */
+
     public List<MedicalForm> getAllMedicalFormsWithPdf() {
         List<MedicalForm> forms = medicalFormRepository.findAll();
-        System.out.println("Retrieved " + forms.size() + " medical forms for admin");
+        logger.info("Retrieved {} medical forms for admin", forms.size());
         return forms;
     }
 
 
-    /**
-     * Get all medical forms in the system
-     */
+
     public List<MedicalForm> getAllMedicalForms() {
         return medicalFormRepository.findAll();
+
     }
-    
-    /**
-     * Get medical forms created by a specific doctor
-     */
+
     public List<MedicalForm> getMedicalFormsByDoctor(User doctor) {
         return medicalFormRepository.findByDoctor(doctor);
     }
-    
-    /**
-     * Get active (non-completed) medical forms created by a specific doctor
-     * This helps doctors focus on forms that still need attention
-     */
+
     public List<MedicalForm> getActiveMedicalFormsByDoctor(User doctor) {
-        // Get all statuses except COMPLETED
+
         List<FormStatus> activeStatuses = Arrays.asList(
-            FormStatus.SUBMITTED, 
-            FormStatus.UNDER_REVIEW, 
+            FormStatus.SUBMITTED,
+            FormStatus.UNDER_REVIEW,
             FormStatus.REQUIRES_SUPERVISION
         );
-        
+
         return medicalFormRepository.findByDoctorAndStatusIn(doctor, activeStatuses);
     }
-    
-    /**
-     * Get completed medical forms created by a specific doctor
-     */
+
     public List<MedicalForm> getCompletedMedicalFormsByDoctor(User doctor) {
         return medicalFormRepository.findByDoctorAndStatus(doctor, FormStatus.COMPLETED);
     }
-    
+
     public Optional<MedicalForm> getFormById(Integer formId) {
         return medicalFormRepository.findById(formId);
     }
-    /**
-     * Get recent medical forms created by a specific doctor (last 30 days)
-     */
+
     public List<MedicalForm> getRecentMedicalFormsByDoctor(User doctor) {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         return medicalFormRepository.findByDoctorAndCreatedAtAfter(doctor, thirtyDaysAgo);
     }
-    
-    /**
-     * Check if a form was created by a specific doctor
-     */
+
     public boolean isFormCreatedByDoctor(Integer formId, User doctor) {
         Optional<MedicalForm> form = medicalFormRepository.findById(formId);
         if (form.isEmpty()) {
             return false;
         }
-        
+
         return form.get().getDoctor().getUserId().equals(doctor.getUserId());
     }
 }
