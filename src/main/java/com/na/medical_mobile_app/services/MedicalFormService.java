@@ -46,6 +46,41 @@ public class MedicalFormService {
     @Autowired
     private PdfStorageService pdfStorageService;
 
+    // File validation method
+    private void validateFiles(MultipartFile mriPhoto, MultipartFile seizureVideo) throws Exception {
+        // Validate MRI photo
+        if (mriPhoto != null && !mriPhoto.isEmpty()) {
+            // Check file size (10MB limit)
+            if (mriPhoto.getSize() > 10 * 1024 * 1024) {
+                throw new Exception("MRI photo size exceeds 10MB limit");
+            }
+            
+            // Check file type
+            String contentType = mriPhoto.getContentType();
+            if (contentType != null && !contentType.startsWith("image/")) {
+                throw new Exception("MRI photo must be an image file. Received: " + contentType);
+            }
+            
+            System.out.println("✅ MRI photo validated: " + mriPhoto.getOriginalFilename() + " (" + mriPhoto.getSize() + " bytes)");
+        }
+
+        // Validate seizure video
+        if (seizureVideo != null && !seizureVideo.isEmpty()) {
+            // Check file size (50MB limit)
+            if (seizureVideo.getSize() > 50 * 1024 * 1024) {
+                throw new Exception("Seizure video size exceeds 50MB limit");
+            }
+            
+            // Check file type
+            String contentType = seizureVideo.getContentType();
+            if (contentType != null && !contentType.startsWith("video/")) {
+                throw new Exception("Seizure video must be a video file. Received: " + contentType);
+            }
+            
+            System.out.println("✅ Seizure video validated: " + seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)");
+        }
+    }
+
     // ... existing buildSymptomsSummary method (keep it as is) ...
 
     private String buildSymptomsSummary(MedicalFormRequest request) {
@@ -133,14 +168,38 @@ public class MedicalFormService {
             throw new IllegalArgumentException("Request and CIN number cannot be null");
         }
 
+        System.out.println("🩺 Starting medical form save process...");
+
+        // Validate files first
+        try {
+            validateFiles(mriPhoto, seizureVideo);
+        } catch (Exception e) {
+            System.err.println("❌ File validation failed: " + e.getMessage());
+            throw new Exception("File validation failed: " + e.getMessage());
+        }
+
         // Patient population
-        Patient patient = patientService.findOrCreatePatient(request);
+        Patient patient;
+        try {
+            patient = patientService.findOrCreatePatient(request);
+            System.out.println("✅ Patient processed: " + patient.getFullName());
+        } catch (Exception e) {
+            System.err.println("❌ Error processing patient: " + e.getMessage());
+            throw new Exception("Error processing patient: " + e.getMessage());
+        }
 
         // Get the current doctor (sender)
         User defaultUser = userService.getLoggedInUser();
         
         // The improved neurologist assignment service
-        User neurologue = neurologistAssignmentService.assignNeurologistToForm(patient, request);
+        User neurologue;
+        try {
+            neurologue = neurologistAssignmentService.assignNeurologistToForm(patient, request);
+            System.out.println("✅ Neurologist assigned: " + (neurologue != null ? neurologue.getName() : "None"));
+        } catch (Exception e) {
+            System.err.println("❌ Error assigning neurologist: " + e.getMessage());
+            throw new Exception("Error assigning neurologist: " + e.getMessage());
+        }
 
         // Create medical form
         MedicalForm medicalForm = new MedicalForm();
@@ -157,26 +216,55 @@ public class MedicalFormService {
         medicalForm.setSymptoms(buildSymptomsSummary(request));
 
         // Save the form first to get an ID
-        medicalForm = medicalFormRepository.save(medicalForm);
+        try {
+            medicalForm = medicalFormRepository.save(medicalForm);
+            System.out.println("✅ Medical form saved with ID: " + medicalForm.getFormId());
+        } catch (Exception e) {
+            System.err.println("❌ Error saving medical form: " + e.getMessage());
+            throw new Exception("Error saving medical form: " + e.getMessage());
+        }
 
         // Handle attachments
-        List<FileAttachment> attachments = attachmentService.saveAttachments(medicalForm,
-                mriPhoto,
-                seizureVideo,
-                uploadedBy);
-        medicalForm.setAttachments(attachments);
-        medicalForm = medicalFormRepository.save(medicalForm);
+        try {
+            List<FileAttachment> attachments = attachmentService.saveAttachments(medicalForm,
+                    mriPhoto,
+                    seizureVideo,
+                    uploadedBy);
+            medicalForm.setAttachments(attachments);
+            medicalForm = medicalFormRepository.save(medicalForm);
+            System.out.println("✅ Attachments saved: " + attachments.size() + " files");
+        } catch (Exception e) {
+            System.err.println("❌ Error saving attachments: " + e.getMessage());
+            throw new Exception("Failed to save file attachments: " + e.getMessage());
+        }
 
         // Update patient's referring doctor
-        patient.setReferringDoctor(defaultUser);
-        patientRepository.save(patient);
+        try {
+            patient.setReferringDoctor(defaultUser);
+            patientRepository.save(patient);
+        } catch (Exception e) {
+            System.err.println("⚠️ Warning: Failed to update patient's referring doctor: " + e.getMessage());
+            // Continue execution as this is not critical
+        }
         
         // Create notification for the neurologist
-        notificationService.createNewFormNotification(medicalForm);
+        try {
+            notificationService.createNewFormNotification(medicalForm);
+            System.out.println("✅ Notification created");
+        } catch (Exception e) {
+            System.err.println("⚠️ Warning: Failed to create notification: " + e.getMessage());
+            // Continue execution as this is not critical
+        }
 
-        // Generate and save PDF automatically
-        generateAndSavePdf(medicalForm);
+        // Generate and save PDF automatically (in background)
+        try {
+            generateAndSavePdf(medicalForm);
+        } catch (Exception e) {
+            System.err.println("⚠️ PDF generation failed but form was saved: " + e.getMessage());
+            // Don't throw exception for PDF generation failures
+        }
 
+        System.out.println("✅ Medical form submission completed successfully");
         return medicalForm.getFormId();
     }
 
@@ -247,8 +335,7 @@ public class MedicalFormService {
         System.out.println("Retrieved " + forms.size() + " medical forms for admin");
         return forms;
     }
-
-    // ... keep all other existing methods as they are ...
+    
 
     /**
      * Get all medical forms in the system

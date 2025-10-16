@@ -48,14 +48,8 @@ const formatDateForBackend = (dateString) => {
     
     console.log('Invalid date format:', dateString);
     return null;
+    
 };
-
-const TIMEOUT_DURATION = 30000; // 30 seconds timeout
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 seconds
-
-// Sleep function for retry delay
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Helper function to convert seizureOccurrence to seizureFrequency enum
 const getSeizureFrequencyFromOccurrence = (seizureOccurrence) => {
@@ -69,6 +63,23 @@ const getSeizureFrequencyFromOccurrence = (seizureOccurrence) => {
     if (seizureOccurrence.mensuelle) return 'MONTHLY';
     
     return null;
+};
+
+// Validate file before upload
+const validateFile = (file, maxSize, allowedTypes) => {
+    if (!file || !file.uri) return null;
+    
+    // Check file size (convert MB to bytes)
+    if (file.fileSize && file.fileSize > maxSize * 1024 * 1024) {
+        throw new Error(`File size exceeds ${maxSize}MB limit`);
+    }
+    
+    // Check file type
+    if (file.type && !allowedTypes.includes(file.type)) {
+        throw new Error(`File type not supported. Allowed types: ${allowedTypes.join(', ')}`);
+    }
+    
+    return true;
 };
 
 export async function submitMedicalForm(formData) {
@@ -93,6 +104,15 @@ export async function submitMedicalForm(formData) {
             throw new Error('User ID not found. Please log in again.');
         }
 
+        // Validate files before upload
+        if (formData.mriPhoto?.uri) {
+            validateFile(formData.mriPhoto, 10, ['image/jpeg', 'image/png', 'image/jpg']);
+        }
+        
+        if (formData.seizureVideo?.uri) {
+            validateFile(formData.seizureVideo, 50, ['video/mp4', 'video/avi', 'video/mov']);
+        }
+
         // Format dates to match backend expectations (YYYY-MM-DD)
         const birthDate = formatDateForBackend(formData.birthDate);
         const firstSeizureDate = formatDateForBackend(formData.firstSeizureDate);
@@ -114,7 +134,7 @@ export async function submitMedicalForm(formData) {
             firstSeizureDate,
             lastSeizureDate,
             isFirstSeizure: formData.isFirstSeizure,
-            // Handle seizureFrequency - convert from seizureOccurrence
+
             seizureFrequency: getSeizureFrequencyFromOccurrence(formData.seizureOccurrence),
             seizureDuration: formData.seizureDuration ? parseInt(formData.seizureDuration) : null,
             totalSeizures: formData.totalSeizures ? parseInt(formData.totalSeizures) : null,
@@ -122,7 +142,7 @@ export async function submitMedicalForm(formData) {
             // Characteristics
             hasAura: formData.hasAura,
             auraDescription: formData.auraDescription,
-            seizureType: formData.seizureType, // Changed from seizureTypes to seizureType
+            seizureType: formData.seizureType,
 
             // Updated "Pendant la crise" symptoms
             lossOfConsciousness: formData.lossOfConsciousness,
@@ -143,16 +163,17 @@ export async function submitMedicalForm(formData) {
         };
 
         // Log the request data for debugging
-        console.log('Request data:', JSON.stringify(requestData));
+        console.log('Request data:', JSON.stringify(requestData, null, 2));
 
         // Create FormData object for multipart request
         const form = new FormData();
 
-        // Add the JSON data as a string parameter (not a part)
+        // Add the JSON data as a string parameter
         form.append('form', JSON.stringify(requestData));
 
         // Add files if they exist
         if (formData.mriPhoto?.uri) {
+            console.log('Adding MRI photo:', formData.mriPhoto);
             form.append('mriPhoto', {
                 uri: formData.mriPhoto.uri,
                 name: 'mri_photo.jpg',
@@ -161,6 +182,7 @@ export async function submitMedicalForm(formData) {
         }
 
         if (formData.seizureVideo?.uri) {
+            console.log('Adding seizure video:', formData.seizureVideo);
             form.append('seizureVideo', {
                 uri: formData.seizureVideo.uri,
                 name: 'seizure_video.mp4',
@@ -173,6 +195,7 @@ export async function submitMedicalForm(formData) {
         // Remove Content-Type to let browser set it for multipart/form-data
         delete headers['Content-Type'];
         
+        console.log('📤 Sending form submission request...');
         const response = await fetch(`${API_BASE_URL}/api/medical-forms/submit?userId=${userId}`, {
             method: 'POST',
             headers,
@@ -180,19 +203,28 @@ export async function submitMedicalForm(formData) {
             credentials: 'include'
         });
         
+        console.log('📥 Server response status:', response.status);
+        
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response:', response.status, errorText);
-            throw new Error('File upload error. Please try again.');
+            let errorText;
+            try {
+                const errorData = await response.json();
+                errorText = errorData.error || JSON.stringify(errorData);
+            } catch {
+                errorText = await response.text();
+            }
+            console.error('❌ Server error response:', errorText);
+            throw new Error(errorText || `Server error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Form submitted successfully:', data);
+        console.log('✅ Form submitted successfully:', data);
         return data;
     } catch (error) {
         console.error('=== FORM SUBMISSION ERROR ===');
         console.error('Error type:', error.name);
         console.error('Error message:', error.message);
-        throw new Error('File upload error. Please try again.');
+        console.error('Error stack:', error.stack);
+        throw error; // Re-throw the original error to preserve the message
     }
 }

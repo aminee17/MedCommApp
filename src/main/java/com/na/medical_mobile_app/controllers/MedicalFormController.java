@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/medical-forms")
-// @CrossOrigin(origins = "*")
+
 public class MedicalFormController {
 
     @Autowired
@@ -36,28 +36,41 @@ public class MedicalFormController {
 
     //-------------------Form submission : Method M->N---------------------------------------------------------------------------------
     @PostMapping("/submit")
-    public ResponseEntity<Integer> submitMedicalForm(
+    public ResponseEntity<?> submitMedicalForm(
             @RequestParam("form") String formJson,
             @RequestPart(value = "mriPhoto", required = false) MultipartFile mriPhoto,
             @RequestPart(value = "seizureVideo", required = false) MultipartFile seizureVideo) {
+        
+        System.out.println("📥 Received medical form submission");
+        System.out.println("📁 MRI Photo: " + (mriPhoto != null ? mriPhoto.getOriginalFilename() + " (" + mriPhoto.getSize() + " bytes)" : "null"));
+        System.out.println("📁 Seizure Video: " + (seizureVideo != null ? seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)" : "null"));
+        
         MedicalFormRequest form;
         try {
             // Convert JSON string to MedicalFormRequest object
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule()); // For handling LocalDate
+            objectMapper.registerModule(new JavaTimeModule());
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             form = objectMapper.readValue(formJson, MedicalFormRequest.class);
+            System.out.println("✅ Successfully parsed form JSON");
         } catch (Exception e) {
+            System.err.println("❌ Error parsing form JSON: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid form data: " + e.getMessage()));
         }
+        
         try {
-            User currentUser = userService.getLoggedInUser(); // get the logged in user
+            User currentUser = userService.getLoggedInUser();
+            System.out.println("👤 Current user: " + currentUser.getEmail());
+            
             Integer formId = medicalFormService.saveMedicalForm(form, mriPhoto, seizureVideo, currentUser);
-            return ResponseEntity.ok(formId);
+            System.out.println("✅ Form saved successfully with ID: " + formId);
+            
+            return ResponseEntity.ok(Map.of("formId", formId, "message", "Form submitted successfully"));
         } catch (Exception e) {
+            System.err.println("❌ Error saving medical form: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(Map.of("error", "File upload error: " + e.getMessage()));
         }
     }
 
