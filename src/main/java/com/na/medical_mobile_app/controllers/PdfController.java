@@ -1,4 +1,4 @@
-// controllers/PdfController.java
+// controller/PdfController.java
 package com.na.medical_mobile_app.controllers;
 
 import com.na.medical_mobile_app.entities.MedicalForm;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pdf")
-// @CrossOrigin(origins = "*") // Uncomment if CORS issues
+// @CrossOrigin(origins = "*")
 public class PdfController {
 
     @Autowired
