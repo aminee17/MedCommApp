@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.na.medical_mobile_app.DTOs.MedicalFormRequest;
 import com.na.medical_mobile_app.entities.FormResponse;
+import com.na.medical_mobile_app.entities.MedicalForm;
 import com.na.medical_mobile_app.entities.User;
 import com.na.medical_mobile_app.services.FormResponseService;
 import com.na.medical_mobile_app.services.MedicalFormService;
@@ -41,13 +42,13 @@ public class MedicalFormController {
             @RequestPart(value = "mriPhoto", required = false) MultipartFile mriPhoto,
             @RequestPart(value = "seizureVideo", required = false) MultipartFile seizureVideo) {
         
-        System.out.println("📥 Received medical form submission");
-        System.out.println("📁 MRI Photo: " + (mriPhoto != null ? mriPhoto.getOriginalFilename() + " (" + mriPhoto.getSize() + " bytes)" : "null"));
-        System.out.println("📁 Seizure Video: " + (seizureVideo != null ? seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)" : "null"));
+        System.out.println("🔥 Received medical form submission");
+        System.out.println("📄 MRI Photo: " + (mriPhoto != null ? mriPhoto.getOriginalFilename() + " (" + mriPhoto.getSize() + " bytes)" : "null"));
+        System.out.println("📄 Seizure Video: " + (seizureVideo != null ? seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)" : "null"));
         
         MedicalFormRequest form;
         try {
-            // Convert JSON string to MedicalFormRequest object
+            
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -78,12 +79,12 @@ public class MedicalFormController {
     public ResponseEntity<List<Map<String, Object>>> getMedicalFormsForDoctor(
             @RequestParam(value = "filter", defaultValue = "active") String filter) {
         try {
-            // Get the current logged-in doctor
+
             User currentDoctor = userService.getLoggedInUser();
             
             List<Map<String, Object>> transformed;
             
-            // Filter forms based on the requested filter
+
             switch (filter.toLowerCase()) {
                 case "all":
                     transformed = MedicalFormMapper.toSimpleList(
@@ -114,6 +115,37 @@ public class MedicalFormController {
     }
     
     /**
+     * Helper method to check if current user has access to a form
+     * Doctors can access forms they created
+     */
+    private boolean hasAccessToForm(Integer formId, User currentUser) {
+        try {
+            System.out.println("🔍 Checking access for user: " + currentUser.getEmail() + " to form: " + formId);
+            
+            // Get the form
+            Optional<MedicalForm> formOpt = medicalFormService.getFormById(formId);
+            if (!formOpt.isPresent()) {
+                System.out.println("❌ Form not found: " + formId);
+                return false;
+            }
+            
+            MedicalForm form = formOpt.get();
+            
+            // Check if current user is the doctor who created the form
+            boolean isCreator = form.getDoctor().getUserId().equals(currentUser.getUserId());
+            System.out.println("👤 Form creator ID: " + form.getDoctor().getUserId());
+            System.out.println("👤 Current user ID: " + currentUser.getUserId());
+            System.out.println("✅ Is creator: " + isCreator);
+            
+            return isCreator;
+        } catch (Exception e) {
+            System.err.println("❌ Error checking access: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
      * Get form response for a specific form - for doctors to view neurologist responses
      */
     @GetMapping("/{formId}/response")
@@ -123,8 +155,8 @@ public class MedicalFormController {
             System.out.println("👤 Doctor requesting response for form: " + formId);
             
             // Verify that this form belongs to the doctor
-            boolean isOwnForm = medicalFormService.isFormCreatedByDoctor(formId, currentDoctor);
-            if (!isOwnForm) {
+            if (!hasAccessToForm(formId, currentDoctor)) {
+                System.out.println("🚫 Access denied for user: " + currentDoctor.getEmail());
                 return ResponseEntity.status(403).body(Map.of("error", "You don't have permission to access this form"));
             }
             
@@ -169,19 +201,21 @@ public class MedicalFormController {
     @GetMapping("/responses/check/{formId}")
     public ResponseEntity<?> checkFormResponse(@PathVariable Integer formId) {
         try {
-            // Get the current logged-in doctor
+
             User currentDoctor = userService.getLoggedInUser();
+            System.out.println("👤 Checking response for form: " + formId + " by user: " + currentDoctor.getEmail());
             
             // Verify that this form belongs to the doctor
-            boolean isOwnForm = medicalFormService.isFormCreatedByDoctor(formId, currentDoctor);
-            if (!isOwnForm) {
+            if (!hasAccessToForm(formId, currentDoctor)) {
+                System.out.println("🚫 Access denied for user: " + currentDoctor.getEmail());
                 return ResponseEntity.status(403).body(Map.of("error", "You don't have permission to access this form"));
             }
             
             boolean hasResponse = formResponseService.hasResponse(formId);
-            System.out.println("🔍 Form " + formId + " has response: " + hasResponse);
+            System.out.println("📋 Form " + formId + " has response: " + hasResponse);
             return ResponseEntity.ok(Map.of("hasResponse", hasResponse));
         } catch (Exception e) {
+            System.err.println("❌ Error checking form response: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -193,12 +227,13 @@ public class MedicalFormController {
     @GetMapping("/responses/{formId}")
     public ResponseEntity<?> getFormResponse(@PathVariable Integer formId) {
         try {
-            // Get the current logged-in doctor
+
             User currentDoctor = userService.getLoggedInUser();
+            System.out.println("👤 Getting response for form: " + formId + " by user: " + currentDoctor.getEmail());
             
             // Verify that this form belongs to the doctor
-            boolean isOwnForm = medicalFormService.isFormCreatedByDoctor(formId, currentDoctor);
-            if (!isOwnForm) {
+            if (!hasAccessToForm(formId, currentDoctor)) {
+                System.out.println("🚫 Access denied for user: " + currentDoctor.getEmail());
                 return ResponseEntity.status(403).body(Map.of("error", "You don't have permission to access this form"));
             }
             
@@ -223,11 +258,14 @@ public class MedicalFormController {
                 responseData.put("neurologistName", r.getResponder().getName());
                 responseData.put("neurologistEmail", r.getResponder().getEmail());
                 
+                System.out.println("✅ Returning response for form: " + formId);
                 return ResponseEntity.ok(responseData);
             } else {
+                System.out.println("ℹ️ No response found for form: " + formId);
                 return ResponseEntity.ok(Map.of("message", "No response found for this form"));
             }
         } catch (Exception e) {
+            System.err.println("❌ Error getting form response: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

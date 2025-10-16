@@ -373,6 +373,9 @@ public class MedicalFormService {
         return medicalFormRepository.findByDoctorAndStatus(doctor, FormStatus.COMPLETED);
     }
     
+    public Optional<MedicalForm> getFormById(Integer formId) {
+        return medicalFormRepository.findById(formId);
+    }
     /**
      * Get recent medical forms created by a specific doctor (last 30 days)
      */
