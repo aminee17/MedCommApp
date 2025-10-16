@@ -11,6 +11,7 @@ import com.na.medical_mobile_app.services.FormResponseService;
 import com.na.medical_mobile_app.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +23,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/neurologue")
-// @CrossOrigin(origins = "*", allowedHeaders = "*")
+
 public class NeurologueController {
 
     @Autowired
@@ -62,22 +63,35 @@ public class NeurologueController {
         }
         return attachments;
     }
-
-
-
+    
 
     /**
      * Endpoint for a neurologist to respond to a medical form
      */
     //-----------------------------------------Responding to a form--------------------------------------------------------
-    @PostMapping("/form-response")
-    public FormResponse submitFormResponse(
+    @PostMapping(value = "/form-response", 
+                consumes = MediaType.APPLICATION_JSON_VALUE,
+                produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> submitFormResponse(
             @RequestBody FormResponseRequest request,
             @RequestParam(value = "userId", required = false) Integer userId,
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
-        User user = getUserFromParams(userId, userIdHeader);
-        return formResponseService.saveFormResponse(request);
+        try {
+            System.out.println("📥 Received form response submission");
+            System.out.println("📋 Form ID: " + request.getFormId());
+            System.out.println("📋 Response Type: " + request.getResponseType());
+            
+            User user = getUserFromParams(userId, userIdHeader);
+            FormResponse response = formResponseService.saveFormResponse(request);
+            
+            System.out.println("✅ Form response saved successfully with ID: " + response.getResponseId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("❌ Error submitting form response: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to submit form response: " + e.getMessage()));
+        }
     }
     
     /**
@@ -140,6 +154,8 @@ public class NeurologueController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // ... keep all other methods unchanged ...
 
     //--------------------------------------Getting all pending forms with status not completed--------------------------
     @GetMapping("/pending")
@@ -247,7 +263,5 @@ public class NeurologueController {
         
         return user;
     }
-
-    // TODO : CHAT FEATURE TO BE IMPLEMENTED LATER
 
 }

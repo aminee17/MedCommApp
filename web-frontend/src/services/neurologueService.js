@@ -91,7 +91,7 @@ export const fetchAllFormsForNeurologue = async () => {
     }
 };
 
-// Submit form response from neurologist
+// Submit form response from neurologist - FIXED VERSION
 export const submitFormResponse = async (formResponseData) => {
     try {
         const userId = await getUserId();
@@ -99,9 +99,16 @@ export const submitFormResponse = async (formResponseData) => {
             throw new Error('User ID not found. Please log in again.');
         }
         
+        console.log('📤 Submitting form response:', formResponseData);
+        
         const url = `${API_BASE_URL}/api/neurologue/form-response?userId=${userId}`;
         
+        // Get auth headers and ensure Content-Type is set
         const headers = await getAuthHeaders();
+        headers['Content-Type'] = 'application/json'; // Add this line
+        
+        console.log('📤 Headers:', headers);
+        
         const response = await fetch(url, {
             method: 'POST',
             headers,
@@ -109,14 +116,25 @@ export const submitFormResponse = async (formResponseData) => {
             body: JSON.stringify(formResponseData)
         });
         
+        console.log('📥 Response status:', response.status);
+        
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Failed to submit form response');
+            let errorText;
+            try {
+                const errorData = await response.json();
+                errorText = errorData.error || JSON.stringify(errorData);
+            } catch {
+                errorText = await response.text();
+            }
+            console.error('❌ Server error:', errorText);
+            throw new Error(errorText || `Server error: ${response.status}`);
         }
         
-        return response.json();
+        const result = await response.json();
+        console.log('✅ Form response submitted successfully:', result);
+        return result;
     } catch (error) {
-        console.error("Error submitting form response:", error.message || error);
+        console.error("❌ Error submitting form response:", error.message || error);
         throw error;
     }
 };
@@ -132,14 +150,11 @@ export const fetchFormById = async (formId) => {
         // Use the correct endpoint from the NeurologueController
         const url = `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId
-            },
-            credentials: 'include' // Include credentials for session cookies
+            headers,
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -165,14 +180,11 @@ export const sendChatMessage = async (formId, message, senderId, receiverId) => 
         
         const url = `${API_BASE_URL}/api/chat/send?userId=${userId}`;
         
+        const headers = await getAuthHeaders();
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'userId': userId
-            },
-            credentials: 'include', // Include credentials for session cookies
+            headers,
+            credentials: 'include',
             body: JSON.stringify({
                 formId,
                 message,
