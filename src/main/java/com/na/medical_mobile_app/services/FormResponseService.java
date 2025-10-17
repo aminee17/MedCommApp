@@ -37,40 +37,44 @@ public class FormResponseService {
     private NotificationService notificationService;
 
     /**
-     * Check if user has permission to access this form
+     * Check if user has permission to access this form - FIXED VERSION
      */
     public boolean canAccessForm(User user, MedicalForm form) {
-        System.out.println("🔐 Permission check - User: " + user.getUserId() + 
-                          ", Role: " + user.getRole() +
-                          ", Form Doctor: " + (form.getDoctor() != null ? form.getDoctor().getUserId() : "null") +
-                          ", Form AssignedTo: " + (form.getAssignedTo() != null ? form.getAssignedTo().getUserId() : "null"));
+        System.out.println("🔐 PERMISSION CHECK DETAILS ===");
+        System.out.println("👤 User: " + user.getUserId() + " (" + user.getName() + ") - Role: " + user.getRole());
+        System.out.println("📋 Form: " + form.getFormId() + " - Status: " + form.getStatus());
+        System.out.println("   - Form Doctor: " + (form.getDoctor() != null ? form.getDoctor().getUserId() + " (" + form.getDoctor().getName() + ")" : "null"));
+        System.out.println("   - Form AssignedTo: " + (form.getAssignedTo() != null ? form.getAssignedTo().getUserId() + " (" + form.getAssignedTo().getName() + ")" : "null"));
         
-        // Admin can access everything
+        // 1. Admin can access everything
         if (user.getRole() == Role.ADMIN) {
-            System.out.println("🔐 ADMIN access granted");
+            System.out.println("🔐 ✅ ADMIN access granted - User is ADMIN");
             return true;
         }
         
-        // Doctor who created the form can access it
+        // 2. Doctor who created the form can ALWAYS access it (including responses)
         if (form.getDoctor() != null && form.getDoctor().getUserId().equals(user.getUserId())) {
-            System.out.println("🔐 DOCTOR (creator) access granted");
+            System.out.println("🔐 ✅ DOCTOR access granted - User created this form");
             return true;
         }
         
-        // Neurologist assigned to the form can access it
+        // 3. Neurologist assigned to the form can access it
         if (form.getAssignedTo() != null && form.getAssignedTo().getUserId().equals(user.getUserId())) {
-            System.out.println("🔐 NEUROLOGIST (assigned) access granted");
+            System.out.println("🔐 ✅ NEUROLOGIST access granted - User is assigned to this form");
             return true;
         }
         
-        // Any neurologist can access forms in certain statuses (for assignment)
+        // 4. Any neurologist can access unassigned forms in SUBMITTED status
         if ((user.getRole() == Role.NEUROLOGUE || user.getRole() == Role.NEUROLOGUE_RESIDENT) && 
-            (form.getStatus() == FormStatus.SUBMITTED || form.getAssignedTo() == null)) {
-            System.out.println("🔐 NEUROLOGIST (available form) access granted");
+            form.getStatus() == FormStatus.SUBMITTED && form.getAssignedTo() == null) {
+            System.out.println("🔐 ✅ NEUROLOGIST access granted - Form is available for assignment");
             return true;
         }
         
-        System.out.println("🔐 ACCESS DENIED");
+        System.out.println("🔐 ❌ ACCESS DENIED - User doesn't have permission to access this form");
+        System.out.println("   - User is not the form creator");
+        System.out.println("   - User is not assigned to this form");
+        System.out.println("   - User doesn't have appropriate role");
         return false;
     }
 
@@ -81,6 +85,32 @@ public class FormResponseService {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
         return canAccessForm(user, form);
+    }
+
+    /**
+     * Special method for doctors to access responses for forms they created
+     * This bypasses normal permission checks for doctors viewing their own forms
+     */
+    public boolean canDoctorAccessFormResponse(User user, MedicalForm form) {
+        System.out.println("🔐 DOCTOR RESPONSE ACCESS CHECK ===");
+        System.out.println("👤 User: " + user.getUserId() + " (" + user.getName() + ") - Role: " + user.getRole());
+        System.out.println("📋 Form: " + form.getFormId() + " - Created by: " + 
+                         (form.getDoctor() != null ? form.getDoctor().getUserId() + " (" + form.getDoctor().getName() + ")" : "null"));
+        
+        // Doctors can ALWAYS access responses for forms they created
+        if (form.getDoctor() != null && form.getDoctor().getUserId().equals(user.getUserId())) {
+            System.out.println("🔐 ✅ DOCTOR RESPONSE ACCESS GRANTED - User created this form");
+            return true;
+        }
+        
+        // Admin can always access
+        if (user.getRole() == Role.ADMIN) {
+            System.out.println("🔐 ✅ ADMIN RESPONSE ACCESS GRANTED");
+            return true;
+        }
+        
+        System.out.println("🔐 ❌ DOCTOR RESPONSE ACCESS DENIED");
+        return false;
     }
 
     /**
@@ -144,6 +174,7 @@ public class FormResponseService {
             System.err.println("⚠️ Failed to create notification: " + e.getMessage());
             
         }
+    
 
         System.out.println("🎉 Form response submission completed successfully");
         return savedResponse;
@@ -181,13 +212,21 @@ public class FormResponseService {
     }
 
     /**
-     * Get the latest response for a specific medical form
+     * Get the latest response for a specific medical form - DOCTOR FRIENDLY VERSION
      */
     public Optional<FormResponse> getLatestResponseForForm(Integer formId, User user) {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
 
-        // Check permission
+        System.out.println("📥 Getting latest response for form ID: " + formId + " - User: " + user.getName());
+        
+        // Special check for doctors accessing their own forms
+        if (canDoctorAccessFormResponse(user, form)) {
+            System.out.println("✅ Doctor access granted for response retrieval");
+            return formResponseRepository.findTopByFormOrderByCreatedAtDesc(form);
+        }
+        
+        // Normal permission check for other users
         if (!canAccessForm(user, form)) {
             throw new RuntimeException("You don't have permission to access this form");
         }
@@ -204,13 +243,21 @@ public class FormResponseService {
     }
 
     /**
-     * Check if a form has any responses
+     * Check if a form has any responses - DOCTOR FRIENDLY VERSION
      */
     public boolean hasResponse(Integer formId, User user) {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
 
-        // Check permission
+        System.out.println("📥 Checking response existence for form ID: " + formId + " - User: " + user.getName());
+        
+        // Special check for doctors accessing their own forms
+        if (canDoctorAccessFormResponse(user, form)) {
+            System.out.println("✅ Doctor access granted for response check");
+            return formResponseRepository.existsByForm(form);
+        }
+        
+        // Normal permission check for other users
         if (!canAccessForm(user, form)) {
             throw new RuntimeException("You don't have permission to access this form");
         }
@@ -224,6 +271,52 @@ public class FormResponseService {
     public boolean hasResponse(Integer formId) {
         User currentUser = userService.getLoggedInUser();
         return hasResponse(formId, currentUser);
+    }
+
+    /**
+     * Get all responses for forms created by a specific doctor
+     */
+    public List<FormResponse> getResponsesForDoctorForms(User doctor) {
+        System.out.println("📋 Getting all responses for forms created by doctor: " + doctor.getName());
+        
+        // Get all forms created by this doctor
+        List<MedicalForm> doctorForms = medicalFormRepository.findByDoctor(doctor);
+        System.out.println("📊 Found " + doctorForms.size() + " forms created by doctor");
+        
+        List<FormResponse> allResponses = new ArrayList<>();
+        
+        for (MedicalForm form : doctorForms) {
+            // Get all responses for this form
+            List<FormResponse> formResponses = formResponseRepository.findByForm(form);
+            System.out.println("📄 Form " + form.getFormId() + " has " + formResponses.size() + " responses");
+            allResponses.addAll(formResponses);
+        }
+        
+        System.out.println("✅ Total responses found: " + allResponses.size());
+        return allResponses;
+    }
+
+    /**
+     * Get responses for a specific form with doctor-friendly access
+     */
+    public List<FormResponse> getFormResponsesWithDoctorAccess(Integer formId, User user) {
+        MedicalForm form = medicalFormRepository.findById(formId)
+                .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
+
+        System.out.println("📥 Getting all responses for form ID: " + formId + " - User: " + user.getName());
+        
+        // Special check for doctors accessing their own forms
+        if (canDoctorAccessFormResponse(user, form)) {
+            System.out.println("✅ Doctor access granted for all responses");
+            return formResponseRepository.findByForm(form);
+        }
+        
+        // Normal permission check for other users
+        if (!canAccessForm(user, form)) {
+            throw new RuntimeException("You don't have permission to access this form");
+        }
+
+        return formResponseRepository.findByForm(form);
     }
 
     /**
@@ -285,12 +378,13 @@ public class FormResponseService {
             summary.setAverageSeizureDuration(form.getAverageSeizureDuration());
             summary.setSeizureFrequency(form.getSeizureFrequency());
 
-            // Add referring doctor info - FIXED VERSION (remove specialization if field doesn't exist)
+            // Add referring doctor info
             if (form.getDoctor() != null) {
                 summary.setReferringDoctorName(form.getDoctor().getName());
                 summary.setReferringDoctorEmail(form.getDoctor().getEmail());
-                // Remove the line that sets specialization if the field doesn't exist in DTO
+
             }
+
 
             // Add attachment URLs with full path
             if (form.getAttachments() != null && !form.getAttachments().isEmpty()) {
