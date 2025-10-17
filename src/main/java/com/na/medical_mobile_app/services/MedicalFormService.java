@@ -81,7 +81,7 @@ public class MedicalFormService {
             System.out.println("✅ Seizure video validated: " + seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)");
         }
     }
-    
+
 
 
     private String buildSymptomsSummary(MedicalFormRequest request) {
@@ -335,30 +335,30 @@ public class MedicalFormService {
     }
 
     /**
-     * Get all medical forms with PDF information for admin - FIXED VERSION
-     */
+    * Get all medical forms with PDF information for admin - FIXED VERSION
+    */
     public List<MedicalForm> getAllMedicalFormsWithPdf() {
-        try {
-            List<MedicalForm> forms = medicalFormRepository.findAllWithPdfInfo();
-            System.out.println("📊 Retrieved " + forms.size() + " medical forms for admin dashboard");
-            
-            // Debug: Print PDF status for each form
-            for (MedicalForm form : forms) {
-                System.out.println("📋 Form ID: " + form.getFormId() + 
-                                 " | PDF Generated: " + form.getPdfGenerated() + 
-                                 " | PDF File: " + form.getPdfFileName() +
-                                 " | Status: " + form.getStatus() +
-                                 " | Patient: " + (form.getPatient() != null ? form.getPatient().getName() : "null") +
-                                 " | Doctor: " + (form.getDoctor() != null ? form.getDoctor().getName() : "null"));
-            }
-            
+       try {
+           List<MedicalForm> forms = medicalFormRepository.findAllWithPdfInfo();
+           System.out.println("📊 Retrieved " + forms.size() + " medical forms for admin dashboard");
+        
+           // Debug: Print PDF status for each form
+           for (MedicalForm form : forms) {
+               System.out.println("📋 Form ID: " + form.getFormId() + 
+                                " | PDF Generated: " + form.getPdfGenerated() + 
+                                " | PDF File: " + form.getPdfFileName() +
+                                " | Status: " + form.getStatus() +
+                                " | Patient: " + (form.getPatient() != null ? form.getPatient().getName() : "null") +
+                                " | Doctor: " + (form.getDoctor() != null ? form.getDoctor().getName() : "null"));
+           }
+        
             return forms;
         } catch (Exception e) {
             System.err.println("❌ Error fetching medical forms for admin: " + e.getMessage());
             e.printStackTrace();
-            return List.of(); // Return empty list instead of throwing exception
+            return List.of();
         }
-    }
+    }  
 
 
     /**

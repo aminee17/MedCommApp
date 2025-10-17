@@ -1,4 +1,3 @@
-// services/FormResponseService.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.services;
 
 import com.na.medical_mobile_app.DTOs.FormResponseRequest;
@@ -76,6 +75,15 @@ public class FormResponseService {
     }
 
     /**
+     * Check if user has permission to access this form by ID
+     */
+    public boolean canAccessForm(User user, Integer formId) {
+        MedicalForm form = medicalFormRepository.findById(formId)
+                .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
+        return canAccessForm(user, form);
+    }
+
+    /**
      * Submit a neurologist's response to a medical form
      */
     public FormResponse saveFormResponse(FormResponseRequest request, User neurologist) {
@@ -134,7 +142,7 @@ public class FormResponseService {
             System.out.println("✅ Notification created for doctor");
         } catch (Exception e) {
             System.err.println("⚠️ Failed to create notification: " + e.getMessage());
-            // Don't throw exception for notification failures
+            
         }
 
         System.out.println("🎉 Form response submission completed successfully");
@@ -188,6 +196,14 @@ public class FormResponseService {
     }
 
     /**
+     * Backward compatible method - gets current logged in user automatically
+     */
+    public Optional<FormResponse> getLatestResponseForForm(Integer formId) {
+        User currentUser = userService.getLoggedInUser();
+        return getLatestResponseForForm(formId, currentUser);
+    }
+
+    /**
      * Check if a form has any responses
      */
     public boolean hasResponse(Integer formId, User user) {
@@ -200,6 +216,14 @@ public class FormResponseService {
         }
 
         return formResponseRepository.existsByForm(form);
+    }
+
+    /**
+     * Backward compatible method - gets current logged in user automatically  
+     */
+    public boolean hasResponse(Integer formId) {
+        User currentUser = userService.getLoggedInUser();
+        return hasResponse(formId, currentUser);
     }
 
     /**
@@ -261,11 +285,11 @@ public class FormResponseService {
             summary.setAverageSeizureDuration(form.getAverageSeizureDuration());
             summary.setSeizureFrequency(form.getSeizureFrequency());
 
-            // Add referring doctor info
+            // Add referring doctor info - FIXED VERSION (remove specialization if field doesn't exist)
             if (form.getDoctor() != null) {
                 summary.setReferringDoctorName(form.getDoctor().getName());
                 summary.setReferringDoctorEmail(form.getDoctor().getEmail());
-                summary.setReferringDoctorSpecialization(form.getDoctor().getSpecialization());
+                // Remove the line that sets specialization if the field doesn't exist in DTO
             }
 
             // Add attachment URLs with full path
