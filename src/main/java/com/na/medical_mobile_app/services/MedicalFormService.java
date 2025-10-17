@@ -420,4 +420,20 @@ public class MedicalFormService {
         
         return form.get().getDoctor().getUserId().equals(doctor.getUserId());
     }
+    /**
+     * Debug method to check PDF generation status for all forms
+     */
+    public void debugPdfGenerationStatus() {
+        List<MedicalForm> forms = medicalFormRepository.findAll();
+        System.out.println("=== PDF GENERATION DEBUG ===");
+        System.out.println("Total forms in system: " + forms.size());
+    
+        for (MedicalForm form : forms) {
+            System.out.println("Form ID: " + form.getFormId() + 
+                             " | PDF Generated: " + form.getPdfGenerated() + 
+                             " | PDF File: " + form.getPdfFileName() +
+                             " | Status: " + form.getStatus());
+        }
+        System.out.println("=== END DEBUG ===");
+    }
 }
