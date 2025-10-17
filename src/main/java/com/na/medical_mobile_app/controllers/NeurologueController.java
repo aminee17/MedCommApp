@@ -1,3 +1,4 @@
+// controllers/NeurologueController.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.controllers;
 
 import com.na.medical_mobile_app.DTOs.FormResponseRequest;
@@ -37,33 +38,53 @@ public class NeurologueController {
 
     //---------------------------------------------Getting the attachement for the neuro----------------------------------------------
     @GetMapping("/attachments/{id}")
-    public ResponseEntity<byte[]> serveAttachment(@PathVariable Integer id) throws Exception {
-        FileAttachment attachment = attachmentService.getAttachmentById(id);
-        byte[] decryptedBytes = attachmentService.getDecryptedAttachmentBytes(id);
+    public ResponseEntity<byte[]> serveAttachment(@PathVariable Integer id,
+                                                 @RequestParam(value = "userId", required = false) Integer userId,
+                                                 @RequestHeader(value = "userId", required = false) String userIdHeader) throws Exception {
+        try {
+            User user = getUserFromParams(userId, userIdHeader);
+            FileAttachment attachment = attachmentService.getAttachmentById(id);
+            
+            // Check if user has permission to access this attachment
+            if (!formResponseService.canAccessForm(user, attachment.getForm())) {
+                return ResponseEntity.status(403).body(null);
+            }
+            
+            byte[] decryptedBytes = attachmentService.getDecryptedAttachmentBytes(id);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, attachment.getMimeType())
-                .body(decryptedBytes);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, attachment.getMimeType())
+                    .body(decryptedBytes);
+        } catch (Exception e) {
+            System.err.println("❌ Error serving attachment: " + e.getMessage());
+            return ResponseEntity.status(403).body(null);
+        }
+
     }
 
 
     @GetMapping("/forms/{formId}/attachments")
-    public List<FileAttachment> getAttachmentsForForm(
+    public ResponseEntity<?> getAttachmentsForForm(
             @PathVariable Integer formId,
             @RequestParam(value = "userId", required = false) Integer userId,
             @RequestHeader(value = "userId", required = false) String userIdHeader) {
         
-        // Validate user access
-        getUserFromParams(userId, userIdHeader);
-        
-        List<FileAttachment> attachments = attachmentService.getAttachmentsByFormId(formId);
-        System.out.println("Found " + attachments.size() + " attachments for form " + formId);
-        for (FileAttachment attachment : attachments) {
-            System.out.println("Attachment ID: " + attachment.getAttachmentId() + ", MimeType: " + attachment.getMimeType() + ", FileName: " + attachment.getFileName());
+        try {
+            User user = getUserFromParams(userId, userIdHeader);
+            
+            // Check permission first
+            if (!formResponseService.canAccessForm(user, formId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "You don't have permission to access this form"));
+            }
+            
+            List<FileAttachment> attachments = attachmentService.getAttachmentsByFormId(formId);
+            System.out.println("✅ Found " + attachments.size() + " attachments for form " + formId);
+            return ResponseEntity.ok(attachments);
+        } catch (Exception e) {
+            System.err.println("❌ Error getting attachments: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
-        return attachments;
     }
-    
 
     /**
      * Endpoint for a neurologist to respond to a medical form
@@ -83,7 +104,7 @@ public class NeurologueController {
             System.out.println("📋 Response Type: " + request.getResponseType());
             
             User user = getUserFromParams(userId, userIdHeader);
-            FormResponse response = formResponseService.saveFormResponse(request);
+            FormResponse response = formResponseService.saveFormResponse(request, user);
             
             System.out.println("✅ Form response saved successfully with ID: " + response.getResponseId());
             return ResponseEntity.ok(response);
@@ -104,12 +125,12 @@ public class NeurologueController {
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
-            getUserFromParams(userId, userIdHeader); // Validate user
-            boolean hasResponse = formResponseService.hasResponse(formId);
+            User user = getUserFromParams(userId, userIdHeader);
+            boolean hasResponse = formResponseService.hasResponse(formId, user);
             return ResponseEntity.ok(Map.of("hasResponse", hasResponse));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            System.err.println("❌ Error checking response status: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
     }
     
@@ -123,8 +144,8 @@ public class NeurologueController {
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
-            getUserFromParams(userId, userIdHeader); // Validate user
-            Optional<FormResponse> response = formResponseService.getLatestResponseForForm(formId);
+            User user = getUserFromParams(userId, userIdHeader);
+            Optional<FormResponse> response = formResponseService.getLatestResponseForForm(formId, user);
             
             if (response.isPresent()) {
                 Map<String, Object> responseData = new HashMap<>();
@@ -150,76 +171,75 @@ public class NeurologueController {
                 return ResponseEntity.ok(Map.of("message", "No response found for this form"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            System.err.println("❌ Error getting form response: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
+
     }
 
-    // ... keep all other methods unchanged ...
+
 
     //--------------------------------------Getting all pending forms with status not completed--------------------------
     @GetMapping("/pending")
-    public List<MedicalFormSummaryDTO> getPendingFormsForNeurologue(
+    public ResponseEntity<?> getPendingFormsForNeurologue(
             @RequestParam(value = "userId", required = false) Integer userId,
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
             User user = getUserFromParams(userId, userIdHeader);
             
-            System.out.println("Using user: " + user.getName() + ", Role: " + user.getRole() + ", ID: " + user.getUserId());
+            System.out.println("✅ Using user: " + user.getName() + ", Role: " + user.getRole() + ", ID: " + user.getUserId());
             
-            // Delegate to service layer
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getPendingFormSummariesForNeurologue(user);
-            System.out.println("Found " + forms.size() + " pending forms for user");
-            return forms;
+            System.out.println("✅ Found " + forms.size() + " pending forms for user");
+            return ResponseEntity.ok(forms);
         } catch (Exception e) {
-            System.err.println("Error getting pending forms: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            System.err.println("❌ Error getting pending forms: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
     }
     
     //--------------------------------------Getting all completed forms (forms with responses)--------------------------
     @GetMapping("/completed")
-    public List<MedicalFormSummaryDTO> getCompletedFormsForNeurologue(
+    public ResponseEntity<?> getCompletedFormsForNeurologue(
             @RequestParam(value = "userId", required = false) Integer userId,
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
             User user = getUserFromParams(userId, userIdHeader);
             
-            System.out.println("Getting completed forms for user: " + user.getName());
+            System.out.println("✅ Getting completed forms for user: " + user.getName());
             
-            // Delegate to service layer
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getCompletedFormSummariesForNeurologue(user);
-            System.out.println("Found " + forms.size() + " completed forms for user");
-            return forms;
+
+            System.out.println("✅ Found " + forms.size() + " completed forms for user");
+            return ResponseEntity.ok(forms);
         } catch (Exception e) {
-            System.err.println("Error getting completed forms: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            System.err.println("❌ Error getting completed forms: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
     }
     
     //--------------------------------------Getting all forms (both pending and completed)--------------------------
     @GetMapping("/all-forms")
-    public List<MedicalFormSummaryDTO> getAllFormsForNeurologue(
+    public ResponseEntity<?> getAllFormsForNeurologue(
             @RequestParam(value = "userId", required = false) Integer userId,
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
             User user = getUserFromParams(userId, userIdHeader);
             
-            System.out.println("Getting all forms for user: " + user.getName());
+            System.out.println("✅ Getting all forms for user: " + user.getName());
             
-            // Delegate to service layer
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getAllFormSummariesForNeurologue(user);
-            System.out.println("Found " + forms.size() + " total forms for user");
-            return forms;
+            System.out.println("✅ Found " + forms.size() + " total forms for user");
+            return ResponseEntity.ok(forms);
         } catch (Exception e) {
-            System.err.println("Error getting all forms: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            System.err.println("❌ Error getting all forms: " + e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
     }
     
@@ -233,14 +253,14 @@ public class NeurologueController {
         if (userId != null) {
             user = userRepository.findById(userId)
                     .orElse(null);
-            System.out.println("Using user from request parameter: " + userId);
+            System.out.println("✅ Using user from request parameter: " + userId);
         } 
         // Then try from header
         else if (userIdHeader != null && !userIdHeader.isEmpty()) {
             try {
                 Integer id = Integer.parseInt(userIdHeader);
                 user = userRepository.findById(id).orElse(null);
-                System.out.println("Using user from request header: " + id);
+                System.out.println("✅ Using user from request header: " + id);
             } catch (NumberFormatException ignored) {
                 // Not a valid ID, continue
             }
@@ -250,9 +270,9 @@ public class NeurologueController {
         if (user == null) {
             try {
                 user = userService.getLoggedInUser();
-                System.out.println("Using authenticated user: " + user.getName());
+                System.out.println("✅ Using authenticated user: " + user.getName());
             } catch (Exception e) {
-                System.err.println("Authentication failed: " + e.getMessage());
+                System.err.println("❌ Authentication failed: " + e.getMessage());
                 throw new RuntimeException("No valid user found. Please provide a userId parameter or header, or authenticate properly.");
             }
         }

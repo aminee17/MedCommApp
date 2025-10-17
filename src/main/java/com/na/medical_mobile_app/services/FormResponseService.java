@@ -1,3 +1,4 @@
+// services/FormResponseService.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.services;
 
 import com.na.medical_mobile_app.DTOs.FormResponseRequest;
@@ -37,18 +38,59 @@ public class FormResponseService {
     private NotificationService notificationService;
 
     /**
+     * Check if user has permission to access this form
+     */
+    public boolean canAccessForm(User user, MedicalForm form) {
+        System.out.println("🔐 Permission check - User: " + user.getUserId() + 
+                          ", Role: " + user.getRole() +
+                          ", Form Doctor: " + (form.getDoctor() != null ? form.getDoctor().getUserId() : "null") +
+                          ", Form AssignedTo: " + (form.getAssignedTo() != null ? form.getAssignedTo().getUserId() : "null"));
+        
+        // Admin can access everything
+        if (user.getRole() == Role.ADMIN) {
+            System.out.println("🔐 ADMIN access granted");
+            return true;
+        }
+        
+        // Doctor who created the form can access it
+        if (form.getDoctor() != null && form.getDoctor().getUserId().equals(user.getUserId())) {
+            System.out.println("🔐 DOCTOR (creator) access granted");
+            return true;
+        }
+        
+        // Neurologist assigned to the form can access it
+        if (form.getAssignedTo() != null && form.getAssignedTo().getUserId().equals(user.getUserId())) {
+            System.out.println("🔐 NEUROLOGIST (assigned) access granted");
+            return true;
+        }
+        
+        // Any neurologist can access forms in certain statuses (for assignment)
+        if ((user.getRole() == Role.NEUROLOGUE || user.getRole() == Role.NEUROLOGUE_RESIDENT) && 
+            (form.getStatus() == FormStatus.SUBMITTED || form.getAssignedTo() == null)) {
+            System.out.println("🔐 NEUROLOGIST (available form) access granted");
+            return true;
+        }
+        
+        System.out.println("🔐 ACCESS DENIED");
+        return false;
+    }
+
+    /**
      * Submit a neurologist's response to a medical form
      */
-    public FormResponse saveFormResponse(FormResponseRequest request) {
+    public FormResponse saveFormResponse(FormResponseRequest request, User neurologist) {
         System.out.println("🔄 Starting form response submission for form ID: " + request.getFormId());
         
-        // Get the current user (neurologist)
-        User neurologist = userService.getLoggedInUser();
-        System.out.println("👤 Neurologist: " + neurologist.getName() + " (" + neurologist.getRole() + ")");
-
         // Find the medical form
         MedicalForm form = medicalFormRepository.findById(request.getFormId())
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + request.getFormId()));
+        
+        // Check permission
+        if (!canAccessForm(neurologist, form)) {
+            throw new RuntimeException("You don't have permission to access this form");
+        }
+        
+        System.out.println("👤 Neurologist: " + neurologist.getName() + " (" + neurologist.getRole() + ")");
         System.out.println("📋 Found form for patient: " + form.getPatient().getName());
 
         // Create new form response
@@ -133,9 +175,14 @@ public class FormResponseService {
     /**
      * Get the latest response for a specific medical form
      */
-    public Optional<FormResponse> getLatestResponseForForm(Integer formId) {
+    public Optional<FormResponse> getLatestResponseForForm(Integer formId, User user) {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
+
+        // Check permission
+        if (!canAccessForm(user, form)) {
+            throw new RuntimeException("You don't have permission to access this form");
+        }
 
         return formResponseRepository.findTopByFormOrderByCreatedAtDesc(form);
     }
@@ -143,9 +190,14 @@ public class FormResponseService {
     /**
      * Check if a form has any responses
      */
-    public boolean hasResponse(Integer formId) {
+    public boolean hasResponse(Integer formId, User user) {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + formId));
+
+        // Check permission
+        if (!canAccessForm(user, form)) {
+            throw new RuntimeException("You don't have permission to access this form");
+        }
 
         return formResponseRepository.existsByForm(form);
     }
@@ -154,13 +206,15 @@ public class FormResponseService {
      * Get pending forms for a neurologist
      */
     public List<MedicalFormSummaryDTO> getPendingFormSummariesForNeurologue(User neurologist) {
-        List<MedicalForm> pendingForms = medicalFormRepository.findByAssignedTo(neurologist);
+        // Get forms assigned to this neurologist that are not completed
+        List<MedicalForm> pendingForms = medicalFormRepository.findByAssignedToAndStatusNot(neurologist, FormStatus.COMPLETED);
+        
+        // Also get unassigned forms for neurologists to pick up
+        if (pendingForms.isEmpty()) {
+            pendingForms = medicalFormRepository.findByAssignedToIsNullAndStatus(FormStatus.SUBMITTED);
+        }
 
-        // Filter out forms that are already completed
-        pendingForms = pendingForms.stream()
-                .filter(form -> form.getStatus() != FormStatus.COMPLETED)
-                .collect(Collectors.toList());
-
+        System.out.println("📋 Found " + pendingForms.size() + " pending forms for neurologist: " + neurologist.getName());
         return convertToSummaryDTOs(pendingForms);
     }
 
@@ -168,13 +222,9 @@ public class FormResponseService {
      * Get completed forms for a neurologist
      */
     public List<MedicalFormSummaryDTO> getCompletedFormSummariesForNeurologue(User neurologist) {
-        List<MedicalForm> completedForms = medicalFormRepository.findByAssignedTo(neurologist);
+        List<MedicalForm> completedForms = medicalFormRepository.findByAssignedToAndStatus(neurologist, FormStatus.COMPLETED);
 
-        // Filter only completed forms
-        completedForms = completedForms.stream()
-                .filter(form -> form.getStatus() == FormStatus.COMPLETED)
-                .collect(Collectors.toList());
-
+        System.out.println("📋 Found " + completedForms.size() + " completed forms for neurologist: " + neurologist.getName());
         return convertToSummaryDTOs(completedForms);
     }
 
@@ -183,6 +233,7 @@ public class FormResponseService {
      */
     public List<MedicalFormSummaryDTO> getAllFormSummariesForNeurologue(User neurologist) {
         List<MedicalForm> allForms = medicalFormRepository.findByAssignedTo(neurologist);
+        System.out.println("📋 Found " + allForms.size() + " total forms for neurologist: " + neurologist.getName());
         return convertToSummaryDTOs(allForms);
     }
 
@@ -211,12 +262,16 @@ public class FormResponseService {
             summary.setSeizureFrequency(form.getSeizureFrequency());
 
             // Add referring doctor info
-            userService.populateReferringDoctorInfo(summary, form.getDoctor());
+            if (form.getDoctor() != null) {
+                summary.setReferringDoctorName(form.getDoctor().getName());
+                summary.setReferringDoctorEmail(form.getDoctor().getEmail());
+                summary.setReferringDoctorSpecialization(form.getDoctor().getSpecialization());
+            }
 
             // Add attachment URLs with full path
             if (form.getAttachments() != null && !form.getAttachments().isEmpty()) {
                 List<String> urls = form.getAttachments().stream()
-                        .map(attachment -> "http://192.168.1.4:8080/api/neurologue/attachments/" + attachment.getAttachmentId())
+                        .map(attachment -> "/api/neurologue/attachments/" + attachment.getAttachmentId())
                         .collect(Collectors.toList());
                 summary.setAttachmentUrls(urls);
             }

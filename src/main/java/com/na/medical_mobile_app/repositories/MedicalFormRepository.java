@@ -1,4 +1,4 @@
-// repositories/MedicalFormRepository.java - COMPLETE CORRECTED VERSION
+// repositories/MedicalFormRepository.java - ADD THESE METHODS
 package com.na.medical_mobile_app.repositories;
 
 import com.na.medical_mobile_app.entities.*;
@@ -33,11 +33,14 @@ public interface MedicalFormRepository extends JpaRepository<MedicalForm, Intege
     List<MedicalForm> findByDoctorAndCreatedAtAfter(User doctor, LocalDateTime date);
     List<MedicalForm> findByDoctorOrderByCreatedAtDesc(User doctor);
     
-    // CRUCIAL: Add this method to fetch forms with related entities for admin
-    @Query("SELECT DISTINCT m FROM MedicalForm m " +
-           "LEFT JOIN FETCH m.patient " +
-           "LEFT JOIN FETCH m.doctor " +
-           "LEFT JOIN FETCH m.assignedTo " +
-           "ORDER BY m.createdAt DESC")
-    List<MedicalForm> findAllWithPdfInfo();
+    // ADD THESE CRUCIAL METHODS:
+    List<MedicalForm> findByAssignedToAndStatusNot(User assignedTo, FormStatus status);
+    List<MedicalForm> findByAssignedToIsNullAndStatus(FormStatus status);
+    
+    // Add permission check method
+    @Query("SELECT m FROM MedicalForm m WHERE m.formId = ?1 AND (" +
+           "m.doctor.userId = ?2 OR " +
+           "m.assignedTo.userId = ?2 OR " +
+           "?3 = 'ADMIN')")
+    Optional<MedicalForm> findByIdWithPermission(Integer formId, Integer userId, String role);
 }
