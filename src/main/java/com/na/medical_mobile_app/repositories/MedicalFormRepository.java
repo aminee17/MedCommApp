@@ -1,4 +1,4 @@
-// repositories/MedicalFormRepository.java - ADD THESE METHODS
+// repositories/MedicalFormRepository.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.repositories;
 
 import com.na.medical_mobile_app.entities.*;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional; // ADD THIS IMPORT
 
 @Repository
 public interface MedicalFormRepository extends JpaRepository<MedicalForm, Integer> {
@@ -37,7 +38,7 @@ public interface MedicalFormRepository extends JpaRepository<MedicalForm, Intege
     List<MedicalForm> findByAssignedToAndStatusNot(User assignedTo, FormStatus status);
     List<MedicalForm> findByAssignedToIsNullAndStatus(FormStatus status);
     
-    // Add permission check method
+    // Add permission check method - FIXED VERSION
     @Query("SELECT m FROM MedicalForm m WHERE m.formId = ?1 AND (" +
            "m.doctor.userId = ?2 OR " +
            "m.assignedTo.userId = ?2 OR " +
