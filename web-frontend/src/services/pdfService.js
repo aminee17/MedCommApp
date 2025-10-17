@@ -1,9 +1,10 @@
-// services/pdfService.js
+// services/pdfService.js - UPDATED VERSION
 import { API_BASE_URL } from '../utils/constants';
 import { getAuthHeaders } from './authService';
 
 export const fetchMedicalFormsForAdmin = async () => {
     try {
+        console.log('📡 Fetching medical forms for admin...');
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/pdf/admin/forms`, {
             method: 'GET',
@@ -11,18 +12,30 @@ export const fetchMedicalFormsForAdmin = async () => {
         });
 
         if (!response.ok) {
-            throw new Error('Erreur lors de la récupération des formulaires');
+            const errorText = await response.text();
+            console.error('❌ Server error response:', errorText);
+            throw new Error('Erreur lors de la récupération des formulaires: ' + response.status);
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log('✅ Medical forms data received:', data);
+        
+        // Debug: Check PDF status
+        data.forEach(form => {
+            console.log(`📄 Form ${form.formId}: PDF Generated = ${form.pdfGenerated}, File = ${form.pdfFileName}`);
+        });
+        
+        return data;
     } catch (error) {
-        console.error('Error fetching medical forms for admin:', error);
+        console.error('❌ Error fetching medical forms for admin:', error);
         throw error;
     }
 };
 
 export const downloadPdf = async (formId, fileName) => {
     try {
+        console.log(`📥 Downloading PDF for form ${formId}, filename: ${fileName}`);
+        
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/pdf/download/${formId}`, {
             method: 'GET',
@@ -30,14 +43,13 @@ export const downloadPdf = async (formId, fileName) => {
         });
 
         if (!response.ok) {
-            throw new Error('Erreur lors du téléchargement du PDF');
+            throw new Error('Erreur lors du téléchargement du PDF: ' + response.status);
         }
 
-        // For React Native, you might need to handle the file download differently
-        // This is a basic implementation - you might want to use a file download library
+        // For React Native, use a different approach for file download
         const blob = await response.blob();
         
-        // Create a temporary link to download the file
+        // Create download link
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -47,14 +59,17 @@ export const downloadPdf = async (formId, fileName) => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         
+        console.log('✅ PDF download completed');
+        
     } catch (error) {
-        console.error('Error downloading PDF:', error);
+        console.error('❌ Error downloading PDF:', error);
         throw error;
     }
 };
 
 export const regeneratePdf = async (formId) => {
     try {
+        console.log(`🔄 Regenerating PDF for form ${formId}`);
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/pdf/regenerate/${formId}`, {
             method: 'POST',
@@ -62,12 +77,14 @@ export const regeneratePdf = async (formId) => {
         });
 
         if (!response.ok) {
-            throw new Error('Erreur lors de la régénération du PDF');
+            throw new Error('Erreur lors de la régénération du PDF: ' + response.status);
         }
 
-        return await response.json();
+        const result = await response.json();
+        console.log('✅ PDF regeneration result:', result);
+        return result;
     } catch (error) {
-        console.error('Error regenerating PDF:', error);
+        console.error('❌ Error regenerating PDF:', error);
         throw error;
     }
 };

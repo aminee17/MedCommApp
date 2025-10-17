@@ -1,7 +1,9 @@
+// repositories/MedicalFormRepository.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.repositories;
 
 import com.na.medical_mobile_app.entities.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -30,4 +32,12 @@ public interface MedicalFormRepository extends JpaRepository<MedicalForm, Intege
     List<MedicalForm> findByDoctorAndStatusIn(User doctor, List<FormStatus> statuses);
     List<MedicalForm> findByDoctorAndCreatedAtAfter(User doctor, LocalDateTime date);
     List<MedicalForm> findByDoctorOrderByCreatedAtDesc(User doctor);
+    
+    // CRUCIAL: Add this method to fetch forms with related entities for admin
+    @Query("SELECT DISTINCT m FROM MedicalForm m " +
+           "LEFT JOIN FETCH m.patient " +
+           "LEFT JOIN FETCH m.doctor " +
+           "LEFT JOIN FETCH m.assignedTo " +
+           "ORDER BY m.createdAt DESC")
+    List<MedicalForm> findAllWithPdfInfo();
 }

@@ -1,3 +1,4 @@
+// services/MedicalFormService.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.services;
 
 import com.na.medical_mobile_app.DTOs.MedicalFormRequest;
@@ -80,8 +81,8 @@ public class MedicalFormService {
             System.out.println("✅ Seizure video validated: " + seizureVideo.getOriginalFilename() + " (" + seizureVideo.getSize() + " bytes)");
         }
     }
+    
 
-    // ... existing buildSymptomsSummary method (keep it as is) ...
 
     private String buildSymptomsSummary(MedicalFormRequest request) {
         StringBuilder summary = new StringBuilder();
@@ -215,6 +216,12 @@ public class MedicalFormService {
         medicalForm.setAssignedTo(neurologue);
         medicalForm.setSymptoms(buildSymptomsSummary(request));
 
+        // Initialize PDF fields
+        medicalForm.setPdfGenerated(false);
+        medicalForm.setPdfGeneratedAt(null);
+        medicalForm.setPdfFileName(null);
+        medicalForm.setPdfFilePath(null);
+
         // Save the form first to get an ID
         try {
             medicalForm = medicalFormRepository.save(medicalForm);
@@ -295,10 +302,10 @@ public class MedicalFormService {
             
             medicalFormRepository.save(form);
             
-            System.out.println("PDF generation completed successfully for form ID: " + form.getFormId());
+            System.out.println("✅ PDF generation completed successfully for form ID: " + form.getFormId());
             
         } catch (Exception e) {
-            System.err.println("Error generating PDF for form ID: " + form.getFormId());
+            System.err.println("❌ Error generating PDF for form ID: " + form.getFormId());
             e.printStackTrace();
             // Don't throw exception to avoid breaking form submission
         }
@@ -312,7 +319,7 @@ public class MedicalFormService {
                 .orElseThrow(() -> new Exception("Form not found with ID: " + formId));
         
         if (!form.getPdfGenerated() || form.getPdfFilePath() == null) {
-            System.out.println("PDF not found for form ID: " + formId + ", generating now...");
+            System.out.println("📄 PDF not found for form ID: " + formId + ", generating now...");
             // Generate PDF if not already generated
             generateAndSavePdf(form);
         }
@@ -320,7 +327,7 @@ public class MedicalFormService {
         try {
             return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
         } catch (Exception e) {
-            System.err.println("Error loading PDF for form ID: " + formId);
+            System.err.println("❌ Error loading PDF for form ID: " + formId);
             // Try to regenerate PDF if loading fails
             generateAndSavePdf(form);
             return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
@@ -328,12 +335,29 @@ public class MedicalFormService {
     }
 
     /**
-     * Get all medical forms with PDF information for admin
+     * Get all medical forms with PDF information for admin - FIXED VERSION
      */
     public List<MedicalForm> getAllMedicalFormsWithPdf() {
-        List<MedicalForm> forms = medicalFormRepository.findAll();
-        System.out.println("Retrieved " + forms.size() + " medical forms for admin");
-        return forms;
+        try {
+            List<MedicalForm> forms = medicalFormRepository.findAllWithPdfInfo();
+            System.out.println("📊 Retrieved " + forms.size() + " medical forms for admin dashboard");
+            
+            // Debug: Print PDF status for each form
+            for (MedicalForm form : forms) {
+                System.out.println("📋 Form ID: " + form.getFormId() + 
+                                 " | PDF Generated: " + form.getPdfGenerated() + 
+                                 " | PDF File: " + form.getPdfFileName() +
+                                 " | Status: " + form.getStatus() +
+                                 " | Patient: " + (form.getPatient() != null ? form.getPatient().getName() : "null") +
+                                 " | Doctor: " + (form.getDoctor() != null ? form.getDoctor().getName() : "null"));
+            }
+            
+            return forms;
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching medical forms for admin: " + e.getMessage());
+            e.printStackTrace();
+            return List.of(); // Return empty list instead of throwing exception
+        }
     }
 
 
@@ -376,6 +400,7 @@ public class MedicalFormService {
     public Optional<MedicalForm> getFormById(Integer formId) {
         return medicalFormRepository.findById(formId);
     }
+    
     /**
      * Get recent medical forms created by a specific doctor (last 30 days)
      */
