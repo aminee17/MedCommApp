@@ -1,4 +1,4 @@
-
+// controllers/NeurologueController.java - COMPLETE CORRECTED VERSION
 package com.na.medical_mobile_app.controllers;
 
 import com.na.medical_mobile_app.DTOs.FormResponseRequest;
@@ -15,7 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.stream.Collectors;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,88 +174,10 @@ public class NeurologueController {
             System.err.println("❌ Error getting form response: " + e.getMessage());
             return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }
+
     }
 
-    /**
-     * Get responses for forms created by the current doctor
-     */
-    @GetMapping("/doctor/my-forms-responses")
-    public ResponseEntity<?> getResponsesForDoctorForms(
-            @RequestParam(value = "userId", required = false) Integer userId,
-            @RequestHeader(value = "userId", required = false) String userIdHeader
-    ) {
-        try {
-            User user = getUserFromParams(userId, userIdHeader);
-            System.out.println("📋 Getting responses for forms created by doctor: " + user.getName());
-            
-            List<FormResponse> responses = formResponseService.getResponsesForDoctorForms(user);
-            
-            // Convert to DTO for response
-            List<Map<String, Object>> responseData = responses.stream().map(response -> {
-                Map<String, Object> data = new HashMap<>();
-                data.put("responseId", response.getResponseId());
-                data.put("formId", response.getForm().getFormId());
-                data.put("patientName", response.getForm().getPatient().getName());
-                data.put("responseType", response.getResponseType());
-                data.put("diagnosis", response.getDiagnosis());
-                data.put("recommendations", response.getRecommendations());
-                data.put("treatmentSuggestions", response.getTreatmentSuggestions());
-                data.put("neurologistName", response.getResponder().getName());
-                data.put("createdAt", response.getCreatedAt());
-                return data;
-            }).collect(Collectors.toList());
-            
-            System.out.println("✅ Returning " + responseData.size() + " responses for doctor");
-            return ResponseEntity.ok(responseData);
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error getting doctor form responses: " + e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
 
-    /**
-     * Get all responses for a specific form with doctor-friendly access
-     */
-    @GetMapping("/form-responses/{formId}")
-    public ResponseEntity<?> getAllResponsesForForm(
-            @PathVariable Integer formId,
-            @RequestParam(value = "userId", required = false) Integer userId,
-            @RequestHeader(value = "userId", required = false) String userIdHeader
-    ) {
-        try {
-            User user = getUserFromParams(userId, userIdHeader);
-            List<FormResponse> responses = formResponseService.getFormResponsesWithDoctorAccess(formId, user);
-            
-            List<Map<String, Object>> responseData = responses.stream().map(response -> {
-                Map<String, Object> data = new HashMap<>();
-                data.put("responseId", response.getResponseId());
-                data.put("responseType", response.getResponseType());
-                data.put("diagnosis", response.getDiagnosis());
-                data.put("recommendations", response.getRecommendations());
-                data.put("treatmentSuggestions", response.getTreatmentSuggestions());
-                data.put("medicationChanges", response.getMedicationChanges());
-                data.put("followUpInstructions", response.getFollowUpInstructions());
-                data.put("requiresSupervision", response.getRequiresSupervision());
-                data.put("urgencyLevel", response.getUrgencyLevel());
-                data.put("followUpRequired", response.getFollowUpRequired());
-                data.put("followUpDate", response.getFollowUpDate());
-                data.put("createdAt", response.getCreatedAt());
-                data.put("neurologistName", response.getResponder().getName());
-                data.put("neurologistEmail", response.getResponder().getEmail());
-                data.put("neurologistSpecialization", response.getResponder().getSpecialization());
-                
-                return data;
-            }).collect(Collectors.toList());
-            
-            System.out.println("✅ Returning " + responseData.size() + " responses for form " + formId);
-            return ResponseEntity.ok(responseData);
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error getting form responses: " + e.getMessage());
-            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
-        }
-    }
 
     //--------------------------------------Getting all pending forms with status not completed--------------------------
     @GetMapping("/pending")
@@ -268,6 +190,7 @@ public class NeurologueController {
             
             System.out.println("✅ Using user: " + user.getName() + ", Role: " + user.getRole() + ", ID: " + user.getUserId());
             
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getPendingFormSummariesForNeurologue(user);
             System.out.println("✅ Found " + forms.size() + " pending forms for user");
             return ResponseEntity.ok(forms);
@@ -288,6 +211,7 @@ public class NeurologueController {
             
             System.out.println("✅ Getting completed forms for user: " + user.getName());
             
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getCompletedFormSummariesForNeurologue(user);
 
             System.out.println("✅ Found " + forms.size() + " completed forms for user");
@@ -309,6 +233,7 @@ public class NeurologueController {
             
             System.out.println("✅ Getting all forms for user: " + user.getName());
             
+
             List<MedicalFormSummaryDTO> forms = formResponseService.getAllFormSummariesForNeurologue(user);
             System.out.println("✅ Found " + forms.size() + " total forms for user");
             return ResponseEntity.ok(forms);
