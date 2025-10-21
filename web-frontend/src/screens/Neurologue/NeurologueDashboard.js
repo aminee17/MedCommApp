@@ -176,7 +176,7 @@ const NeurologueDashboard = () => {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Chargement des formulaires...</Text>
+                <Text style={styles.loadingText}> </Text>
             </View>
         );
     }
@@ -250,7 +250,7 @@ const NeurologueDashboard = () => {
                 <AIInsights 
                     patients={patients}
                     onPatientSelect={(patientId) => {
-                        
+
                         const patientForms = forms.filter(f => f.patientId === patientId);
 
                         if (patientForms.length > 0) {
