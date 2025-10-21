@@ -31,7 +31,7 @@ import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 
 // Components
 import NotificationBell from '../components/common/NotificationBell';
-import { COLORS } from '../utils/theme';
+
 
 const Stack = createNativeStackNavigator();
 
