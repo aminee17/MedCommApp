@@ -13,7 +13,7 @@ import {
     rejectRequest,
 } from '../../services/adminService';
 import { useLogout } from '../../hooks/useLogout';
-import { fetchMedicalFormsForAdmin, downloadPdf } from '../../services/pdfService';
+import { fetchMedicalFormsForAdmin, downloadPdf, downloadPdfWithGeneration } from '../../services/pdfService';
 
 export default function AdminDashboard({ navigation }) {
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -89,13 +89,22 @@ export default function AdminDashboard({ navigation }) {
         }
     };
 
-    const handleDownloadPdf = async (formId, fileName) => {
+    const handleDownloadPdf = async (formId, fileName, pdfGenerated) => {
         try {
             Alert.alert('Téléchargement', 'Téléchargement du PDF en cours...');
-            await downloadPdf(formId, fileName);
+            
+            if (pdfGenerated) {
+                // If PDF already exists, download directly
+                await downloadPdf(formId, fileName);
+            } else {
+                // If PDF doesn't exist, generate it first then download
+                await downloadPdfWithGeneration(formId, fileName);
+            }
+            
             Alert.alert('Succès', 'PDF téléchargé avec succès');
         } catch (error) {
-            Alert.alert('Erreur', 'Erreur lors du téléchargement du PDF');
+            console.error('Download error:', error);
+            Alert.alert('Erreur', error.message || 'Erreur lors du téléchargement du PDF');
         }
     };
 
@@ -177,15 +186,11 @@ export default function AdminDashboard({ navigation }) {
             </View>
 
             <View style={styles.buttonContainer}>
-                {item.pdfGenerated ? (
-                    <Button
-                        title="Télécharger PDF"
-                        onPress={() => handleDownloadPdf(item.formId, item.pdfFileName)}
-                        color="#3498DB"
-                    />
-                ) : (
-                    <Text style={styles.noPdfText}>PDF non disponible</Text>
-                )}
+                <Button
+                    title={item.pdfGenerated ? "Télécharger PDF" : "Générer & Télécharger PDF"}
+                    onPress={() => handleDownloadPdf(item.formId, item.pdfFileName, item.pdfGenerated)}
+                    color={item.pdfGenerated ? "#3498DB" : "#27AE60"}
+                />
             </View>
         </View>
     );
