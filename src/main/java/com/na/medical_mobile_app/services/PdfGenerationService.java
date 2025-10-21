@@ -16,9 +16,33 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.regex.Pattern;
 
 @Service
 public class PdfGenerationService {
+
+    /**
+     * Sanitize text to remove control characters and fix encoding issues for PDF
+     */
+    private String sanitizeText(String text) {
+        if (text == null) {
+            return "";
+        }
+        
+        // Replace newlines and carriage returns with spaces
+        text = text.replaceAll("\\r\\n|\\r|\\n", " ");
+        
+        // Remove other control characters (including U+000A LF)
+        text = text.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
+        
+        // Remove any remaining problematic characters
+        text = Pattern.compile("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]").matcher(text).replaceAll("");
+        
+        // Trim and ensure not empty
+        text = text.trim();
+        
+        return text.isEmpty() ? "Non spécifié" : text;
+    }
 
     public byte[] generateMedicalFormPdf(MedicalForm form) throws IOException {
         try (PDDocument document = new PDDocument();
@@ -35,14 +59,13 @@ public class PdfGenerationService {
                 
                 float margin = 50;
                 float yPosition = 750;
-                float lineHeight = 14;
                 float sectionSpacing = 20;
                 
                 // Title
                 contentStream.setFont(titleFont, 16);
                 contentStream.beginText();
                 contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("FORMULAIRE MÉDICAL - ÉPILEPSIE");
+                contentStream.showText(sanitizeText("FORMULAIRE MÉDICAL - ÉPILEPSIE"));
                 contentStream.endText();
                 yPosition -= 30;
                 
@@ -50,8 +73,8 @@ public class PdfGenerationService {
                 contentStream.setFont(normalFont, 10);
                 contentStream.beginText();
                 contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("Formulaire #: " + form.getFormId() + " | Généré le: " + 
-                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
+                contentStream.showText(sanitizeText("Formulaire #: " + form.getFormId() + " | Généré le: " + 
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"))));
                 contentStream.endText();
                 yPosition -= 20;
                 
@@ -68,7 +91,7 @@ public class PdfGenerationService {
                 if (form.getSymptoms() != null && !form.getSymptoms().isEmpty()) {
                     yPosition -= sectionSpacing;
                     yPosition = addSectionTitle(contentStream, "SYMPTÔMES ET DESCRIPTION DES CRISES", margin, yPosition, boldFont);
-                    yPosition = addWrappedText(contentStream, form.getSymptoms(), margin, yPosition, normalFont, 12);
+                    yPosition = addWrappedText(contentStream, sanitizeText(form.getSymptoms()), margin, yPosition, normalFont, 12);
                 }
                 
                 // Doctor Information
@@ -80,7 +103,7 @@ public class PdfGenerationService {
                 contentStream.setFont(normalFont, 8);
                 contentStream.beginText();
                 contentStream.newLineAtOffset(margin, 30);
-                contentStream.showText("Document généré automatiquement par le système Medical Mobile App");
+                contentStream.showText(sanitizeText("Document généré automatiquement par le système Medical Mobile App"));
                 contentStream.endText();
             }
             
@@ -93,7 +116,7 @@ public class PdfGenerationService {
         contentStream.setFont(font, 12);
         contentStream.beginText();
         contentStream.newLineAtOffset(margin, yPosition);
-        contentStream.showText(title);
+        contentStream.showText(sanitizeText(title));
         contentStream.endText();
         return yPosition - 15;
     }
@@ -102,13 +125,13 @@ public class PdfGenerationService {
         float currentY = yPosition;
         
         // Use the exact method names from your Patient entity
-        String name = patient.getName() != null ? patient.getName() : "Non spécifié";
+        String name = sanitizeText(patient.getName() != null ? patient.getName() : "Non spécifié");
         String birthdate = patient.getBirthdate() != null ? 
             patient.getBirthdate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "Non spécifié";
-        String gender = patient.getGender() != null ? patient.getGender().toString() : "Non spécifié";
-        String cin = patient.getCin() != null ? patient.getCin().toString() : "Non spécifié";
-        String phone = patient.getPhone() != null ? patient.getPhone() : "Non spécifié";
-        String address = patient.getAddress() != null ? patient.getAddress() : "Non spécifié";
+        String gender = sanitizeText(patient.getGender() != null ? patient.getGender().toString() : "Non spécifié");
+        String cin = sanitizeText(patient.getCin() != null ? patient.getCin().toString() : "Non spécifié");
+        String phone = sanitizeText(patient.getPhone() != null ? patient.getPhone() : "Non spécifié");
+        String address = sanitizeText(patient.getAddress() != null ? patient.getAddress() : "Non spécifié");
         
         currentY = addKeyValueLine(contentStream, "Nom complet:", name, margin, currentY, boldFont, normalFont);
         currentY = addKeyValueLine(contentStream, "Date de naissance:", birthdate, margin, currentY, boldFont, normalFont);
@@ -150,27 +173,36 @@ public class PdfGenerationService {
     private float addDoctorInfo(PDPageContentStream contentStream, User doctor, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
         float currentY = yPosition;
         
-        currentY = addKeyValueLine(contentStream, "Nom:", doctor.getName(), margin, currentY, boldFont, normalFont);
-        currentY = addKeyValueLine(contentStream, "Email:", doctor.getEmail(), margin, currentY, boldFont, normalFont);
-        currentY = addKeyValueLine(contentStream, "Spécialité:", doctor.getSpecialization(), margin, currentY, boldFont, normalFont);
+        if (doctor != null) {
+            currentY = addKeyValueLine(contentStream, "Nom:", doctor.getName(), margin, currentY, boldFont, normalFont);
+            currentY = addKeyValueLine(contentStream, "Email:", doctor.getEmail(), margin, currentY, boldFont, normalFont);
+            currentY = addKeyValueLine(contentStream, "Spécialité:", doctor.getSpecialization(), margin, currentY, boldFont, normalFont);
+        } else {
+            currentY = addKeyValueLine(contentStream, "Nom:", "Non spécifié", margin, currentY, boldFont, normalFont);
+            currentY = addKeyValueLine(contentStream, "Email:", "Non spécifié", margin, currentY, boldFont, normalFont);
+            currentY = addKeyValueLine(contentStream, "Spécialité:", "Non spécifié", margin, currentY, boldFont, normalFont);
+        }
         
         return currentY;
     }
     
     private float addKeyValueLine(PDPageContentStream contentStream, String key, String value, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
         if (value != null && !value.trim().isEmpty()) {
+            String sanitizedKey = sanitizeText(key);
+            String sanitizedValue = sanitizeText(value);
+            
             // Key
             contentStream.setFont(boldFont, 10);
             contentStream.beginText();
             contentStream.newLineAtOffset(margin, yPosition);
-            contentStream.showText(key + " ");
+            contentStream.showText(sanitizedKey + " ");
             contentStream.endText();
             
             // Value
             contentStream.setFont(normalFont, 10);
             contentStream.beginText();
-            contentStream.newLineAtOffset(margin + getStringWidth(key + " ", boldFont, 10), yPosition);
-            contentStream.showText(value);
+            contentStream.newLineAtOffset(margin + getStringWidth(sanitizedKey + " ", boldFont, 10), yPosition);
+            contentStream.showText(sanitizedValue);
             contentStream.endText();
             
             return yPosition - 12;
@@ -185,23 +217,30 @@ public class PdfGenerationService {
     private float addWrappedText(PDPageContentStream contentStream, String text, float margin, float yPosition, PDType1Font font, float fontSize) throws IOException {
         contentStream.setFont(font, fontSize);
         
-        String[] words = text.split(" ");
+        // Sanitize text first and split by words
+        String sanitizedText = sanitizeText(text);
+        String[] words = sanitizedText.split("\\s+"); // Split by any whitespace
         StringBuilder line = new StringBuilder();
         float lineWidth = 0;
         float maxWidth = 500;
         
         for (String word : words) {
-            float wordWidth = getStringWidth(line + word + " ", font, fontSize);
+            if (word.trim().isEmpty()) continue; // Skip empty words
+            
+            String wordWithSpace = word + " ";
+            float wordWidth = getStringWidth(wordWithSpace, font, fontSize);
             
             if (lineWidth + wordWidth < maxWidth) {
                 line.append(word).append(" ");
                 lineWidth += wordWidth;
             } else {
-                // Draw the current line
-                contentStream.beginText();
-                contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText(line.toString());
-                contentStream.endText();
+                // Draw the current line if it's not empty
+                if (line.length() > 0) {
+                    contentStream.beginText();
+                    contentStream.newLineAtOffset(margin, yPosition);
+                    contentStream.showText(sanitizeText(line.toString()));
+                    contentStream.endText();
+                }
                 
                 // Start new line
                 line = new StringBuilder(word + " ");
@@ -216,11 +255,11 @@ public class PdfGenerationService {
             }
         }
         
-        // Draw the last line
+        // Draw the last line if it's not empty
         if (line.length() > 0) {
             contentStream.beginText();
             contentStream.newLineAtOffset(margin, yPosition);
-            contentStream.showText(line.toString());
+            contentStream.showText(sanitizeText(line.toString()));
             contentStream.endText();
             yPosition -= 15;
         }

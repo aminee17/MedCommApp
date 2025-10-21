@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from '../utils/theme';
 
 // Auth Screens
 import RoleSelection from '../screens/Auth/RoleSelection';
@@ -55,9 +57,59 @@ const createHeaderRight = (navigation, handleLogout) => () => (
 );
 
 const AppNavigator = () => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [initialRouteName, setInitialRouteName] = useState('RoleSelection');
+
+    useEffect(() => {
+        checkAuthState();
+    }, []);
+
+    const checkAuthState = async () => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            const userId = await AsyncStorage.getItem('userId');
+            const userRole = await AsyncStorage.getItem('userRole');
+
+            console.log('Auth check - Token:', !!token, 'UserID:', userId, 'Role:', userRole);
+
+            if (token && userId && userRole) {
+                // User is authenticated, set the appropriate initial route
+                switch (userRole) {
+                    case 'ADMIN':
+                        setInitialRouteName('AdminDashboard');
+                        break;
+                    case 'NEUROLOGUE':
+                    case 'NEUROLOGUE_RESIDENT':
+                        setInitialRouteName('NeurologueDashboard');
+                        break;
+                    case 'MEDECIN':
+                        setInitialRouteName('DoctorDashboard');
+                        break;
+                    default:
+                        setInitialRouteName('RoleSelection');
+                }
+            } else {
+                setInitialRouteName('RoleSelection');
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
+            setInitialRouteName('RoleSelection');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+        );
+    }
+
     return (
         <Stack.Navigator
-            initialRouteName="RoleSelection"
+            initialRouteName={initialRouteName}
             screenOptions={{
                 headerStyle: {
                     backgroundColor: COLORS.primary,
