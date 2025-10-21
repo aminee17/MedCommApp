@@ -9,11 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-// @CrossOrigin(origins = "*")
 public class AuthController {
 
-
-    
     @Autowired
     private AuthService authService;
 
@@ -27,5 +24,15 @@ public class AuthController {
         return authService.registerAdmin(request);
     }
 
+    // Optional: Add logout endpoint if needed
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok().body("Logged out successfully");
+    }
 
+    // Optional: Add token validation endpoint
+    @PostMapping("/validate-token")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String token) {
+        return authService.validateToken(token);
+    }
 }
