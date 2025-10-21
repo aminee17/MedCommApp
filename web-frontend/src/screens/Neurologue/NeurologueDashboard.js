@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, RefreshControl } from 'react-native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
@@ -13,6 +13,7 @@ import { useLogout } from '../../hooks/useLogout';
 const NeurologueDashboard = () => {
     const [forms, setForms] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [userName, setUserName] = useState('');
     const [activeFilter, setActiveFilter] = useState('pending'); // 'pending', 'completed', 'all', or 'ai'
     const [patients, setPatients] = useState([]);
@@ -20,70 +21,92 @@ const NeurologueDashboard = () => {
     const handleLogout = useLogout();
     const route = useRoute();
 
-    useEffect(() => {
-        const loadUserData = async () => {
-            try {
-                const name = await AsyncStorage.getItem('userName');
-                if (name) {
-                    setUserName(name);
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
+    // Load user data
+    const loadUserData = async () => {
+        try {
+            const name = await AsyncStorage.getItem('userName');
+            if (name) {
+                setUserName(name);
             }
-        };
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    };
 
-        const loadForms = async () => {
-            try {
-                let data;
-                switch (activeFilter) {
-                    case 'completed':
-                        data = await fetchCompletedFormsForNeurologue();
-                        break;
-                    case 'all':
-                        data = await fetchAllFormsForNeurologue();
-                        break;
-                    case 'ai':
-                        data = await fetchAllFormsForNeurologue();
-                        break;
-                    case 'pending':
-                    default:
-                        data = await fetchPendingFormsForNeurologue();
-                        break;
-                }
-                setForms(data);
+    // Load forms based on active filter
+    const loadForms = async () => {
+        try {
+            setLoading(true);
+            let data;
+            switch (activeFilter) {
+                case 'completed':
+                    data = await fetchCompletedFormsForNeurologue();
+                    break;
+                case 'all':
+                    data = await fetchAllFormsForNeurologue();
+                    break;
+                case 'ai':
+                    data = await fetchAllFormsForNeurologue();
+                    break;
+                case 'pending':
+                default:
+                    data = await fetchPendingFormsForNeurologue();
+                    break;
+            }
+            setForms(data || []);
+            
+            // Extract unique patients for AI insights
+            const uniquePatients = (data || []).reduce((acc, form) => {
+                const patientName = form.patientName || 'Unknown Patient';
                 
-                // Extract unique patients for AI insights
-                console.log('Sample form object:', data[0]);
-                const uniquePatients = data.reduce((acc, form) => {
-                    const patientName = form.patientName || 'Unknown Patient';
-                    
-                    if (!acc.find(p => p.patientId === form.patientId)) {
-                        acc.push({
-                            patientId: form.patientId,
-                            fullName: patientName,
-                            formId: form.formId
-                        });
-                    }
-                    return acc;
-                }, []);
-                console.log('Extracted patients:', uniquePatients);
-                setPatients(uniquePatients);
-            } catch (error) {
-                console.error('Error fetching forms:', error);
-                if (error.message.includes('User ID not found')) {
-                    // Redirect to login if user ID is not found
-                    Alert.alert('Session expirée', 'Veuillez vous reconnecter.', [
-                        { text: 'OK', onPress: () => navigation.replace('NeurologueLogin') }
-                    ]);
+                if (!acc.find(p => p.patientId === form.patientId)) {
+                    acc.push({
+                        patientId: form.patientId,
+                        fullName: patientName,
+                        formId: form.formId
+                    });
                 }
-            } finally {
-                setLoading(false);
+                return acc;
+            }, []);
+            setPatients(uniquePatients);
+        } catch (error) {
+            console.error('Error fetching forms:', error);
+            if (error.message.includes('User ID not found')) {
+                Alert.alert('Session expirée', 'Veuillez vous reconnecter.', [
+                    { text: 'OK', onPress: () => navigation.replace('NeurologueLogin') }
+                ]);
             }
-        };
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
+    // Initial load
+    useEffect(() => {
         loadUserData();
         loadForms();
-    }, [navigation, activeFilter]);
+    }, []);
+
+    // Refresh when active filter changes
+    useEffect(() => {
+        console.log('🔄 Filter changed to:', activeFilter);
+        loadForms();
+    }, [activeFilter]);
+
+    // Refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            console.log('🔄 Screen focused, refreshing data...');
+            loadForms();
+        }, [activeFilter])
+    );
+
+    // Pull to refresh
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        loadForms();
+    }, [activeFilter]);
 
     // Handle logout from header
     useEffect(() => {
@@ -97,6 +120,12 @@ const NeurologueDashboard = () => {
 
     const handleFormPress = (form) => {
         navigation.navigate('NeurologueFormDetails', { form });
+    };
+
+    // Handle filter change with immediate refresh
+    const handleFilterChange = (filter) => {
+        setActiveFilter(filter);
+        // The useEffect above will automatically trigger loadForms()
     };
 
     // Component for form card with chat functionality
@@ -143,8 +172,13 @@ const NeurologueDashboard = () => {
         );
     };
 
-    if (loading) {
-        return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
+    if (loading && !refreshing) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Chargement des formulaires...</Text>
+            </View>
+        );
     }
 
     // Function to get the header title based on active filter
@@ -177,30 +211,38 @@ const NeurologueDashboard = () => {
             <View style={filterStyles.filterContainer}>
                 <TouchableOpacity 
                     style={[filterStyles.filterButton, activeFilter === 'pending' && filterStyles.activeFilter]}
-                    onPress={() => setActiveFilter('pending')}
+                    onPress={() => handleFilterChange('pending')}
                 >
-                    <Text style={[filterStyles.filterText, activeFilter === 'pending' && filterStyles.activeFilterText]}>En attente</Text>
+                    <Text style={[filterStyles.filterText, activeFilter === 'pending' && filterStyles.activeFilterText]}>
+                        En attente
+                    </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                     style={[filterStyles.filterButton, activeFilter === 'completed' && filterStyles.activeFilter]}
-                    onPress={() => setActiveFilter('completed')}
+                    onPress={() => handleFilterChange('completed')}
                 >
-                    <Text style={[filterStyles.filterText, activeFilter === 'completed' && filterStyles.activeFilterText]}>Complétés</Text>
+                    <Text style={[filterStyles.filterText, activeFilter === 'completed' && filterStyles.activeFilterText]}>
+                        Complétés
+                    </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                     style={[filterStyles.filterButton, activeFilter === 'all' && filterStyles.activeFilter]}
-                    onPress={() => setActiveFilter('all')}
+                    onPress={() => handleFilterChange('all')}
                 >
-                    <Text style={[filterStyles.filterText, activeFilter === 'all' && filterStyles.activeFilterText]}>Tous</Text>
+                    <Text style={[filterStyles.filterText, activeFilter === 'all' && filterStyles.activeFilterText]}>
+                        Tous
+                    </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                     style={[filterStyles.filterButton, activeFilter === 'ai' && filterStyles.activeFilter]}
-                    onPress={() => setActiveFilter('ai')}
+                    onPress={() => handleFilterChange('ai')}
                 >
-                    <Text style={[filterStyles.filterText, activeFilter === 'ai' && filterStyles.activeFilterText]}>🧠 AI</Text>
+                    <Text style={[filterStyles.filterText, activeFilter === 'ai' && filterStyles.activeFilterText]}>
+                        🧠 AI
+                    </Text>
                 </TouchableOpacity>
             </View>
             
@@ -208,16 +250,15 @@ const NeurologueDashboard = () => {
                 <AIInsights 
                     patients={patients}
                     onPatientSelect={(patientId) => {
-                        // Navigate to patient details or forms
+                        
                         const patientForms = forms.filter(f => f.patientId === patientId);
+
                         if (patientForms.length > 0) {
                             handleFormPress(patientForms[0]);
                         }
                     }}
                 />
-            ) : loading ? (
-                <ActivityIndicator size="large" style={{ marginTop: 50 }} />
-            ) : forms.length > 0 ? (
+            ) : (
                 <FlatList
                     data={forms}
                     keyExtractor={(item, index) => item.formId?.toString() || index.toString()}
@@ -225,18 +266,30 @@ const NeurologueDashboard = () => {
                         <FormCardWithChat 
                             form={item} 
                             onPress={() => handleFormPress(item)}
-                            onChatPress={() => navigation.navigate('NeurologueChat', { formId: item.formId, doctorId: item.referringDoctorId })}
+                            onChatPress={() => navigation.navigate('NeurologueChat', { 
+                                formId: item.formId, 
+                                doctorId: item.referringDoctorId 
+                            })}
                         />
                     )}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>
+                                {activeFilter === 'pending' ? 'Aucun formulaire en attente' : 
+                                 activeFilter === 'completed' ? 'Aucun formulaire complété' : 
+                                 'Aucun formulaire disponible'}
+                            </Text>
+                        </View>
+                    }
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={[COLORS.primary]}
+                            tintColor={COLORS.primary}
+                        />
+                    }
                 />
-            ) : (
-                <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>
-                        {activeFilter === 'pending' ? 'Aucun formulaire en attente' : 
-                         activeFilter === 'completed' ? 'Aucun formulaire complété' : 
-                         'Aucun formulaire disponible'}
-                    </Text>
-                </View>
             )}
         </View>
     );
@@ -266,10 +319,37 @@ const filterStyles = StyleSheet.create({
     filterText: {
         color: '#555',
         fontWeight: '500',
+        fontSize: 12,
     },
     activeFilterText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+});
+
+// Add these styles to your existing styles or create them
+const additionalStyles = StyleSheet.create({
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.lightGrey,
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: COLORS.grey,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: COLORS.grey,
+        textAlign: 'center',
     },
 });
 
