@@ -26,12 +26,13 @@ export default function AdminDashboard({ navigation }) {
 
     // React to header-triggered logout param changes
     useEffect(() => {
-
-        if (route.params?.triggerLogout) {
-            navigation.setParams({ triggerLogout: null });
-            handleLogout();
+        console.log('AdminDashboard - forceLogout param:', route.params?.forceLogout);
+        if (route.params?.forceLogout) {
+            console.log('AdminDashboard - Triggering logout from header...');
+            navigation.setParams({ forceLogout: null });
+            handleLogout(false); // false = no confirmation
         }
-    }, [route.params?.triggerLogout]);
+    }, [route.params?.forceLogout, handleLogout, navigation]);
 
     useEffect(() => {
         if (activeTab === 'requests') {
