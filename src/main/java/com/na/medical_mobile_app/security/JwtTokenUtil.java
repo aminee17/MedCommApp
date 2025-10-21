@@ -102,14 +102,5 @@ public class JwtTokenUtil {
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-
-    // Additional validation method that doesn't require UserDetails
-    public Boolean validateToken(String token) {
-        try {
-            getAllClaimsFromToken(token);
-            return !isTokenExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    
 }
