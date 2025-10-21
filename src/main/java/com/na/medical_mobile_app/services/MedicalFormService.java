@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -278,21 +277,35 @@ public class MedicalFormService {
     /**
      * Generate PDF for a medical form and save it to file system
      */
-    public void generateAndSavePdf(MedicalForm form) {
+    public void generateAndSavePdf(MedicalForm form) throws Exception {
         try {
-            System.out.println("Starting PDF generation for form ID: " + form.getFormId());
+            System.out.println("🔄 Starting PDF generation for form ID: " + form.getFormId());
+            
+            // Validate form before generating PDF
+            if (form == null || form.getFormId() == null) {
+                throw new Exception("Invalid form provided for PDF generation");
+            }
             
             // Generate PDF
             byte[] pdfData = pdfGenerationService.generateMedicalFormPdf(form);
-            System.out.println("PDF generated successfully, size: " + pdfData.length + " bytes");
+            if (pdfData == null || pdfData.length == 0) {
+                throw new Exception("Generated PDF data is null or empty");
+            }
+            System.out.println("📄 PDF generated successfully, size: " + pdfData.length + " bytes");
             
             // Generate filename
             String fileName = pdfGenerationService.generatePdfFileName(form);
-            System.out.println("Generated PDF filename: " + fileName);
+            if (fileName == null || fileName.trim().isEmpty()) {
+                fileName = "medical_form_" + form.getFormId() + "_" + System.currentTimeMillis() + ".pdf";
+            }
+            System.out.println("📝 Generated PDF filename: " + fileName);
             
             // Save to file system
             String filePath = pdfStorageService.savePdfToFileSystem(pdfData, fileName);
-            System.out.println("PDF saved to: " + filePath);
+            if (filePath == null || filePath.trim().isEmpty()) {
+                throw new Exception("Failed to save PDF to file system");
+            }
+            System.out.println("💾 PDF saved to: " + filePath);
             
             // Update form with PDF information
             form.setPdfGenerated(true);
@@ -300,14 +313,18 @@ public class MedicalFormService {
             form.setPdfFileName(fileName);
             form.setPdfFilePath(filePath);
             
-            medicalFormRepository.save(form);
+            // Save to database
+            MedicalForm savedForm = medicalFormRepository.save(form);
+            if (savedForm == null) {
+                throw new Exception("Failed to save form to database");
+            }
             
             System.out.println("✅ PDF generation completed successfully for form ID: " + form.getFormId());
             
         } catch (Exception e) {
-            System.err.println("❌ Error generating PDF for form ID: " + form.getFormId());
+            System.err.println("❌ Error generating PDF for form ID: " + form.getFormId() + " - " + e.getMessage());
             e.printStackTrace();
-            // Don't throw exception to avoid breaking form submission
+            throw new Exception("Failed to generate PDF: " + e.getMessage(), e);
         }
     }
 
@@ -318,18 +335,49 @@ public class MedicalFormService {
         MedicalForm form = medicalFormRepository.findById(formId)
                 .orElseThrow(() -> new Exception("Form not found with ID: " + formId));
         
-        if (!form.getPdfGenerated() || form.getPdfFilePath() == null) {
+        System.out.println("🔍 Form " + formId + " PDF status - Generated: " + form.getPdfGenerated() + 
+                         ", Path: " + form.getPdfFilePath());
+        
+        if (!form.getPdfGenerated() || form.getPdfFilePath() == null || form.getPdfFilePath().trim().isEmpty()) {
             System.out.println("📄 PDF not found for form ID: " + formId + ", generating now...");
             // Generate PDF if not already generated
             generateAndSavePdf(form);
+            
+            // Refresh form from database to get updated PDF info
+            form = medicalFormRepository.findById(formId)
+                    .orElseThrow(() -> new Exception("Form not found after PDF generation"));
+            
+            System.out.println("🔄 After generation - Generated: " + form.getPdfGenerated() + 
+                             ", Path: " + form.getPdfFilePath());
+        }
+        
+        // Double check that we have a valid file path
+        if (form.getPdfFilePath() == null || form.getPdfFilePath().trim().isEmpty()) {
+            throw new Exception("PDF file path is null or empty for form ID: " + formId);
         }
         
         try {
-            return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
+            System.out.println("📂 Loading PDF from path: " + form.getPdfFilePath());
+            byte[] pdfData = pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
+            System.out.println("✅ PDF loaded successfully, size: " + pdfData.length + " bytes");
+            return pdfData;
         } catch (Exception e) {
-            System.err.println("❌ Error loading PDF for form ID: " + formId);
+            System.err.println("❌ Error loading PDF for form ID: " + formId + " from path: " + form.getPdfFilePath());
+            e.printStackTrace();
+            
             // Try to regenerate PDF if loading fails
+            System.out.println("🔄 Attempting to regenerate PDF...");
             generateAndSavePdf(form);
+            
+            // Refresh form again
+            form = medicalFormRepository.findById(formId)
+                    .orElseThrow(() -> new Exception("Form not found after PDF regeneration"));
+            
+            if (form.getPdfFilePath() == null || form.getPdfFilePath().trim().isEmpty()) {
+                throw new Exception("PDF file path is still null after regeneration for form ID: " + formId);
+            }
+            
+            System.out.println("📂 Retrying load from path: " + form.getPdfFilePath());
             return pdfStorageService.loadPdfFromFileSystem(form.getPdfFilePath());
         }
     }

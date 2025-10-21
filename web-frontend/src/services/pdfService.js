@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../utils/constants';
 import { getAuthHeaders } from './authService';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 export const fetchMedicalFormsForAdmin = async () => {
     try {
@@ -50,79 +50,100 @@ export const downloadPdf = async (formId, fileName) => {
         const finalFileName = fileName || `formulaire_${formId}.pdf`;
         const cleanFileName = finalFileName.replace(/[^a-zA-Z0-9.-]/g, '_');
         
-        // For React Native - save file locally and then share
-        const fileUri = `${FileSystem.documentDirectory}${cleanFileName}`;
-        
-        // Download the file directly using React Native FileSystem
-        try {
-            const downloadResult = await FileSystem.downloadAsync(
-                `${API_BASE_URL}/api/pdf/download/${formId}`,
-                fileUri,
-                {
-                    headers: headers
-                }
-            );
-            
-            if (downloadResult.status === 200) {
-                // Check if sharing is available and share the file
-                const isAvailable = await Sharing.isAvailableAsync();
-                if (isAvailable) {
-                    await Sharing.shareAsync(downloadResult.uri, {
-                        mimeType: 'application/pdf',
-                        dialogTitle: 'Télécharger le formulaire médical',
-                        UTI: 'com.adobe.pdf'
-                    });
-                    console.log('✅ PDF download completed and shared');
-                } else {
-                    Alert.alert('Succès', `PDF téléchargé dans: ${downloadResult.uri}`);
-                }
-            } else {
-                throw new Error(`Download failed with status: ${downloadResult.status}`);
-            }
-        } catch (fileSystemError) {
-            console.error('❌ FileSystem download failed, trying fetch approach:', fileSystemError);
-            
-            // Fallback to fetch + blob approach if FileSystem download fails
-            const response = await fetch(`${API_BASE_URL}/api/pdf/download/${formId}`, {
-                method: 'GET',
-                headers,
-            });
+        // Make the API request first to check if it's successful
+        const response = await fetch(`${API_BASE_URL}/api/pdf/download/${formId}`, {
+            method: 'GET',
+            headers,
+        });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Download error:', errorText);
-                throw new Error('Erreur lors du téléchargement du PDF: ' + response.status);
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Download error:', errorText);
+            throw new Error(`Erreur lors du téléchargement du PDF: ${response.status} - ${errorText}`);
+        }
+        
+        // Handle download based on platform
+        if (Platform.OS === 'web') {
+            console.log('🌐 Web platform detected, using browser download');
             
-            const pdfData = await response.blob();
+            // For web platform, use browser download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = cleanFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
             
-            // Convert blob to base64 for React Native FileSystem
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                try {
-                    const base64Data = reader.result.split(',')[1]; // Remove data:application/pdf;base64, prefix
-                    await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-                        encoding: FileSystem.EncodingType.Base64,
-                    });
-                    
+            console.log('✅ PDF download completed on web');
+        } else {
+            console.log('📱 Mobile platform detected, using native download');
+            
+            // For mobile platforms, use React Native FileSystem and Sharing
+            const fileUri = `${FileSystem.documentDirectory}${cleanFileName}`;
+            
+            try {
+                // Try FileSystem download first
+                const downloadResult = await FileSystem.downloadAsync(
+                    `${API_BASE_URL}/api/pdf/download/${formId}`,
+                    fileUri,
+                    {
+                        headers: headers
+                    }
+                );
+                
+                if (downloadResult.status === 200) {
                     // Check if sharing is available and share the file
                     const isAvailable = await Sharing.isAvailableAsync();
                     if (isAvailable) {
-                        await Sharing.shareAsync(fileUri, {
+                        await Sharing.shareAsync(downloadResult.uri, {
                             mimeType: 'application/pdf',
                             dialogTitle: 'Télécharger le formulaire médical',
                             UTI: 'com.adobe.pdf'
                         });
                         console.log('✅ PDF download completed and shared');
                     } else {
-                        Alert.alert('Succès', `PDF téléchargé dans: ${fileUri}`);
+                        Alert.alert('Succès', `PDF téléchargé dans: ${downloadResult.uri}`);
                     }
-                } catch (shareError) {
-                    console.error('❌ Error saving/sharing PDF:', shareError);
-                    Alert.alert('Erreur', 'Impossible de sauvegarder le PDF');
+                } else {
+                    throw new Error(`Download failed with status: ${downloadResult.status}`);
                 }
-            };
-            reader.readAsDataURL(pdfData);
+            } catch (fileSystemError) {
+                console.error('❌ FileSystem download failed, trying blob approach:', fileSystemError);
+                
+                // Fallback to blob approach if FileSystem download fails
+                const pdfData = await response.blob();
+                
+                // Convert blob to base64 for React Native FileSystem
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        const base64Data = reader.result.split(',')[1]; // Remove data:application/pdf;base64, prefix
+                        await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+                            encoding: FileSystem.EncodingType.Base64,
+                        });
+                        
+                        // Check if sharing is available and share the file
+                        const isAvailable = await Sharing.isAvailableAsync();
+                        if (isAvailable) {
+                            await Sharing.shareAsync(fileUri, {
+                                mimeType: 'application/pdf',
+                                dialogTitle: 'Télécharger le formulaire médical',
+                                UTI: 'com.adobe.pdf'
+                            });
+                            console.log('✅ PDF download completed and shared');
+                        } else {
+                            Alert.alert('Succès', `PDF téléchargé dans: ${fileUri}`);
+                        }
+                    } catch (shareError) {
+                        console.error('❌ Error saving/sharing PDF:', shareError);
+                        Alert.alert('Erreur', 'Impossible de sauvegarder le PDF');
+                    }
+                };
+                reader.readAsDataURL(pdfData);
+            }
         }
         
     } catch (error) {

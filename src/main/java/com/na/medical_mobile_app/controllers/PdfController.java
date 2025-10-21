@@ -3,7 +3,6 @@ package com.na.medical_mobile_app.controllers;
 
 import com.na.medical_mobile_app.entities.MedicalForm;
 import com.na.medical_mobile_app.services.MedicalFormService;
-import com.na.medical_mobile_app.services.PdfGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,8 +23,7 @@ public class PdfController {
     @Autowired
     private MedicalFormService medicalFormService;
 
-    @Autowired
-    private PdfGenerationService pdfGenerationService;
+    // Removed unused PdfGenerationService injection
 
     /**
      * Download PDF for a specific medical form
@@ -35,9 +33,29 @@ public class PdfController {
         try {
             System.out.println("📥 Download PDF request for form ID: " + formId);
             
-            byte[] pdfData = medicalFormService.getPdfData(formId);
+            // First check if the form exists
             MedicalForm form = medicalFormService.getFormById(formId)
                     .orElseThrow(() -> new Exception("Form not found with ID: " + formId));
+            
+            System.out.println("📋 Found form: " + form.getFormId() + 
+                             " | PDF Generated: " + form.getPdfGenerated() + 
+                             " | PDF File: " + form.getPdfFileName());
+
+            // Get PDF data (this will generate if needed)
+            byte[] pdfData;
+            try {
+                pdfData = medicalFormService.getPdfData(formId);
+                System.out.println("📄 PDF data retrieved, size: " + pdfData.length + " bytes");
+            } catch (Exception pdfError) {
+                System.err.println("❌ Error getting PDF data for form ID: " + formId + " - " + pdfError.getMessage());
+                pdfError.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error generating/loading PDF: " + pdfError.getMessage()).getBytes());
+            }
+
+            // Get updated form info (in case PDF was just generated)
+            form = medicalFormService.getFormById(formId)
+                    .orElseThrow(() -> new Exception("Form not found after PDF generation"));
 
             String fileName = form.getPdfFileName() != null ? 
                 form.getPdfFileName() : 
@@ -49,13 +67,21 @@ public class PdfController {
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
             headers.setContentLength(pdfData.length);
 
-            System.out.println("✅ PDF download successful for form ID: " + formId);
+            System.out.println("✅ PDF download successful for form ID: " + formId + " | File: " + fileName);
             return new ResponseEntity<>(pdfData, headers, HttpStatus.OK);
             
         } catch (Exception e) {
             System.err.println("❌ Error downloading PDF for form ID: " + formId + " - " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            
+            // Return more detailed error information
+            try {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(("Error downloading PDF: " + e.getMessage()).getBytes());
+            } catch (Exception responseError) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
         }
     }
 
