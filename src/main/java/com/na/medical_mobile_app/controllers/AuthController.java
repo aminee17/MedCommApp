@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+// @CrossOrigin(origins = "*")
 public class AuthController {
 
+
+    
     @Autowired
     private AuthService authService;
 
@@ -23,4 +26,6 @@ public class AuthController {
     public ResponseEntity<?> registerAdmin(@RequestBody AdminRegistrationRequest request) {
         return authService.registerAdmin(request);
     }
+
+
 }
