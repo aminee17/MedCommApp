@@ -37,8 +37,18 @@ public class ChatController {
             System.out.println("userId param: " + userId);
             System.out.println("userId header: " + userIdHeader);
             
-            // Get the current user
-            User currentUser = userService.getLoggedInUser();
+            // Get the current user - prioritize userId parameter/header over authentication
+            User currentUser;
+            if (userId != null) {
+                System.out.println("Using userId parameter: " + userId);
+                currentUser = userService.getUserById(userId);
+            } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+                System.out.println("Using userId header: " + userIdHeader);
+                currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+            } else {
+                System.out.println("Falling back to getLoggedInUser()");
+                currentUser = userService.getLoggedInUser();
+            }
             System.out.println("Current user: " + currentUser.getUserId() + " - " + currentUser.getName());
             
             // Extract request parameters
@@ -80,8 +90,15 @@ public class ChatController {
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
-            // Get the current user
-            User currentUser = userService.getLoggedInUser();
+            // Get the current user - prioritize userId parameter/header over authentication
+            User currentUser;
+            if (userId != null) {
+                currentUser = userService.getUserById(userId);
+            } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+                currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+            } else {
+                currentUser = userService.getLoggedInUser();
+            }
             
             // Mark messages as read
             communicationService.markMessagesAsRead(formId, currentUser.getUserId());
@@ -106,8 +123,15 @@ public class ChatController {
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
-            // Get the current user
-            User currentUser = userService.getLoggedInUser();
+            // Get the current user - prioritize userId parameter/header over authentication
+            User currentUser;
+            if (userId != null) {
+                currentUser = userService.getUserById(userId);
+            } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+                currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+            } else {
+                currentUser = userService.getLoggedInUser();
+            }
             
             // Count unread messages
             Integer count = communicationService.countUnreadMessagesForForm(formId, currentUser.getUserId());
@@ -131,8 +155,15 @@ public class ChatController {
             @RequestHeader(value = "userId", required = false) String userIdHeader
     ) {
         try {
-            // Get the current user
-            User currentUser = userService.getLoggedInUser();
+            // Get the current user - prioritize userId parameter/header over authentication
+            User currentUser;
+            if (userId != null) {
+                currentUser = userService.getUserById(userId);
+            } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+                currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+            } else {
+                currentUser = userService.getLoggedInUser();
+            }
             
             // Send the voice message
             ChatMessageDTO voiceMessage = communicationService.sendVoiceMessage(

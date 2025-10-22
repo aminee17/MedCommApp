@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
@@ -134,6 +133,15 @@ public class UserService {
             System.err.println("⚠️ Error getting request parameter '" + paramName + "': " + e.getMessage());
             return null;
         }
+    }
+
+    //---------------------------------Get user by ID -------------------------------------------------------------
+    public User getUserById(Integer userId) {
+        System.out.println("🔍 Looking up user by ID: " + userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        System.out.println("✅ Found user: " + user.getName() + " (" + user.getRole() + ")");
+        return user;
     }
 
     //---------------------------------Get any neurologist -------------------------------------------------------------
