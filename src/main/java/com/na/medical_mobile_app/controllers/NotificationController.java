@@ -26,9 +26,30 @@ public class NotificationController {
      * Get all notifications for the current user
      */
     @GetMapping
-    public ResponseEntity<List<Notification>> getUserNotifications() {
-        User currentUser = userService.getLoggedInUser();
+    public ResponseEntity<List<Notification>> getUserNotifications(
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        System.out.println("🔔 Getting notifications - userId param: " + userId + ", userId header: " + userIdHeader);
+        
+        // Get the current user - prioritize userId parameter/header over authentication
+        User currentUser;
+        if (userId != null) {
+            System.out.println("Using userId parameter: " + userId);
+            currentUser = userService.getUserById(userId);
+        } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            System.out.println("Using userId header: " + userIdHeader);
+            currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+        } else {
+            System.out.println("Falling back to getLoggedInUser()");
+            currentUser = userService.getLoggedInUser();
+        }
+        
+        System.out.println("🔔 Current user for notifications: " + currentUser.getUserId() + " - " + currentUser.getName() + " (" + currentUser.getRole() + ")");
+        
         List<Notification> notifications = notificationService.getUserNotifications(currentUser);
+        System.out.println("🔔 Found " + notifications.size() + " notifications for user " + currentUser.getName());
+        
         return ResponseEntity.ok(notifications);
     }
     
@@ -36,8 +57,20 @@ public class NotificationController {
      * Get unread notifications for the current user
      */
     @GetMapping("/unread")
-    public ResponseEntity<List<Notification>> getUnreadNotifications() {
-        User currentUser = userService.getLoggedInUser();
+    public ResponseEntity<List<Notification>> getUnreadNotifications(
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        // Get the current user - prioritize userId parameter/header over authentication
+        User currentUser;
+        if (userId != null) {
+            currentUser = userService.getUserById(userId);
+        } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+        } else {
+            currentUser = userService.getLoggedInUser();
+        }
+        
         List<Notification> notifications = notificationService.getUnreadNotifications(currentUser);
         return ResponseEntity.ok(notifications);
     }
@@ -46,9 +79,30 @@ public class NotificationController {
      * Count unread notifications for the current user
      */
     @GetMapping("/count")
-    public ResponseEntity<Map<String, Integer>> countUnreadNotifications() {
-        User currentUser = userService.getLoggedInUser();
+    public ResponseEntity<Map<String, Integer>> countUnreadNotifications(
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        System.out.println("🔔 Counting notifications - userId param: " + userId + ", userId header: " + userIdHeader);
+        
+        // Get the current user - prioritize userId parameter/header over authentication
+        User currentUser;
+        if (userId != null) {
+            System.out.println("Using userId parameter: " + userId);
+            currentUser = userService.getUserById(userId);
+        } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            System.out.println("Using userId header: " + userIdHeader);
+            currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+        } else {
+            System.out.println("Falling back to getLoggedInUser()");
+            currentUser = userService.getLoggedInUser();
+        }
+        
+        System.out.println("🔔 Current user for notification count: " + currentUser.getUserId() + " - " + currentUser.getName() + " (" + currentUser.getRole() + ")");
+        
         Integer count = notificationService.countUnreadNotifications(currentUser);
+        System.out.println("🔔 Unread notification count for " + currentUser.getName() + ": " + count);
+        
         return ResponseEntity.ok(Map.of("count", count));
     }
     
@@ -65,8 +119,20 @@ public class NotificationController {
      * Mark all notifications as read
      */
     @PostMapping("/read-all")
-    public ResponseEntity<Map<String, String>> markAllAsRead() {
-        User currentUser = userService.getLoggedInUser();
+    public ResponseEntity<Map<String, String>> markAllAsRead(
+            @RequestParam(value = "userId", required = false) Integer userId,
+            @RequestHeader(value = "userId", required = false) String userIdHeader
+    ) {
+        // Get the current user - prioritize userId parameter/header over authentication
+        User currentUser;
+        if (userId != null) {
+            currentUser = userService.getUserById(userId);
+        } else if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            currentUser = userService.getUserById(Integer.parseInt(userIdHeader));
+        } else {
+            currentUser = userService.getLoggedInUser();
+        }
+        
         notificationService.markAllAsRead(currentUser);
         return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
     }
