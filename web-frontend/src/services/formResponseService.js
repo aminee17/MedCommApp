@@ -3,6 +3,18 @@ import { parseJSONResponse } from '../utils/jsonUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
+// Internal helper: retry once on 403 for flaky permission checks
+const requestWithRetry = async (url, options = {}) => {
+    const doFetch = async () => fetch(url, { ...options });
+    let res = await doFetch();
+    if (res.status === 403) {
+        await new Promise(r => setTimeout(r, 200));
+        const headers = await getAuthHeaders();
+        res = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...headers } });
+    }
+    return res;
+};
+
 /**
  * Check if a form has a neurologist response (for doctors)
  * @param {number} formId - The ID of the medical form
@@ -17,7 +29,7 @@ export async function checkFormResponse(formId) {
         }
         
         const headers = await getAuthHeaders();
-        const response = await fetch(
+        const response = await requestWithRetry(
             `${API_BASE_URL}/api/medical-forms/responses/check/${formId}?userId=${userId}`, 
             {
                 method: 'GET',
@@ -48,7 +60,7 @@ export async function getFormResponse(formId) {
         }
         
         const headers = await getAuthHeaders();
-        const response = await fetch(
+        const response = await requestWithRetry(
             `${API_BASE_URL}/api/medical-forms/responses/${formId}?userId=${userId}`, 
             {
                 method: 'GET',
@@ -78,7 +90,7 @@ export async function getNeurologistFormResponse(formId) {
         }
         
         const headers = await getAuthHeaders();
-        const response = await fetch(
+        const response = await requestWithRetry(
             `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`, 
             {
                 method: 'GET',

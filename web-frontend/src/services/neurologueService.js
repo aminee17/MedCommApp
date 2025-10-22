@@ -3,6 +3,19 @@ import { fetchWithErrorHandling } from '../utils/errorMessages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
+// Internal helper: robust fetch with one retry on 403
+const requestWithRetry = async (url, options = {}) => {
+    const doFetch = async () => fetch(url, { ...options });
+    let res = await doFetch();
+    if (res.status === 403) {
+        // Retry once after brief delay and refreshed headers
+        await new Promise(r => setTimeout(r, 200));
+        const headers = await getAuthHeaders();
+        res = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...headers } });
+    }
+    return res;
+};
+
 // Get user ID from AsyncStorage
 const getUserId = async () => {
     try {
@@ -25,7 +38,7 @@ export const fetchPendingFormsForNeurologue = async () => {
         const url = `${API_BASE_URL}/api/neurologue/pending?userId=${userId}`;
         
         const headers = await getAuthHeaders();
-        const response = await fetchWithErrorHandling(url, {
+        const response = await requestWithRetry(url, {
             method: 'GET',
             headers,
             credentials: 'include'
@@ -51,7 +64,7 @@ export const fetchCompletedFormsForNeurologue = async () => {
         const url = `${API_BASE_URL}/api/neurologue/completed?userId=${userId}`;
         
         const headers = await getAuthHeaders();
-        const response = await fetchWithErrorHandling(url, {
+        const response = await requestWithRetry(url, {
             method: 'GET',
             headers,
             credentials: 'include'
@@ -77,7 +90,7 @@ export const fetchAllFormsForNeurologue = async () => {
         const url = `${API_BASE_URL}/api/neurologue/all-forms?userId=${userId}`;
         
         const headers = await getAuthHeaders();
-        const response = await fetchWithErrorHandling(url, {
+        const response = await requestWithRetry(url, {
             method: 'GET',
             headers,
             credentials: 'include'

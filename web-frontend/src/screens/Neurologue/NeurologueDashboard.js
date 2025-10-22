@@ -33,26 +33,12 @@ const NeurologueDashboard = () => {
         }
     };
 
-    // Load forms based on active filter
+    // Load all forms once, filter client-side for instant tab switching
     const loadForms = async () => {
         try {
             setLoading(true);
-            let data;
-            switch (activeFilter) {
-                case 'completed':
-                    data = await fetchCompletedFormsForNeurologue();
-                    break;
-                case 'all':
-                    data = await fetchAllFormsForNeurologue();
-                    break;
-                case 'ai':
-                    data = await fetchAllFormsForNeurologue();
-                    break;
-                case 'pending':
-                default:
-                    data = await fetchPendingFormsForNeurologue();
-                    break;
-            }
+            // Fetch all to avoid multiple server calls and flakiness
+            const data = await fetchAllFormsForNeurologue();
             setForms(data || []);
             
             // Extract unique patients for AI insights
@@ -260,7 +246,13 @@ const NeurologueDashboard = () => {
                 />
             ) : (
                 <FlatList
-                    data={forms}
+                    data={
+                        activeFilter === 'completed'
+                            ? forms.filter(f => f.status === 'COMPLETED')
+                            : activeFilter === 'pending'
+                                ? forms.filter(f => f.status !== 'COMPLETED')
+                                : forms
+                    }
                     keyExtractor={(item, index) => item.formId?.toString() || index.toString()}
                     renderItem={({ item }) => (
                         <FormCardWithChat 

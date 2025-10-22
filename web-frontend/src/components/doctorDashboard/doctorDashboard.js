@@ -101,7 +101,8 @@ const DoctorDashboard = () => {
         try {
             setLoading(true);
             console.log('🔄 Fetching forms with filter:', filter);
-            const data = await fetchMedicalFormsForDoctor(filter);
+            // Fetch ALL once for faster client-side filtering
+            const data = await fetchMedicalFormsForDoctor('all');
             console.log('✅ Forms fetched:', data.length);
             setForms(data);
             
