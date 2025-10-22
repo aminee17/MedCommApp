@@ -254,13 +254,7 @@ const DoctorDashboard = () => {
                         <Text style={styles.newFormButtonText}>+ Nouveau formulaire</Text>
                     </TouchableOpacity>
 
-                    {/* Debug button - remove in production */}
-                    <TouchableOpacity
-                        style={styles.debugButton}
-                        onPress={handleDebugResponses}
-                    >
-                        <Ionicons name="bug-outline" size={20} color={COLORS.warning} />
-                    </TouchableOpacity>
+                    
                 </View>
             </View>
             
