@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchPendingFormsForNeurologue, fetchCompletedFormsForNeurologue, fetchAllFormsForNeurologue } from '../../services/neurologueService';
 import { countUnreadMessagesForForm } from '../../services/chatService';
+import { countUnreadNotifications } from '../../services/notificationService';
 import { COLORS, SPACING } from '../../utils/theme';
 import styles from './styles';
 import AIInsights from '../../components/neurologueDashboard/AIInsights';
@@ -17,6 +18,7 @@ const NeurologueDashboard = () => {
     const [userName, setUserName] = useState('');
     const [activeFilter, setActiveFilter] = useState('pending'); // 'pending', 'completed', 'all', or 'ai'
     const [patients, setPatients] = useState([]);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const navigation = useNavigation();
     const handleLogout = useLogout();
     const route = useRoute();
@@ -68,10 +70,22 @@ const NeurologueDashboard = () => {
         }
     };
 
+    // Load unread notifications count
+    const loadNotifications = async () => {
+        try {
+            const count = await countUnreadNotifications();
+            setUnreadNotifications(count);
+            console.log('📢 Unread notifications:', count);
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+        }
+    };
+
     // Initial load
     useEffect(() => {
         loadUserData();
         loadForms();
+        loadNotifications();
     }, []);
 
     // Refresh when active filter changes
@@ -85,6 +99,7 @@ const NeurologueDashboard = () => {
         useCallback(() => {
             console.log('🔄 Screen focused, refreshing data...');
             loadForms();
+            loadNotifications();
         }, [activeFilter])
     );
 
@@ -92,6 +107,7 @@ const NeurologueDashboard = () => {
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         loadForms();
+        loadNotifications();
     }, [activeFilter]);
 
     // Handle logout from header
@@ -190,7 +206,17 @@ const NeurologueDashboard = () => {
                     {userName && <Text style={styles.welcomeText}>Bienvenue, Dr. {userName}</Text>}
                 </View>
                 <View style={styles.headerIcons}>
-                    {/* Remove the in-screen logout button since it's in header */}
+                    <TouchableOpacity 
+                        style={styles.notificationButton}
+                        onPress={() => navigation.navigate('Notifications')}
+                    >
+                        {unreadNotifications > 0 && (
+                            <View style={styles.notificationBadge}>
+                                <Text style={styles.notificationText}>{unreadNotifications}</Text>
+                            </View>
+                        )}
+                        <Ionicons name="notifications-outline" size={24} color={COLORS.primary} />
+                    </TouchableOpacity>
                 </View>
             </View>
             

@@ -119,10 +119,18 @@ const Chat = ({ route, navigation }) => {
     };
 
     const renderMessage = ({ item }) => {
-        // Check if the message is from the current user
-        const isCurrentUser = item.senderId === userId;
+        // Check if the message is from the current user - convert both to integers for proper comparison
+        const isCurrentUser = parseInt(item.senderId) === parseInt(userId);
         const isMedecin = item.senderRole === 'MEDECIN';
         const isVoiceMessage = item.messageType === 'AUDIO';
+        
+        console.log('Rendering message:', {
+            senderId: item.senderId,
+            currentUserId: userId,
+            isCurrentUser,
+            senderName: item.senderName,
+            senderRole: item.senderRole
+        });
         
         return (
             <View style={[
