@@ -87,7 +87,7 @@ const NeurologueDashboard = () => {
         loadForms();
         loadNotifications();
     }, []);
-
+    
 
     // Refresh when screen comes into focus
     useFocusEffect(
@@ -183,7 +183,15 @@ const NeurologueDashboard = () => {
         );
     };
 
-    
+    // Show loading only for initial load, not for filter changes
+    if (loading && !refreshing && forms.length === 0) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Chargement des formulaires...</Text>
+            </View>
+        );
+    }
 
     // Function to get the header title based on active filter
     const getHeaderTitle = () => {
