@@ -87,12 +87,7 @@ const NeurologueDashboard = () => {
         loadForms();
         loadNotifications();
     }, []);
-
-    // Refresh when active filter changes
-    useEffect(() => {
-        console.log('🔄 Filter changed to:', activeFilter);
-        loadForms();
-    }, [activeFilter]);
+    
 
     // Refresh when screen comes into focus
     useFocusEffect(
@@ -100,7 +95,7 @@ const NeurologueDashboard = () => {
             console.log('🔄 Screen focused, refreshing data...');
             loadForms();
             loadNotifications();
-        }, [activeFilter])
+        }, []) // Empty dependency array - only runs when screen focuses
     );
 
     // Pull to refresh
@@ -108,7 +103,7 @@ const NeurologueDashboard = () => {
         setRefreshing(true);
         loadForms();
         loadNotifications();
-    }, [activeFilter]);
+    }, []); // Remove activeFilter dependency
 
     // Handle logout from header
     useEffect(() => {
@@ -124,11 +119,25 @@ const NeurologueDashboard = () => {
         navigation.navigate('NeurologueFormDetails', { form });
     };
 
-    // Handle filter change with immediate refresh
+    // Instant filter switching - no API calls
     const handleFilterChange = (filter) => {
         setActiveFilter(filter);
-        // The useEffect above will automatically trigger loadForms()
     };
+
+    // Optimized filtering - client-side only
+    const filteredForms = React.useMemo(() => {
+        if (!forms || forms.length === 0) return [];
+        
+        switch (activeFilter) {
+            case 'completed':
+                return forms.filter(f => f.status === 'COMPLETED');
+            case 'pending':
+                return forms.filter(f => f.status !== 'COMPLETED');
+            case 'all':
+            default:
+                return forms;
+        }
+    }, [forms, activeFilter]);
 
     // Component for form card with chat functionality
     const FormCardWithChat = ({ form, onPress, onChatPress }) => {
@@ -174,11 +183,12 @@ const NeurologueDashboard = () => {
         );
     };
 
-    if (loading && !refreshing) {
+    // Show loading only for initial load, not for filter changes
+    if (loading && !refreshing && forms.length === 0) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}> </Text>
+                <Text style={styles.loadingText}>Chargement des formulaires...</Text>
             </View>
         );
     }
@@ -272,13 +282,7 @@ const NeurologueDashboard = () => {
                 />
             ) : (
                 <FlatList
-                    data={
-                        activeFilter === 'completed'
-                            ? forms.filter(f => f.status === 'COMPLETED')
-                            : activeFilter === 'pending'
-                                ? forms.filter(f => f.status !== 'COMPLETED')
-                                : forms
-                    }
+                    data={filteredForms}
                     keyExtractor={(item, index) => item.formId?.toString() || index.toString()}
                     renderItem={({ item }) => (
                         <FormCardWithChat 

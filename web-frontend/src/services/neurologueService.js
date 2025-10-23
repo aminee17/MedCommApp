@@ -26,64 +26,30 @@ const getUserId = async () => {
     }
 };
 
-// Fetch pending forms for neurologist
-export const fetchPendingFormsForNeurologue = async () => {
+// Cache for forms data to prevent unnecessary API calls
+let formsCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 30000; // 30 seconds
+
+// Clear cache (useful after form submissions)
+export const clearFormsCache = () => {
+    formsCache = null;
+    cacheTimestamp = null;
+};
+
+// Fetch all forms for neurologist with caching
+export const fetchAllFormsForNeurologue = async (forceRefresh = false) => {
     try {
         const userId = await getUserId();
         if (!userId) {
             throw new Error('Session expirée. Veuillez vous reconnecter.');
         }
         
-        // Build URL with userId parameter
-        const url = `${API_BASE_URL}/api/neurologue/pending?userId=${userId}`;
-        
-        const headers = await getAuthHeaders();
-        const response = await requestWithRetry(url, {
-            method: 'GET',
-            headers,
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching pending forms:", error.message || error);
-        throw error;
-    }
-};
-
-// Fetch completed forms for neurologist
-export const fetchCompletedFormsForNeurologue = async () => {
-    try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('Session expirée. Veuillez vous reconnecter.');
-        }
-        
-        // Build URL with userId parameter
-        const url = `${API_BASE_URL}/api/neurologue/completed?userId=${userId}`;
-        
-        const headers = await getAuthHeaders();
-        const response = await requestWithRetry(url, {
-            method: 'GET',
-            headers,
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching completed forms:", error.message || error);
-        throw error;
-    }
-};
-
-// Fetch all forms for neurologist (both pending and completed)
-export const fetchAllFormsForNeurologue = async () => {
-    try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('Session expirée. Veuillez vous reconnecter.');
+        // Check cache if not forcing refresh
+        const now = Date.now();
+        if (!forceRefresh && formsCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+            console.log('📦 Returning cached forms data');
+            return formsCache;
         }
         
         // Build URL with userId parameter
@@ -97,9 +63,36 @@ export const fetchAllFormsForNeurologue = async () => {
         });
 
         const data = await response.json();
+        
+        // Update cache
+        formsCache = data;
+        cacheTimestamp = Date.now();
+        
         return data;
     } catch (error) {
         console.error("Error fetching all forms:", error.message || error);
+        throw error;
+    }
+};
+
+// Fetch pending forms for neurologist (uses cache when possible)
+export const fetchPendingFormsForNeurologue = async () => {
+    try {
+        const allForms = await fetchAllFormsForNeurologue();
+        return allForms.filter(form => form.status !== 'COMPLETED');
+    } catch (error) {
+        console.error("Error fetching pending forms:", error.message || error);
+        throw error;
+    }
+};
+
+// Fetch completed forms for neurologist (uses cache when possible)
+export const fetchCompletedFormsForNeurologue = async () => {
+    try {
+        const allForms = await fetchAllFormsForNeurologue();
+        return allForms.filter(form => form.status === 'COMPLETED');
+    } catch (error) {
+        console.error("Error fetching completed forms:", error.message || error);
         throw error;
     }
 };
@@ -145,6 +138,10 @@ export const submitFormResponse = async (formResponseData) => {
         
         const result = await response.json();
         console.log('✅ Form response submitted successfully:', result);
+        
+        // Clear cache after form submission to ensure fresh data
+        clearFormsCache();
+        
         return result;
     } catch (error) {
         console.error("❌ Error submitting form response:", error.message || error);
