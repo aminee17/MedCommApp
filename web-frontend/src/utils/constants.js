@@ -16,7 +16,7 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl().trim().replace(/\/+$/, '');
 
-export const EMAIL_SERVICE_ID = 'service_9zv6eyt';
-export const EMAIL_TEMPLATE_ID = 'template_n54dytm';
-export const EMAIL_PUBLIC_KEY = '64NjucXfMHuHw6cA7';
-export const EMAIL_PRIVATE_KEY = '6Fq-rOvRJEXOhy-r3JPmL';
+export const EMAIL_SERVICE_ID = 'service_y3t3n43';
+export const EMAIL_TEMPLATE_ID = 'template_h733f6c';
+export const EMAIL_PUBLIC_KEY = 'JuNZnJAaXluXgT8G2'; 
+export const EMAIL_PRIVATE_KEY = '8l8XgCIThJLJUA9yO6lYA';
