@@ -37,7 +37,7 @@ export const clearFormsCache = () => {
     cacheTimestamp = null;
 };
 
-// Fetch all forms for neurologist with caching
+// ✅ FIXED: Fetch all forms for neurologist with proper error handling
 export const fetchAllFormsForNeurologue = async (forceRefresh = false) => {
     try {
         const userId = await getUserId();
@@ -62,42 +62,73 @@ export const fetchAllFormsForNeurologue = async (forceRefresh = false) => {
             credentials: 'include'
         });
 
+        // ✅ FIX: Check response status before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                // If we can't parse JSON, use status text
+                errorMessage = response.statusText || errorMessage;
+            }
+            
+            console.error('❌ Server error response:', errorMessage);
+            
+            // Clear cache on error
+            formsCache = null;
+            cacheTimestamp = null;
+            
+            throw new Error(errorMessage);
+        }
+
         const data = await response.json();
         
+        // ✅ FIX: Ensure we always return an array, even if data is null/undefined
+        const formsArray = Array.isArray(data) ? data : [];
+        
         // Update cache
-        formsCache = data;
+        formsCache = formsArray;
         cacheTimestamp = Date.now();
         
-        return data;
+        console.log(`✅ Fetched ${formsArray.length} forms from server`);
+        return formsArray;
     } catch (error) {
-        console.error("Error fetching all forms:", error.message || error);
+        console.error("❌ Error fetching all forms:", error.message || error);
+        
+        // Clear cache on error
+        formsCache = null;
+        cacheTimestamp = null;
+        
         throw error;
     }
 };
 
-// Fetch pending forms for neurologist (uses cache when possible)
+// ✅ FIXED: Fetch pending forms with safe array handling
 export const fetchPendingFormsForNeurologue = async () => {
     try {
         const allForms = await fetchAllFormsForNeurologue();
-        return allForms.filter(form => form.status !== 'COMPLETED');
+        // ✅ FIX: Safe array filtering
+        return Array.isArray(allForms) ? allForms.filter(form => form.status !== 'COMPLETED') : [];
     } catch (error) {
-        console.error("Error fetching pending forms:", error.message || error);
-        throw error;
+        console.error("❌ Error fetching pending forms:", error.message || error);
+        return []; // Return empty array instead of throwing
     }
 };
 
-// Fetch completed forms for neurologist (uses cache when possible)
+// ✅ FIXED: Fetch completed forms with safe array handling
 export const fetchCompletedFormsForNeurologue = async () => {
     try {
         const allForms = await fetchAllFormsForNeurologue();
-        return allForms.filter(form => form.status === 'COMPLETED');
+        // ✅ FIX: Safe array filtering
+        return Array.isArray(allForms) ? allForms.filter(form => form.status === 'COMPLETED') : [];
     } catch (error) {
-        console.error("Error fetching completed forms:", error.message || error);
-        throw error;
+        console.error("❌ Error fetching completed forms:", error.message || error);
+        return []; // Return empty array instead of throwing
     }
 };
 
-// Submit form response from neurologist - FIXED VERSION
+// Submit form response from neurologist
 export const submitFormResponse = async (formResponseData) => {
     try {
         const userId = await getUserId();
@@ -111,7 +142,7 @@ export const submitFormResponse = async (formResponseData) => {
         
         // Get auth headers and ensure Content-Type is set
         const headers = await getAuthHeaders();
-        headers['Content-Type'] = 'application/json'; // Add this line
+        headers['Content-Type'] = 'application/json';
         
         console.log('📤 Headers:', headers);
         
@@ -180,41 +211,7 @@ export const fetchFormById = async (formId) => {
     }
 };
 
-// Placeholder for chat functionality
-export const sendChatMessage = async (formId, message, senderId, receiverId) => {
-    try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/chat/send?userId=${userId}`;
-        
-        const headers = await getAuthHeaders();
-        const response = await fetch(url, {
-            method: 'POST',
-            headers,
-            credentials: 'include',
-            body: JSON.stringify({
-                formId,
-                message,
-                senderId,
-                receiverId,
-                timestamp: new Date().toISOString()
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Failed to send message');
-        }
-        
-        return response.json();
-    } catch (error) {
-        console.error("Error sending message:", error.message || error);
-        throw error;
-    }
-};
+
 
 // Fetch attachments for a form with JWT authentication
 export const fetchAttachmentsForForm = async (formId) => {

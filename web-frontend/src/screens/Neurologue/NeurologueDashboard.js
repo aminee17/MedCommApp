@@ -35,33 +35,53 @@ const NeurologueDashboard = () => {
         }
     };
 
-    // Load all forms once, filter client-side for instant tab switching
+    // ✅ FIXED: Load all forms with proper error handling
     const loadForms = async () => {
         try {
             setLoading(true);
+            console.log('🔄 Fetching forms from server...');
+            
             // Fetch all to avoid multiple server calls and flakiness
             const data = await fetchAllFormsForNeurologue();
-            setForms(data || []);
             
-            // Extract unique patients for AI insights
-            const uniquePatients = (data || []).reduce((acc, form) => {
-                const patientName = form.patientName || 'Unknown Patient';
-                
-                if (!acc.find(p => p.patientId === form.patientId)) {
-                    acc.push({
-                        patientId: form.patientId,
-                        fullName: patientName,
-                        formId: form.formId
-                    });
+            // ✅ FIX: Always ensure we have an array
+            const formsArray = Array.isArray(data) ? data : [];
+            setForms(formsArray);
+            
+            console.log(`✅ Loaded ${formsArray.length} forms`);
+            
+            // ✅ FIX: Safe array operations for patients extraction
+            const uniquePatients = formsArray.reduce((acc, form) => {
+                if (form && form.patientId) {
+                    const patientName = form.patientName || 'Unknown Patient';
+                    
+                    if (!acc.find(p => p.patientId === form.patientId)) {
+                        acc.push({
+                            patientId: form.patientId,
+                            fullName: patientName,
+                            formId: form.formId
+                        });
+                    }
                 }
                 return acc;
             }, []);
+            
             setPatients(uniquePatients);
         } catch (error) {
-            console.error('Error fetching forms:', error);
-            if (error.message.includes('User ID not found')) {
+            console.error('❌ Error fetching forms:', error);
+            
+            // ✅ FIX: Reset to empty arrays on error
+            setForms([]);
+            setPatients([]);
+            
+            if (error.message.includes('User ID not found') || error.message.includes('403') || error.message.includes('Session')) {
                 Alert.alert('Session expirée', 'Veuillez vous reconnecter.', [
                     { text: 'OK', onPress: () => navigation.replace('NeurologueLogin') }
+                ]);
+            } else {
+                // Show generic error for other issues
+                Alert.alert('Erreur', 'Impossible de charger les formulaires. Veuillez réessayer.', [
+                    { text: 'OK' }
                 ]);
             }
         } finally {
@@ -124,18 +144,18 @@ const NeurologueDashboard = () => {
         setActiveFilter(filter);
     };
 
-    // Optimized filtering - client-side only
+    // ✅ FIXED: Optimized filtering with safe array handling
     const filteredForms = React.useMemo(() => {
-        if (!forms || forms.length === 0) return [];
+        if (!Array.isArray(forms) || forms.length === 0) return [];
         
         switch (activeFilter) {
             case 'completed':
-                return forms.filter(f => f.status === 'COMPLETED');
+                return forms.filter(f => f && f.status === 'COMPLETED');
             case 'pending':
-                return forms.filter(f => f.status !== 'COMPLETED');
+                return forms.filter(f => f && f.status !== 'COMPLETED');
             case 'all':
             default:
-                return forms;
+                return forms.filter(f => f); // Ensure all items are truthy
         }
     }, [forms, activeFilter]);
 
@@ -144,6 +164,8 @@ const NeurologueDashboard = () => {
         const [unreadCount, setUnreadCount] = useState(0);
 
         useEffect(() => {
+            if (!form || !form.formId) return;
+            
             const checkUnreadMessages = async () => {
                 try {
                     const count = await countUnreadMessagesForForm(form.formId);
@@ -156,14 +178,16 @@ const NeurologueDashboard = () => {
             checkUnreadMessages();
             const interval = setInterval(checkUnreadMessages, 30000);
             return () => clearInterval(interval);
-        }, [form.formId]);
+        }, [form?.formId]);
+
+        if (!form) return null;
 
         return (
             <TouchableOpacity style={styles.formCard} onPress={onPress}>
                 <View style={styles.formCardHeader}>
                     <View style={styles.formInfo}>
-                        <Text style={styles.formTitle}>Formulaire #{form.formId}</Text>
-                        <Text style={styles.patientInfo}>{form.patientName} - {form.status}</Text>
+                        <Text style={styles.formTitle}>Formulaire #{form.formId || 'N/A'}</Text>
+                        <Text style={styles.patientInfo}>{form.patientName || 'Unknown'} - {form.status || 'Unknown'}</Text>
                     </View>
                     <TouchableOpacity
                         style={styles.chatButtonSmall}
@@ -260,9 +284,7 @@ const NeurologueDashboard = () => {
                 <AIInsights 
                     patients={patients}
                     onPatientSelect={(patientId) => {
-
-                        const patientForms = forms.filter(f => f.patientId === patientId);
-
+                        const patientForms = Array.isArray(forms) ? forms.filter(f => f && f.patientId === patientId) : [];
                         if (patientForms.length > 0) {
                             handleFormPress(patientForms[0]);
                         }
@@ -271,24 +293,33 @@ const NeurologueDashboard = () => {
             ) : (
                 <FlatList
                     data={filteredForms}
-                    keyExtractor={(item, index) => item.formId?.toString() || index.toString()}
+                    keyExtractor={(item, index) => item?.formId?.toString() || `form-${index}`}
                     renderItem={({ item }) => (
                         <FormCardWithChat 
                             form={item} 
                             onPress={() => handleFormPress(item)}
                             onChatPress={() => navigation.navigate('NeurologueChat', { 
-                                formId: item.formId, 
-                                doctorId: item.referringDoctorId 
+                                formId: item?.formId, 
+                                doctorId: item?.referringDoctorId 
                             })}
                         />
                     )}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Text style={styles.emptyText}>
-                                {activeFilter === 'pending' ? 'Aucun formulaire en attente' : 
+                                {loading ? 'Chargement...' :
+                                 activeFilter === 'pending' ? 'Aucun formulaire en attente' : 
                                  activeFilter === 'completed' ? 'Aucun formulaire complété' : 
                                  'Aucun formulaire disponible'}
                             </Text>
+                            {!loading && (
+                                <TouchableOpacity 
+                                    style={localStyles.retryButton}
+                                    onPress={loadForms}
+                                >
+                                    <Text style={localStyles.retryButtonText}>Réessayer</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     }
                     refreshControl={
@@ -337,8 +368,8 @@ const filterStyles = StyleSheet.create({
     },
 });
 
-// Add these styles to your existing styles or create them
-const additionalStyles = StyleSheet.create({
+// Local styles for this component
+const localStyles = StyleSheet.create({
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -360,6 +391,17 @@ const additionalStyles = StyleSheet.create({
         fontSize: 16,
         color: COLORS.grey,
         textAlign: 'center',
+        marginBottom: 15,
+    },
+    retryButton: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    retryButtonText: {
+        color: COLORS.light,
+        fontWeight: 'bold',
     },
 });
 
