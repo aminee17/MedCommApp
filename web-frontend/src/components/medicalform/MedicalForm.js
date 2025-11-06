@@ -28,7 +28,56 @@ const MedicalForm = () => {
     const genders = ['M', 'F'];
     const occurrences = ['quotidienne', 'hebdomadaire', 'mensuelle'];
 
+    // Seizure type options
+    const seizureMainTypes = [
+        { value: 'generalized', label: 'Crise Généralisée' },
+        { value: 'focal', label: 'Crise Focale' }
+    ];
 
+    const generalizedSeizureTypes = [
+        { value: 'tcg', label: 'TCG (Tonico-Clonique Généralisée)' },
+        { value: 'myoclonique', label: 'Myoclonique' },
+        { value: 'atonique', label: 'Atonique' },
+        { value: 'tonique', label: 'Tonique' },
+        { value: 'spasmes', label: 'Spasmes' },
+        { value: 'absenceTypique', label: 'Absence Typique' },
+        { value: 'absenceAtypique', label: 'Absence Atypique' },
+        { value: 'myocloniePalpebrale', label: 'Myoclonie Palpébrale' },
+        { value: 'absenceMyoclonique', label: 'Absence Myoclonique' }
+    ];
+
+    const focalSeizureTypes = [
+        { value: 'avecPerteConnaissance', label: 'Avec perte de connaissance' },
+        { value: 'sansPerteConnaissance', label: 'Sans perte de connaissance' },
+        { value: 'motrice', label: 'Motrice' },
+        { value: 'sensitive', label: 'Sensitive' },
+        { value: 'automatisme', label: 'Automatisme' },
+        { value: 'emotionnelle', label: 'Émotionnelle' }
+    ];
+
+    // Handle main seizure type selection
+    const handleMainSeizureTypeChange = (type) => {
+        handleInputChange('mainSeizureType', type);
+        // Clear sub-selections when main type changes
+        handleInputChange('generalizedSeizureTypes', []);
+        handleInputChange('focalSeizureTypes', []);
+    };
+
+    // Handle multiple selection for seizure subtypes
+    const handleSeizureSubtypeChange = (category, value, isChecked) => {
+        const currentTypes = formData[category] || [];
+        let updatedTypes;
+
+        if (isChecked) {
+            // Add to selection
+            updatedTypes = [...currentTypes, value];
+        } else {
+            // Remove from selection
+            updatedTypes = currentTypes.filter(item => item !== value);
+        }
+
+        handleInputChange(category, updatedTypes);
+    };
 
     return (
         <ScrollView
@@ -162,9 +211,7 @@ const MedicalForm = () => {
                 value={Number(formData.seizureDuration) || 0}
                 onChange={(newVal) => handleInputChange('seizureDuration', newVal.toString())}
             />
-
-
-
+            
 
             <LabeledCheckbox
                 label="Y a-t-il un signe qui annonce la crise ?"
@@ -181,51 +228,58 @@ const MedicalForm = () => {
                 />
             )}
 
-            <Text style={styles.subSectionHeader}>Type de crises (si connu):</Text>
+            {/* NEW SEIZURE TYPE SELECTION */}
+            <Text style={styles.subSectionHeader}>Type principal de crise :</Text>
             <View style={styles.radioContainer}>
-                <View style={styles.radioOption}>
-                    <Checkbox
-                        value={formData.seizureType === 'generalizedTonicClonic'}
-                        onValueChange={() => handleInputChange('seizureType', 'generalizedTonicClonic')}
-                        tintColors={{ true: '#007AFF', false: '#ccc' }}
-                    />
-                    <Text style={styles.radioOptionLabel}>Généralisée Tonico-clonique</Text>
-                </View>
-                <View style={styles.radioOption}>
-                    <Checkbox
-                        value={formData.seizureType === 'generalizedOther'}
-                        onValueChange={() => handleInputChange('seizureType', 'generalizedOther')}
-                        tintColors={{ true: '#007AFF', false: '#ccc' }}
-                    />
-                    <Text style={styles.radioOptionLabel}>Généralisée autre (tonique, clonique, myoclonique, atonique)</Text>
-                </View>
-                <View style={styles.radioOption}>
-                    <Checkbox
-                        value={formData.seizureType === 'absence'}
-                        onValueChange={() => handleInputChange('seizureType', 'absence')}
-                        tintColors={{ true: '#007AFF', false: '#ccc' }}
-                    />
-                    <Text style={styles.radioOptionLabel}>Absence</Text>
-                </View>
-                <View style={styles.radioOption}>
-                    <Checkbox
-                        value={formData.seizureType === 'focalWithLossOfConsciousness'}
-                        onValueChange={() => handleInputChange('seizureType', 'focalWithLossOfConsciousness')}
-                        tintColors={{ true: '#007AFF', false: '#ccc' }}
-                    />
-                    <Text style={styles.radioOptionLabel}>Focale avec perte de connaissance</Text>
-                </View>
-                <View style={styles.radioOption}>
-                    <Checkbox
-                        value={formData.seizureType === 'focalWithoutLossOfConsciousness'}
-                        onValueChange={() => handleInputChange('seizureType', 'focalWithoutLossOfConsciousness')}
-                        tintColors={{ true: '#007AFF', false: '#ccc' }}
-                    />
-                    <Text style={styles.radioOptionLabel}>Focale sans perte de connaissance</Text>
-                </View>
+                {seizureMainTypes.map((type) => (
+                    <View key={type.value} style={styles.radioOption}>
+                        <Checkbox
+                            value={formData.mainSeizureType === type.value}
+                            onValueChange={() => handleMainSeizureTypeChange(type.value)}
+                            tintColors={{ true: '#007AFF', false: '#ccc' }}
+                        />
+                        <Text style={styles.radioOptionLabel}>{type.label}</Text>
+                    </View>
+                ))}
             </View>
 
+            {/* GENERALIZED SEIZURE TYPES */}
+            {formData.mainSeizureType === 'generalized' && (
+                <View style={styles.subSection}>
+                    <Text style={styles.subSectionHeader}>Types de crises généralisées (choix multiples) :</Text>
+                    {generalizedSeizureTypes.map((type) => (
+                        <View key={type.value} style={styles.checkboxOption}>
+                            <Checkbox
+                                value={formData.generalizedSeizureTypes?.includes(type.value) || false}
+                                onValueChange={(checked) => 
+                                    handleSeizureSubtypeChange('generalizedSeizureTypes', type.value, checked)
+                                }
+                                tintColors={{ true: '#007AFF', false: '#ccc' }}
+                            />
+                            <Text style={styles.checkboxOptionLabel}>{type.label}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
 
+            {/* FOCAL SEIZURE TYPES */}
+            {formData.mainSeizureType === 'focal' && (
+                <View style={styles.subSection}>
+                    <Text style={styles.subSectionHeader}>Types de crises focales (choix multiples) :</Text>
+                    {focalSeizureTypes.map((type) => (
+                        <View key={type.value} style={styles.checkboxOption}>
+                            <Checkbox
+                                value={formData.focalSeizureTypes?.includes(type.value) || false}
+                                onValueChange={(checked) => 
+                                    handleSeizureSubtypeChange('focalSeizureTypes', type.value, checked)
+                                }
+                                tintColors={{ true: '#007AFF', false: '#ccc' }}
+                            />
+                            <Text style={styles.checkboxOptionLabel}>{type.label}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
 
             <Text style={styles.subSectionHeader}>Pendant la crise</Text>
             <LabeledCheckbox
