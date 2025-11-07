@@ -112,6 +112,13 @@ const NeurologueLogin = ({ navigation }) => {
                     loading={loading}
                     style={styles.loginButton}
                 />
+
+                <Button
+                    title="Demander la création de compte"
+                    onPress={() => navigation.navigate('DoctorRegistration')}
+                    type="secondary"
+                    style={styles.loginButton}
+                />
             </Card>
         </View>
     );
