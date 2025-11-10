@@ -6,10 +6,11 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../utils/constants';
 import { fetchWithErrorHandling } from '../../utils/errorMessages';
-import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, SIZES, SHADOWS, GRADIENTS } from '../../utils/theme';
 import { Button, Input, Card, Header } from '../../components/common';
 import { getApiUrl } from '../../services/corsProxy';
 const NeurologueLogin = ({ navigation }) => {
@@ -78,14 +79,14 @@ const NeurologueLogin = ({ navigation }) => {
 
     if (checkingAuth) {
         return (
-            <View style={styles.container}>
+            <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
             <Card style={styles.loginCard}>
                 <Text style={styles.title}>Connexion Neurologue</Text>
                 
@@ -120,7 +121,7 @@ const NeurologueLogin = ({ navigation }) => {
                     style={styles.loginButton}
                 />
             </Card>
-        </View>
+        </LinearGradient>
     );
 };
 
@@ -130,7 +131,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: SPACING.l,
-        backgroundColor: COLORS.background,
     },
     loginCard: {
         width: '100%',

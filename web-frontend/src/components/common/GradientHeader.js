@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SIZES, SPACING, SHADOWS } from '../../utils/theme';
+import { COLORS, SIZES, SPACING, SHADOWS, GRADIENTS } from '../../utils/theme';
 
 const GradientHeader = ({ title, rightComponent, leftComponent }) => {
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
+        colors={GRADIENTS.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.gradient}

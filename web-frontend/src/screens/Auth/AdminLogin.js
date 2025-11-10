@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { parseJSONResponse } from '../../utils/jsonUtils';
-import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, SIZES, SHADOWS, GRADIENTS } from '../../utils/theme';
 import { Button, Input, Card } from '../../components/common';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchDirect } from '../../services/corsProxy';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AdminLogin({ navigation }) {
     const [showLogin, setShowLogin] = useState(false);
@@ -58,7 +59,7 @@ export default function AdminLogin({ navigation }) {
 
     if (showLogin) {
         return (
-            <View style={styles.container}>
+            <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
                 <Card style={styles.card}>
                     <Text style={styles.title}>Connexion Administrateur</Text>
                     
@@ -93,12 +94,12 @@ export default function AdminLogin({ navigation }) {
                         style={styles.button}
                     />
                 </Card>
-            </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
             <Card style={styles.card}>
                 <Text style={styles.title}>Espace Administrateur</Text>
                 <Text style={styles.subtitle}>Choisissez une option :</Text>
@@ -116,7 +117,7 @@ export default function AdminLogin({ navigation }) {
                     style={styles.button}
                 />
             </Card>
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -125,7 +126,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: SPACING.l,
-        backgroundColor: COLORS.background,
     },
     card: {
         padding: SPACING.xl,

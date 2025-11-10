@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { COLORS, FONTS, SIZES, SHADOWS, SPACING } from '../../utils/theme';
+import { COLORS, SIZES, SHADOWS, SPACING, BORDER_RADIUS } from '../../utils/theme';
 
 /**
  * A reusable button component with consistent styling
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: SPACING.m,
     paddingHorizontal: SPACING.l,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.small,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   secondaryButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.teal,
   },
   dangerButton: {
     backgroundColor: COLORS.danger,

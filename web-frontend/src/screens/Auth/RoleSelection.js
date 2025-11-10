@@ -1,37 +1,44 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, SPACING, SHADOWS, BORDER_RADIUS, GRADIENTS, SIZES } from '../../utils/theme';
 
 
 export default function RoleSelection() {
     const navigation = useNavigation();
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Bienvenue !</Text>
-            <Text style={styles.subtitle}>Sélectionnez votre rôle</Text>
+        <LinearGradient colors={GRADIENTS.hero} style={styles.container}>
+            <View style={styles.content}>
+                <Text style={styles.title}>Bienvenue !</Text>
+                <Text style={styles.subtitle}>Sélectionnez votre rôle</Text>
 
-            <TouchableOpacity 
-                style={[styles.roleButton, styles.doctorButton]}
-                onPress={() => navigation.navigate('MedecinAuth')}
-            >
-                <Text style={styles.buttonText}>Je suis médecin</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-                style={[styles.roleButton, styles.neurologueButton]}
-                onPress={() => navigation.navigate('NeurologueLogin')}
-            >
-                <Text style={styles.buttonText}>Je suis neurologue</Text>
-            </TouchableOpacity>
+                <TouchableOpacity 
+                    style={[styles.roleCard, styles.doctorCard]}
+                    onPress={() => navigation.navigate('MedecinAuth')}
+                >
+                    <Text style={styles.cardTitle}>Médecin</Text>
+                    <Text style={styles.cardSubtitle}>Accédez à vos patients et formulaires</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                    style={[styles.roleCard, styles.neurologueCard]}
+                    onPress={() => navigation.navigate('NeurologueLogin')}
+                >
+                    <Text style={styles.cardTitle}>Neurologue</Text>
+                    <Text style={styles.cardSubtitle}>Consultez les cas et analyses</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity 
-                style={[styles.roleButton, styles.adminButton]}
-                onPress={() => navigation.navigate('AdminLogin')}
-            >
-                <Text style={styles.buttonText}>Je suis administrateur</Text>
-            </TouchableOpacity>
-        </View>
+                <TouchableOpacity 
+                    style={[styles.roleCard, styles.adminCard]}
+                    onPress={() => navigation.navigate('AdminLogin')}
+                >
+                    <Text style={styles.cardTitle}>Admin</Text>
+                    <Text style={styles.cardSubtitle}>Gérez les utilisateurs et l’accès</Text>
+                </TouchableOpacity>
+            </View>
+        </LinearGradient>
     );
 }
 
@@ -40,45 +47,57 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        backgroundColor: '#f5f5f5',
+        paddingHorizontal: SPACING.l,
+    },
+    content: {
+        width: '100%',
+        maxWidth: 540,
+        alignItems: 'center',
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        marginBottom: 10,
-        color: '#333',
+        marginBottom: SPACING.s,
+        color: COLORS.primaryDark,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 18,
-        marginBottom: 40,
-        color: '#555',
+        marginBottom: SPACING.xl,
+        color: COLORS.textSecondary,
         textAlign: 'center',
     },
-    roleButton: {
-        width: '80%',
-        padding: 20,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginVertical: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+    roleCard: {
+        width: '100%',
+        padding: SPACING.l,
+        borderRadius: BORDER_RADIUS.xl,
+        alignItems: 'flex-start',
+        marginVertical: SPACING.s,
+        backgroundColor: COLORS.surface,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        ...SHADOWS.small,
     },
-    doctorButton: {
-        backgroundColor: '#2196F3',
+    doctorCard: {
+        borderLeftWidth: 6,
+        borderLeftColor: COLORS.primary,
     },
-    neurologueButton: {
-        backgroundColor: '#9C27B0',
+    neurologueCard: {
+        borderLeftWidth: 6,
+        borderLeftColor: COLORS.teal,
     },
-    adminButton: {
-        backgroundColor: '#4CAF50',
+    adminCard: {
+        borderLeftWidth: 6,
+        borderLeftColor: COLORS.primaryDark,
     },
-    buttonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
+    cardTitle: {
+        fontSize: SIZES.xlarge,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+        marginBottom: 6,
+    },
+    cardSubtitle: {
+        fontSize: SIZES.medium,
+        color: COLORS.textSecondary,
     },
 });

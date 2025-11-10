@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import useMedecinAuth from '../../hooks/useMedecinAuth';
-import { COLORS, SPACING, SIZES, SHADOWS } from '../../utils/theme';
+import { COLORS, SPACING, SIZES, SHADOWS, GRADIENTS } from '../../utils/theme';
 import { Button, Input, Card } from '../../components/common';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function MedecinAuth({ navigation }) {
     const [showLogin, setShowLogin] = useState(false);
@@ -10,7 +11,7 @@ export default function MedecinAuth({ navigation }) {
 
     if (showLogin) {
         return (
-            <View style={styles.container}>
+            <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
                 <Card style={styles.card}>
                     <Text style={styles.title}>Connexion Médecin</Text>
                     
@@ -45,12 +46,12 @@ export default function MedecinAuth({ navigation }) {
                         style={styles.button}
                     />
                 </Card>
-            </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient colors={GRADIENTS.auth} style={styles.container}>
             <Card style={styles.card}>
                 <Text style={styles.title}>Espace Médecin</Text>
                 <Text style={styles.subtitle}>Choisissez une option :</Text>
@@ -68,7 +69,7 @@ export default function MedecinAuth({ navigation }) {
                     style={styles.button}
                 />
             </Card>
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -77,7 +78,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: SPACING.l,
-        backgroundColor: COLORS.lightGrey,
     },
     card: {
         padding: SPACING.l,

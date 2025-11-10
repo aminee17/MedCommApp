@@ -1,27 +1,29 @@
 export const COLORS = {
-    primary: '#2E86AB',      // Medical Blue
-    secondary: '#A23B72',    // Medical Purple
-    tertiary: '#F18F01',     // Medical Orange
-    
-    success: '#27AE60',      // Professional Green
-    warning: '#F39C12',      // Professional Orange
-    danger: '#E74C3C',       // Professional Red
-    
-    dark: '#2C3E50',         // Professional Dark
-    grey: '#7F8C8D',         // Professional Grey
-    lightGrey: '#ECF0F1',    // Very Light Grey
-    border: '#E5E8EB',       // Subtle Border
-    light: '#FFFFFF',        // White
-    background: '#FAFBFC',   // App Background
-    surface: '#FFFFFF',      // Card Background
-    
-    lightBlue: '#E8F4F8',    // Light blue background
-    lightPurple: '#F5E8F0',  // Light purple background
-    lightPink: '#FDEDEC',    // Light pink background
-    
-    textPrimary: '#2C3E50',  // Primary text
-    textSecondary: '#7F8C8D', // Secondary text
-    textInverse: '#FFFFFF',  // White text
+    // Primary medical blues
+    primary: '#0F5CA8',       // Cobalt blue
+    primaryDark: '#0B2E4F',   // Navy
+    primaryLight: '#3B8CD9',  // Sky blue
+    iceBlue: '#E6F2FB',       // Ice blue / backgrounds
+
+    // Accents and states
+    teal: '#16A6A1',
+    success: '#27AE60',
+    warning: '#F39C12',
+    danger: '#E65C5C',
+
+    // Neutrals
+    dark: '#233F62',
+    grey: '#7F8C8D',
+    lightGrey: '#F4F7FA',
+    border: '#C8D9EC',
+    light: '#FFFFFF',
+    background: '#F9FBFE',
+    surface: '#FFFFFF',
+
+    // Text
+    textPrimary: '#233F62',
+    textSecondary: '#5B6E84',
+    textInverse: '#FFFFFF',
 };
 
 export const SPACING = {
@@ -39,11 +41,12 @@ export const SIZES = {
     large: 16,
     xlarge: 20,
     xxlarge: 24,
+    display: 32,
 };
 
 export const SHADOWS = {
     small: {
-        shadowColor: '#2C3E50',
+        shadowColor: '#0F5CA8',
         shadowOffset: {
             width: 0,
             height: 2,
@@ -53,7 +56,7 @@ export const SHADOWS = {
         elevation: 2,
     },
     medium: {
-        shadowColor: '#2C3E50',
+        shadowColor: '#0F5CA8',
         shadowOffset: {
             width: 0,
             height: 4,
@@ -63,7 +66,7 @@ export const SHADOWS = {
         elevation: 4,
     },
     large: {
-        shadowColor: '#2C3E50',
+        shadowColor: '#0F5CA8',
         shadowOffset: {
             width: 0,
             height: 8,
@@ -82,4 +85,12 @@ export const BORDER_RADIUS = {
     xl: 16,
     xxl: 20,
     full: 9999,
+};
+
+// Gradient tokens for consistent usage
+export const GRADIENTS = {
+    auth: ['#0F5CA8', '#E6F2FB'],           // Blue → Ice
+    header: ['#0B2E4F', '#0F5CA8'],         // Navy → Cobalt
+    hero: ['#3B8CD9', '#FFFFFF'],           // Sky → White
+    panel: ['#E6F2FB', '#FFFFFF'],          // Subtle ice → white
 };
