@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
         ...SHADOWS.medium,
     },
     submitButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.success,
         borderRadius: 8,
         padding: SPACING.m,
         alignItems: 'center',
