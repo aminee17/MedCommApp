@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
         ...SHADOWS.small,
     },
     respondButton: {
-        backgroundColor: COLORS.success,
+        backgroundColor: COLORS.secondary,
     },
     viewResponseButton: {
         backgroundColor: COLORS.success,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
     },
     aiButton: {
-        backgroundColor: '#be65ceff',
+        backgroundColor: '#9C27B0',
     },
     chatButtonContent: {
         flexDirection: 'row',
