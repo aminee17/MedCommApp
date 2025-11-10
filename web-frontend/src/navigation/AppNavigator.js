@@ -124,33 +124,7 @@ const AppNavigator = () => {
             <Stack.Screen 
                 name="RoleSelection" 
                 component={RoleSelection} 
-                options={{ 
-                    headerTitle: () => (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Image
-                        source={require('../assets/images.jpg')}  // ✅ make sure this path is correct
-                        style={{
-                            width: 35,
-                            height: 35,
-                            marginRight: 8,
-                            resizeMode: 'contain',
-                        }}
-                        />
-                        <Text
-                        style={{
-                            color: '#fff',            // or COLORS.light if defined
-                            fontSize: 18,
-                            fontWeight: 'bold',
-                        }}
-                        >
-                        MedCommApp
-                        </Text>
-                    </View>
-                    ),
-                    headerTitleAlign: 'center',   // optional, centers the title and logo
-                    headerStyle: { backgroundColor: COLORS.primary },
-                    headerTintColor: COLORS.light,
-                }}
+                options={{ title: 'MedCommApp' }} 
             />
             <Stack.Screen 
                 name="MedecinAuth"
