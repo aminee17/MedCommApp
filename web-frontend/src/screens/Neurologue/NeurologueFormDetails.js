@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
         ...SHADOWS.small,
     },
     respondButton: {
-        backgroundColor: COLORS.secondary,
+        backgroundColor: COLORS.success,
     },
     viewResponseButton: {
         backgroundColor: COLORS.success,
