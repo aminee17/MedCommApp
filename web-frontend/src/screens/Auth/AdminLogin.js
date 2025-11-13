@@ -109,13 +109,13 @@ export default function AdminLogin({ navigation }) {
                     onPress={() => setShowLogin(true)}
                     style={styles.button}
                 />
-
+                {/* 
                 <Button
                     title="Créer un compte"
                     onPress={navigateToRegistration}
                     type="secondary"
                     style={styles.button}
-                />
+                />*/}
             </Card>
         </LinearGradient>
     );
