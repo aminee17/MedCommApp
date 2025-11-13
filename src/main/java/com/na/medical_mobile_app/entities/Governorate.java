@@ -1,20 +1,18 @@
 package com.na.medical_mobile_app.entities;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "governorates")
 public class Governorate implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Integer id; // Remove @GeneratedValue since we're setting manual IDs
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -36,35 +34,67 @@ public class Governorate implements Serializable {
     @JsonIgnore
     private List<User> users;
 
+    // Constructors
     public Governorate() {
     }
 
-    @JsonCreator //A constructor to enable deserialization
-    public Governorate(@JsonProperty("id") String id) {
-        this.id = Integer.valueOf(id);
+    public Governorate(Integer id, String name, String code) {
+        this.id = id;
+        this.name = name;
+        this.code = code;
+        this.createdAt = LocalDateTime.now();
     }
-    public void setUsers(List<User> users) {
-        this.users = users;
+
+    public Governorate(Integer id, String name, String code, LocalDateTime createdAt) {
+        this.id = id;
+        this.name = name;
+        this.code = code;
+        this.createdAt = createdAt;
+    }
+
+    // Getters and Setters
+    public Integer getId() {
+        return this.id;
     }
 
     public void setId(Integer id) {
         this.id = id;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCode() {
+        return this.code;
     }
 
     public void setCode(String code) {
         this.code = code;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
+    public List<City> getCities() {
+        return this.cities;
+    }
+
     public void setCities(List<City> cities) {
         this.cities = cities;
+    }
+
+    public List<Patient> getPatients() {
+        return this.patients;
     }
 
     public void setPatients(List<Patient> patients) {
@@ -75,32 +105,16 @@ public class Governorate implements Serializable {
         return this.users;
     }
 
-
-    public Integer getId() {
-        return this.id;
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 
-    public String getName() {
-        return this.name;
+    @Override
+    public String toString() {
+        return "Governorate{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", code='" + code + '\'' +
+                '}';
     }
-
-    public String getCode() {
-        return this.code;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return this.createdAt;
-    }
-
-    public List<City> getCities() {
-        return this.cities;
-    }
-
-    public List<Patient> getPatients() {
-        return this.patients;
-    }
-
 }
-
-
-
