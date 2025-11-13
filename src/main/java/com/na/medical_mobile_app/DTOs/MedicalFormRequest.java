@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 @Setter
 @Getter
@@ -34,6 +35,10 @@ public class MedicalFormRequest {
     public Boolean hasAura;
     public String auraDescription;
     public String seizureType;
+    public String mainSeizureType;
+    public List<String> generalizedSeizureTypes;
+    public List<String> focalSeizureTypes;
+    public Map<String, Boolean> seizureOccurrence;
 
     // Symptoms
     public Boolean lossOfConsciousness;

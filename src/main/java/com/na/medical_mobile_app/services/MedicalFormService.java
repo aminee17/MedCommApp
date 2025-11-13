@@ -12,8 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -88,7 +91,10 @@ public class MedicalFormService {
 
         // Debug logging
         System.out.println("=== DEBUG: Building symptoms summary ===");
-        System.out.println("seizureType: " + request.seizureType);
+        System.out.println("mainSeizureType: " + request.mainSeizureType);
+        System.out.println("generalizedSeizureTypes: " + request.generalizedSeizureTypes);
+        System.out.println("focalSeizureTypes: " + request.focalSeizureTypes);
+        System.out.println("seizureOccurrence map: " + request.seizureOccurrence);
         System.out.println("progressiveFall: " + request.progressiveFall);
         System.out.println("suddenFall: " + request.suddenFall);
         System.out.println("clonicJerks: " + request.clonicJerks);
@@ -99,16 +105,41 @@ public class MedicalFormService {
         System.out.println("lateralTongueBiting: " + request.lateralTongueBiting);
 
         // Seizure type (single choice)
-        if (request.seizureType != null && !request.seizureType.isBlank()) {
-            String seizureTypeLabel = switch (request.seizureType) {
-                case "generalizedTonicClonic" -> "Généralisée Tonico-clonique";
-                case "generalizedOther" -> "Généralisée autre (tonique, clonique, myoclonique, atonique)";
-                case "absence" -> "Absence";
-                case "focalWithLossOfConsciousness" -> "Focale avec perte de connaissance";
-                case "focalWithoutLossOfConsciousness" -> "Focale sans perte de connaissance";
-                default -> request.seizureType;
-            };
-            summary.append("- Type de crise: ").append(seizureTypeLabel).append("\n");
+        if (request.mainSeizureType != null && !request.mainSeizureType.isBlank()) {
+            summary.append("- Type principal de crise : ")
+                    .append(formatMainSeizureType(request.mainSeizureType))
+                    .append("\n");
+        } else if (request.seizureType != null && !request.seizureType.isBlank()) {
+            summary.append("- Type de crise : ").append(request.seizureType).append("\n");
+        }
+
+        if (request.generalizedSeizureTypes != null && !request.generalizedSeizureTypes.isEmpty()) {
+            summary.append("- Crises généralisées : ")
+                    .append(request.generalizedSeizureTypes.stream()
+                            .map(this::formatGeneralizedSeizureType)
+                            .collect(Collectors.joining(", ")))
+                    .append("\n");
+        }
+
+        if (request.focalSeizureTypes != null && !request.focalSeizureTypes.isEmpty()) {
+            summary.append("- Crises focales : ")
+                    .append(request.focalSeizureTypes.stream()
+                            .map(this::formatFocalSeizureType)
+                            .collect(Collectors.joining(", ")))
+                    .append("\n");
+        }
+
+        if (request.seizureOccurrence != null) {
+            List<String> occurrenceLabels = request.seizureOccurrence.entrySet()
+                    .stream()
+                    .filter(Map.Entry::getValue)
+                    .map(entry -> formatOccurrence(entry.getKey()))
+                    .collect(Collectors.toList());
+            if (!occurrenceLabels.isEmpty()) {
+                summary.append("- Fréquence des crises : ")
+                        .append(String.join(", ", occurrenceLabels))
+                        .append("\n");
+            }
         }
 
         // Updated "Pendant la crise" symptoms
@@ -127,7 +158,7 @@ public class MedicalFormService {
 
         // First seizure info
         if (Boolean.TRUE.equals(request.isFirstSeizure)) {
-            summary.append("- Première crise\n");
+            summary.append("- Première crise déclarée\n");
         }
 
         // Aura info
@@ -149,6 +180,79 @@ public class MedicalFormService {
         System.out.println("=== END DEBUG ===");
         
         return result;
+    }
+
+    private String formatMainSeizureType(String type) {
+        if (type == null) {
+            return "Non spécifié";
+        }
+        return switch (type) {
+            case "generalized" -> "Crise généralisée";
+            case "focal" -> "Crise focale";
+            default -> type;
+        };
+    }
+
+    private String formatGeneralizedSeizureType(String type) {
+        if (type == null) {
+            return "";
+        }
+        return switch (type) {
+            case "tcg" -> "TCG (Tonico-Clonique Généralisée)";
+            case "myoclonique" -> "Myoclonique";
+            case "atonique" -> "Atonique";
+            case "tonique" -> "Tonique";
+            case "spasmes" -> "Spasmes";
+            case "absenceTypique" -> "Absence Typique";
+            case "absenceAtypique" -> "Absence Atypique";
+            case "myocloniePalpebrale" -> "Myoclonie Palpébrale";
+            case "absenceMyoclonique" -> "Absence Myoclonique";
+            default -> type;
+        };
+    }
+
+    private String formatFocalSeizureType(String type) {
+        if (type == null) {
+            return "";
+        }
+        return switch (type) {
+            case "avecPerteConnaissance" -> "Avec perte de connaissance";
+            case "sansPerteConnaissance" -> "Sans perte de connaissance";
+            case "motrice" -> "Motrice";
+            case "sensitive" -> "Sensitive";
+            case "automatisme" -> "Automatisme";
+            case "emotionnelle" -> "Émotionnelle";
+            default -> type;
+        };
+    }
+
+    private String formatOccurrence(String occurrence) {
+        if (occurrence == null) {
+            return "";
+        }
+        return switch (occurrence) {
+            case "quotidienne" -> "Quotidienne";
+            case "hebdomadaire" -> "Hebdomadaire";
+            case "mensuelle" -> "Mensuelle";
+            default -> occurrence;
+        };
+    }
+
+    private String formatOccurrenceDetails(Map<String, Boolean> occurrence) {
+        if (occurrence == null || occurrence.isEmpty()) {
+            return null;
+        }
+
+        List<String> selections = occurrence.entrySet().stream()
+                .filter(Map.Entry::getValue)
+                .map(entry -> formatOccurrence(entry.getKey()))
+                .collect(Collectors.toList());
+
+        if (selections.isEmpty()) {
+            return null;
+        }
+
+        return String.join(",", selections);
     }
 
     //-----------------------------------------------Saving the medical form---------------------------------------------------
@@ -209,6 +313,34 @@ public class MedicalFormService {
         medicalForm.setTotalSeizures(request.totalSeizures);
         medicalForm.setAverageSeizureDuration(request.seizureDuration);
         medicalForm.setSeizureFrequency(request.seizureFrequency);
+        medicalForm.setIsFirstSeizure(request.isFirstSeizure);
+        medicalForm.setHasAura(request.hasAura);
+        medicalForm.setAuraDescription(request.auraDescription);
+        medicalForm.setMainSeizureType(request.mainSeizureType);
+        medicalForm.setGeneralizedSeizureTypes(
+                request.generalizedSeizureTypes != null && !request.generalizedSeizureTypes.isEmpty()
+                        ? String.join(",", request.generalizedSeizureTypes)
+                        : null
+        );
+        medicalForm.setFocalSeizureTypes(
+                request.focalSeizureTypes != null && !request.focalSeizureTypes.isEmpty()
+                        ? String.join(",", request.focalSeizureTypes)
+                        : null
+        );
+        medicalForm.setSeizureOccurrenceDetails(formatOccurrenceDetails(request.seizureOccurrence));
+        medicalForm.setLossOfConsciousness(request.lossOfConsciousness);
+        medicalForm.setProgressiveFall(request.progressiveFall);
+        medicalForm.setSuddenFall(request.suddenFall);
+        medicalForm.setBodyStiffening(request.bodyStiffening);
+        medicalForm.setClonicJerks(request.clonicJerks);
+        medicalForm.setAutomatisms(request.automatisms);
+        medicalForm.setEyeDeviation(request.eyeDeviation);
+        medicalForm.setActivityStop(request.activityStop);
+        medicalForm.setSensitiveDisorders(request.sensitiveDisorders);
+        medicalForm.setSensoryDisorders(request.sensoryDisorders);
+        medicalForm.setIncontinence(request.incontinence);
+        medicalForm.setLateralTongueBiting(request.lateralTongueBiting);
+        medicalForm.setOtherInformation(request.otherInformation);
         medicalForm.setCreatedAt(LocalDateTime.now());
         medicalForm.setStatus(FormStatus.SUBMITTED);
         medicalForm.setDoctor(defaultUser);

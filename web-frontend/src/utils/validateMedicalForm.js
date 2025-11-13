@@ -17,8 +17,14 @@ export default function validateMedicalForm(formData) {
         errors.push("Format d'email invalide");
     }
 
-    if (formData.seizureFrequency && !formData.seizureOccurrence) {
-        errors.push("Type d'occurrence des crises manquant (quotidienne, hebdomadaire...)");
+    const hasOccurrenceSelection = formData.seizureOccurrence 
+        && Object.values(formData.seizureOccurrence).some(Boolean);
+    if (!hasOccurrenceSelection) {
+        errors.push("Sélectionnez la fréquence des crises");
+    }
+
+    if (!formData.mainSeizureType) {
+        errors.push("Sélectionnez le type principal de crise");
     }
 
     return errors;

@@ -16,7 +16,12 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PdfGenerationService {
@@ -86,11 +91,33 @@ public class PdfGenerationService {
                 yPosition -= sectionSpacing;
                 yPosition = addSectionTitle(contentStream, "DÉTAILS DU FORMULAIRE MÉDICAL", margin, yPosition, boldFont);
                 yPosition = addFormDetails(contentStream, form, margin, yPosition, boldFont, normalFont);
+
+                // Seizure Types Section
+                yPosition -= sectionSpacing;
+                yPosition = addSectionTitle(contentStream, "TYPE DE CRISE", margin, yPosition, boldFont);
+                yPosition = addSeizureTypeSection(contentStream, form, margin, yPosition, boldFont, normalFont);
+
+                // Aura Section
+                yPosition -= sectionSpacing;
+                yPosition = addSectionTitle(contentStream, "AURA ET SIGNES PRÉCURSEURS", margin, yPosition, boldFont);
+                yPosition = addAuraSection(contentStream, form, margin, yPosition, boldFont, normalFont);
+
+                // Symptoms during crisis
+                yPosition -= sectionSpacing;
+                yPosition = addSectionTitle(contentStream, "SYMPTÔMES PENDANT LA CRISE", margin, yPosition, boldFont);
+                yPosition = addCrisisSymptomsSection(contentStream, form, margin, yPosition, boldFont, normalFont);
+
+                // Other information
+                if (form.getOtherInformation() != null && !form.getOtherInformation().isBlank()) {
+                    yPosition -= sectionSpacing;
+                    yPosition = addSectionTitle(contentStream, "AUTRES INFORMATIONS", margin, yPosition, boldFont);
+                    yPosition = addWrappedText(contentStream, sanitizeText(form.getOtherInformation()), margin, yPosition, normalFont, 12);
+                }
                 
                 // Symptoms Section
                 if (form.getSymptoms() != null && !form.getSymptoms().isEmpty()) {
                     yPosition -= sectionSpacing;
-                    yPosition = addSectionTitle(contentStream, "SYMPTÔMES ET DESCRIPTION DES CRISES", margin, yPosition, boldFont);
+                    yPosition = addSectionTitle(contentStream, "RÉSUMÉ DES SYMPTÔMES", margin, yPosition, boldFont);
                     yPosition = addWrappedText(contentStream, sanitizeText(form.getSymptoms()), margin, yPosition, normalFont, 12);
                 }
                 
@@ -156,8 +183,10 @@ public class PdfGenerationService {
         currentY = addKeyValueLine(contentStream, "Durée moyenne (min):", 
             form.getAverageSeizureDuration() != null ? form.getAverageSeizureDuration().toString() : "Non spécifié", 
             margin, currentY, boldFont, normalFont);
+        currentY = addKeyValueLine(contentStream, "Première crise déclarée:", 
+            formatBoolean(form.getIsFirstSeizure()), margin, currentY, boldFont, normalFont);
         currentY = addKeyValueLine(contentStream, "Fréquence des crises:", 
-            form.getSeizureFrequency() != null ? form.getSeizureFrequency().toString() : "Non spécifié", 
+            formatSeizureFrequency(form), 
             margin, currentY, boldFont, normalFont);
         currentY = addKeyValueLine(contentStream, "Statut:", 
             form.getStatus() != null ? form.getStatus().toString() : "Non spécifié", 
@@ -167,6 +196,74 @@ public class PdfGenerationService {
             form.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "Non spécifié", 
             margin, currentY, boldFont, normalFont);
         
+        return currentY;
+    }
+
+    private float addSeizureTypeSection(PDPageContentStream contentStream, MedicalForm form, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
+        float currentY = yPosition;
+
+        currentY = addKeyValueLine(contentStream, "Type principal:", 
+                formatMainSeizureType(form.getMainSeizureType()),
+                margin, currentY, boldFont, normalFont);
+
+        List<String> generalized = parseStoredList(form.getGeneralizedSeizureTypes()).stream()
+                .map(this::formatGeneralizedSeizureType)
+                .filter(item -> item != null && !item.isBlank())
+                .collect(Collectors.toList());
+        if (!generalized.isEmpty()) {
+            currentY = addLabeledBulletList(contentStream, "Crises généralisées :", generalized, margin, currentY, boldFont, normalFont);
+        }
+
+        List<String> focal = parseStoredList(form.getFocalSeizureTypes()).stream()
+                .map(this::formatFocalSeizureType)
+                .filter(item -> item != null && !item.isBlank())
+                .collect(Collectors.toList());
+        if (!focal.isEmpty()) {
+            currentY = addLabeledBulletList(contentStream, "Crises focales :", focal, margin, currentY, boldFont, normalFont);
+        }
+
+        return currentY;
+    }
+
+    private float addAuraSection(PDPageContentStream contentStream, MedicalForm form, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
+        float currentY = yPosition;
+
+        currentY = addKeyValueLine(contentStream, "Aura présente:", 
+                formatBoolean(form.getHasAura()), margin, currentY, boldFont, normalFont);
+
+        if (Boolean.TRUE.equals(form.getHasAura()) &&
+                form.getAuraDescription() != null &&
+                !form.getAuraDescription().isBlank()) {
+            currentY = addWrappedText(contentStream, sanitizeText(form.getAuraDescription()), margin, currentY, normalFont, 12);
+        }
+
+        return currentY;
+    }
+
+    private float addCrisisSymptomsSection(PDPageContentStream contentStream, MedicalForm form, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
+        float currentY = yPosition;
+
+        List<String> symptoms = new ArrayList<>();
+        if (Boolean.TRUE.equals(form.getLossOfConsciousness())) symptoms.add("Perte de connaissance");
+        if (Boolean.TRUE.equals(form.getProgressiveFall())) symptoms.add("Chute progressive");
+        if (Boolean.TRUE.equals(form.getSuddenFall())) symptoms.add("Chute brusque");
+        if (Boolean.TRUE.equals(form.getBodyStiffening())) symptoms.add("Raidissement du corps");
+        if (Boolean.TRUE.equals(form.getClonicJerks())) symptoms.add("Secousses cloniques");
+        if (Boolean.TRUE.equals(form.getAutomatisms())) symptoms.add("Automatismes");
+        if (Boolean.TRUE.equals(form.getEyeDeviation())) symptoms.add("Déviation des yeux");
+        if (Boolean.TRUE.equals(form.getActivityStop())) symptoms.add("Arrêt de l'activité en cours");
+        if (Boolean.TRUE.equals(form.getSensitiveDisorders())) symptoms.add("Troubles sensitifs");
+        if (Boolean.TRUE.equals(form.getSensoryDisorders())) symptoms.add("Troubles sensoriels");
+        if (Boolean.TRUE.equals(form.getIncontinence())) symptoms.add("Incontinence (urine/selles)");
+        if (Boolean.TRUE.equals(form.getLateralTongueBiting())) symptoms.add("Morsure latérale de la langue");
+
+        if (!symptoms.isEmpty()) {
+            currentY = addBulletList(contentStream, symptoms, margin, currentY, normalFont, 10);
+        } else {
+            currentY = addKeyValueLine(contentStream, "Symptômes déclarés:", "Aucun symptôme indiqué",
+                    margin, currentY, boldFont, normalFont);
+        }
+
         return currentY;
     }
     
@@ -208,6 +305,40 @@ public class PdfGenerationService {
             return yPosition - 12;
         }
         return yPosition;
+    }
+
+    private float addLabeledBulletList(PDPageContentStream contentStream, String label, List<String> items, float margin, float yPosition, PDType1Font boldFont, PDType1Font normalFont) throws IOException {
+        if (items == null || items.isEmpty()) {
+            return yPosition;
+        }
+
+        contentStream.setFont(boldFont, 10);
+        contentStream.beginText();
+        contentStream.newLineAtOffset(margin, yPosition);
+        contentStream.showText(sanitizeText(label));
+        contentStream.endText();
+
+        return addBulletList(contentStream, items, margin, yPosition - 12, normalFont, 10);
+    }
+
+    private float addBulletList(PDPageContentStream contentStream, List<String> items, float margin, float yPosition, PDType1Font font, float fontSize) throws IOException {
+        float currentY = yPosition;
+
+        for (String item : items) {
+            if (item == null || item.isBlank()) {
+                continue;
+            }
+
+            contentStream.setFont(font, fontSize);
+            contentStream.beginText();
+            contentStream.newLineAtOffset(margin + 10, currentY);
+            contentStream.showText("- " + sanitizeText(item));
+            contentStream.endText();
+
+            currentY -= 12;
+        }
+
+        return currentY;
     }
     
     private float getStringWidth(String text, PDType1Font font, float fontSize) throws IOException {
@@ -270,6 +401,91 @@ public class PdfGenerationService {
     private String formatDate(LocalDate date) {
         if (date == null) return "Non spécifié";
         return date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private String formatBoolean(Boolean value) {
+        if (value == null) {
+            return "Non spécifié";
+        }
+        return Boolean.TRUE.equals(value) ? "Oui" : "Non";
+    }
+
+    private List<String> parseStoredList(String stored) {
+        if (stored == null || stored.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(stored.split(","))
+                .map(String::trim)
+                .filter(item -> !item.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private String formatSeizureFrequency(MedicalForm form) {
+        if (form.getSeizureOccurrenceDetails() != null && !form.getSeizureOccurrenceDetails().isBlank()) {
+            List<String> selections = parseStoredList(form.getSeizureOccurrenceDetails());
+            if (!selections.isEmpty()) {
+                return String.join(", ", selections);
+            }
+        }
+
+        if (form.getSeizureFrequency() != null) {
+            return switch (form.getSeizureFrequency()) {
+                case DAILY -> "Quotidienne";
+                case WEEKLY -> "Hebdomadaire";
+                case MONTHLY -> "Mensuelle";
+                default -> form.getSeizureFrequency().toString();
+            };
+        }
+
+        return "Non spécifié";
+    }
+
+    private String formatMainSeizureType(String type) {
+        if (type == null) return "Non spécifié";
+        return switch (type) {
+            case "generalized" -> "Crise généralisée";
+            case "focal" -> "Crise focale";
+            default -> type;
+        };
+    }
+
+    private String formatGeneralizedSeizureType(String type) {
+        if (type == null) return "";
+        return switch (type) {
+            case "tcg" -> "TCG (Tonico-Clonique Généralisée)";
+            case "myoclonique" -> "Myoclonique";
+            case "atonique" -> "Atonique";
+            case "tonique" -> "Tonique";
+            case "spasmes" -> "Spasmes";
+            case "absenceTypique" -> "Absence Typique";
+            case "absenceAtypique" -> "Absence Atypique";
+            case "myocloniePalpebrale" -> "Myoclonie Palpébrale";
+            case "absenceMyoclonique" -> "Absence Myoclonique";
+            default -> type;
+        };
+    }
+
+    private String formatFocalSeizureType(String type) {
+        if (type == null) return "";
+        return switch (type) {
+            case "avecPerteConnaissance" -> "Avec perte de connaissance";
+            case "sansPerteConnaissance" -> "Sans perte de connaissance";
+            case "motrice" -> "Motrice";
+            case "sensitive" -> "Sensitive";
+            case "automatisme" -> "Automatisme";
+            case "emotionnelle" -> "Émotionnelle";
+            default -> type;
+        };
+    }
+
+    private String formatOccurrenceLabel(String occurrence) {
+        if (occurrence == null) return "";
+        return switch (occurrence) {
+            case "quotidienne" -> "Quotidienne";
+            case "hebdomadaire" -> "Hebdomadaire";
+            case "mensuelle" -> "Mensuelle";
+            default -> occurrence;
+        };
     }
 
     public String generatePdfFileName(MedicalForm form) {

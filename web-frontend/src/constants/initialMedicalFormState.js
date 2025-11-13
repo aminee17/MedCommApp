@@ -16,12 +16,18 @@ const initialMedicalFormState = {
     totalSeizures: '',
     seizureDuration: '',
     seizureFrequency: '',
-    seizureOccurrence: '',
+    seizureOccurrence: {
+        quotidienne: false,
+        hebdomadaire: false,
+        mensuelle: false,
+    },
 
     // Characteristics
     hasAura: false,
     auraDescription: '',
-    seizureType: '', // Single choice instead of seizureTypes object
+    mainSeizureType: '',
+    generalizedSeizureTypes: [],
+    focalSeizureTypes: [],
 
     // "Pendant la crise" symptoms
     lossOfConsciousness: false,

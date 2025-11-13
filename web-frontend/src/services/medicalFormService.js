@@ -95,7 +95,9 @@ export async function submitMedicalForm(formData) {
         console.log('sensitiveDisorders:', formData.sensitiveDisorders);
         console.log('sensoryDisorders:', formData.sensoryDisorders);
         console.log('lateralTongueBiting:', formData.lateralTongueBiting);
-        console.log('seizureType:', formData.seizureType);
+        console.log('mainSeizureType:', formData.mainSeizureType);
+        console.log('generalizedSeizureTypes:', formData.generalizedSeizureTypes);
+        console.log('focalSeizureTypes:', formData.focalSeizureTypes);
         console.log('=== END FRONTEND VALUES ===');
 
         // Get userId from AsyncStorage
@@ -142,7 +144,9 @@ export async function submitMedicalForm(formData) {
             // Characteristics
             hasAura: formData.hasAura,
             auraDescription: formData.auraDescription,
-            seizureType: formData.seizureType,
+            mainSeizureType: formData.mainSeizureType,
+            generalizedSeizureTypes: formData.generalizedSeizureTypes || [],
+            focalSeizureTypes: formData.focalSeizureTypes || [],
 
             // Updated "Pendant la crise" symptoms
             lossOfConsciousness: formData.lossOfConsciousness,
@@ -157,6 +161,8 @@ export async function submitMedicalForm(formData) {
             sensoryDisorders: formData.sensoryDisorders,
             incontinence: formData.incontinence,
             lateralTongueBiting: formData.lateralTongueBiting,
+
+            seizureOccurrence: formData.seizureOccurrence,
 
             // Miscellaneous
             otherInformation: formData.otherInformation
