@@ -13,5 +13,5 @@ public interface GovernorateRepository extends JpaRepository<Governorate, Intege
     Governorate findByCode(String code);
     Optional<Governorate> findById(Integer governorate_id);
     List<Governorate> findByNameContainingIgnoreCase(String namePattern);
-    List<Governorate> findByCodeContainingIgnoreCase(String codePattern);
+    List<Governorate> findByCodeContainingIgnoreCase(String codePaattern);
 }
