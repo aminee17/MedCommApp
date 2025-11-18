@@ -209,12 +209,7 @@ export default function AdminDashboard({ navigation }) {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Tableau de bord administrateur</Text>
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={handleLogout}
-                >
-                    <Ionicons name="log-out-outline" size={24} color="#fff" />
-                </TouchableOpacity>
+                
             </View>
 
             {/* Tab Navigation */}
