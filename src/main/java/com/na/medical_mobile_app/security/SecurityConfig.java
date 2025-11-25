@@ -47,7 +47,16 @@ public class SecurityConfig {
                         // Allow CORS preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public endpoints
-                        .requestMatchers("/api/auth/**", "/api/doctor/request-account", "/api/locations/**", "/api/notifications/**", "/api/chat/**", "/api/communications/**").permitAll()
+                        .requestMatchers(
+                            "/api/auth/**", 
+                            "/api/doctor/request-account", 
+                            "/api/locations/**", 
+                            "/api/notifications/**", 
+                            "/api/chat/**", 
+                            "/api/communications/**",
+                            "/health",
+                            "/api/health"
+                        ).permitAll()
                         
                         // Admin only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -74,18 +83,34 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow common localhost origins and dynamic Expo ports
+        // Allow common localhost origins, dynamic Expo ports, and production domain
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
-                "http://192.168.*.*:*"
+                "http://192.168.*.*:*",
+                "https://quiet-douhua-cb85eb.netlify.app"  // Your production domain
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Type", 
+            "X-Requested-With", 
+            "Accept", 
+            "Origin", 
+            "Access-Control-Request-Method", 
+            "Access-Control-Request-Headers"
+        ));
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Type", 
+            "Access-Control-Allow-Origin", 
+            "Access-Control-Allow-Credentials"
+        ));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // 1 hour cache for preflight requests
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
         return source;
     }
 }
