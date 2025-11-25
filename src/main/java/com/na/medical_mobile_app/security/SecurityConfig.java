@@ -83,12 +83,14 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow common localhost origins, dynamic Expo ports, and production domain
+        // Allow all your domains
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "http://192.168.*.*:*",
-                "https://quiet-douhua-cb85eb.netlify.app"  // Your production domain
+                "https://quiet-douhua-cb85eb.netlify.app",
+                "https://medcommapp-frontend.onrender.com",  // Your frontend domain
+                "https://medcommapp.onrender.com"           // Your backend domain (just in case)
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList(
@@ -98,19 +100,21 @@ public class SecurityConfig {
             "Accept", 
             "Origin", 
             "Access-Control-Request-Method", 
-            "Access-Control-Request-Headers"
+            "Access-Control-Request-Headers",
+            "X-Auth-Token"
         ));
         configuration.setExposedHeaders(Arrays.asList(
             "Authorization", 
             "Content-Type", 
             "Access-Control-Allow-Origin", 
-            "Access-Control-Allow-Credentials"
+            "Access-Control-Allow-Credentials",
+            "X-Auth-Token"
         ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // 1 hour cache for preflight requests
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
