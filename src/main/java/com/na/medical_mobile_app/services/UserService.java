@@ -18,75 +18,53 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    //---------------------------------Get logged in user - IMPROVED WITH RETRY LOGIC-------------------------------------------------------------
+    //---------------------------------Get logged in user - JWT secured -------------------------------------------------------------
     public User getLoggedInUser() {
         int maxRetries = 3;
-        
+
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 System.out.println("🔄 UserService.getLoggedInUser attempt " + attempt);
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-                
-                if (auth == null || auth.getName().equals("anonymousUser")) {
-                    System.out.println("🔍 No authentication found, checking for userId parameter");
-                    String userId = getRequestParameter("userId");
-                    
-                    if (userId != null && !userId.isEmpty()) {
-                        try {
-                            Integer id = Integer.parseInt(userId);
-                            System.out.println("👤 Looking up user by ID: " + id);
-                            User user = userRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-                            System.out.println("✅ Found user by ID: " + user.getName() + " (" + user.getRole() + ")");
-                            return user;
-                        } catch (NumberFormatException e) {
-                            System.err.println("❌ Invalid user ID format: " + userId);
-                            throw new RuntimeException("Invalid user ID format");
-                        }
-                    }
-                    
-                    // If we reach here and it's not the last attempt, wait and retry
+
+                if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
                     if (attempt < maxRetries) {
-                        System.out.println("⏳ Waiting before retry...");
-                        Thread.sleep(1000 * attempt);
+                        System.out.println("⏳ No authentication found, waiting before retry...");
+                        Thread.sleep(1000L * attempt);
                         continue;
                     }
-                    
+
                     System.err.println("❌ No authentication found after " + maxRetries + " attempts");
                     throw new RuntimeException("No authentication found");
                 }
-                
-                // Try to find by email first
-                String email = auth.getName();
-                System.out.println("🔍 Authentication found, looking up user by email: " + email);
-                User user = userRepository.findByEmail(email);
-                
+
+                String principal = auth.getName();
+                System.out.println("🔍 Authentication found, looking up user by principal: " + principal);
+
+                User user = userRepository.findByEmail(principal);
                 if (user == null) {
-                    // If not found by email, try by ID
                     try {
-                        Integer id = Integer.parseInt(email);
-                        System.out.println("🔍 Email looks like an ID, looking up user by ID: " + id);
+                        Integer id = Integer.parseInt(principal);
                         user = userRepository.findById(id).orElse(null);
                     } catch (NumberFormatException ignored) {
-                        // Not a numeric ID, continue
+                        // principal is not an ID, ignore
                     }
                 }
-                
+
                 if (user != null) {
                     System.out.println("✅ Found authenticated user: " + user.getName() + " (" + user.getRole() + ")");
                     return user;
                 }
-                
-                // If user not found and not last attempt, wait and retry
+
                 if (attempt < maxRetries) {
-                    System.out.println("⏳ User not found, waiting before retry...");
-                    Thread.sleep(1000 * attempt);
+                    System.out.println("⏳ Authenticated principal not found in DB, retrying...");
+                    Thread.sleep(1000L * attempt);
                     continue;
                 }
-                
-                System.err.println("❌ User not found: " + email);
-                throw new RuntimeException("User not found: " + email);
-                
+
+                System.err.println("❌ User not found for principal: " + principal);
+                throw new RuntimeException("User not found: " + principal);
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Authentication interrupted");
@@ -94,7 +72,7 @@ public class UserService {
                 System.err.println("❌ Error in getLoggedInUser attempt " + attempt + ": " + e.getMessage());
                 if (attempt < maxRetries) {
                     try {
-                        Thread.sleep(1000 * attempt);
+                        Thread.sleep(1000L * attempt);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Authentication interrupted");
@@ -104,35 +82,8 @@ public class UserService {
                 }
             }
         }
-        
-        throw new RuntimeException("Unexpected error in getLoggedInUser");
-    }
 
-    // Helper method to get request parameters - IMPROVED
-    private String getRequestParameter(String paramName) {
-        try {
-            jakarta.servlet.http.HttpServletRequest request = 
-                ((org.springframework.web.context.request.ServletRequestAttributes)
-                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes())
-                .getRequest();
-                
-            // Try header first
-            String headerValue = request.getHeader(paramName);
-            
-            // Then try parameter
-            String paramValue = request.getParameter(paramName);
-            
-            // Use header if available, otherwise use parameter
-            String value = headerValue;
-            if (value == null || value.isEmpty()) {
-                value = paramValue;
-            }
-            
-            return value;
-        } catch (Exception e) {
-            System.err.println("⚠️ Error getting request parameter '" + paramName + "': " + e.getMessage());
-            return null;
-        }
+        throw new RuntimeException("Unexpected error in getLoggedInUser");
     }
 
     //---------------------------------Get user by ID -------------------------------------------------------------

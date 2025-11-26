@@ -51,9 +51,6 @@ public class SecurityConfig {
                             "/api/auth/**", 
                             "/api/doctor/request-account", 
                             "/api/locations/**", 
-                            "/api/notifications/**", 
-                            "/api/chat/**", 
-                            "/api/communications/**",
                             "/health",
                             "/api/health"
                         ).permitAll()
