@@ -1,7 +1,6 @@
 import {API_BASE_URL} from '../utils/constants';
 import {parseJSONResponse} from '../utils/jsonUtils';
 import { fetchWithErrorHandling } from '../utils/errorMessages';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
 /**
@@ -11,15 +10,9 @@ import { getAuthHeaders } from './authService';
  */
 export async function fetchMedicalFormsForDoctor(filter = 'active') {
     try {
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('Session expirée. Veuillez vous reconnecter.');
-        }
-        
         const headers = await getAuthHeaders();
         const response = await fetchWithErrorHandling(
-            `${API_BASE_URL}/api/medical-forms/doctor?userId=${userId}&filter=${filter}`, 
+            `${API_BASE_URL}/api/medical-forms/doctor?filter=${filter}`, 
             {
                 method: 'GET',
                 headers,

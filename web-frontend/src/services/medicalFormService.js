@@ -1,15 +1,9 @@
 import { API_BASE_URL } from '../utils/constants';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
 // Get a medical form by ID
 export async function getMedicalFormById(formId) {
     try {
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/api/medical-forms/${formId}`, {
             method: 'GET',
@@ -99,12 +93,6 @@ export async function submitMedicalForm(formData) {
         console.log('generalizedSeizureTypes:', formData.generalizedSeizureTypes);
         console.log('focalSeizureTypes:', formData.focalSeizureTypes);
         console.log('=== END FRONTEND VALUES ===');
-
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
 
         // Validate files before upload
         if (formData.mriPhoto?.uri) {
@@ -202,7 +190,7 @@ export async function submitMedicalForm(formData) {
         delete headers['Content-Type'];
         
         console.log('📤 Sending form submission request...');
-        const response = await fetch(`${API_BASE_URL}/api/medical-forms/submit?userId=${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/submit`, {
             method: 'POST',
             headers,
             body: form,
@@ -238,13 +226,8 @@ export async function submitMedicalForm(formData) {
 // Get form response for a specific form
 export const getFormResponse = async (formId) => {
     try {
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-
         const headers = await getAuthHeaders();
-        const response = await fetch(`${API_BASE_URL}/api/medical-forms/${formId}/response?userId=${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/${formId}/response`, {
             method: 'GET',
             headers,
             credentials: 'include'
@@ -269,13 +252,8 @@ export const getFormResponse = async (formId) => {
 // Check if a form has a response
 export const checkFormResponse = async (formId) => {
     try {
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-
         const headers = await getAuthHeaders();
-        const response = await fetch(`${API_BASE_URL}/api/medical-forms/responses/check/${formId}?userId=${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/medical-forms/responses/check/${formId}`, {
             method: 'GET',
             headers,
             credentials: 'include'
@@ -297,9 +275,6 @@ export const checkFormResponse = async (formId) => {
 export const debugFormResponse = async (formId) => {
     try {
         console.log('🔍 Debugging form response for form:', formId);
-        
-        const userId = await AsyncStorage.getItem('userId');
-        console.log('👤 User ID:', userId);
         
         // Check if form has response
         const hasResponse = await checkFormResponse(formId);

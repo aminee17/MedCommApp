@@ -1,6 +1,5 @@
 import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
 // Internal helper: retry once on 403 for flaky permission checks
@@ -22,15 +21,9 @@ const requestWithRetry = async (url, options = {}) => {
  */
 export async function checkFormResponse(formId) {
     try {
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         const headers = await getAuthHeaders();
         const response = await requestWithRetry(
-            `${API_BASE_URL}/api/medical-forms/responses/check/${formId}?userId=${userId}`, 
+            `${API_BASE_URL}/api/medical-forms/responses/check/${formId}`, 
             {
                 method: 'GET',
                 headers,
@@ -53,15 +46,9 @@ export async function checkFormResponse(formId) {
  */
 export async function getFormResponse(formId) {
     try {
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         const headers = await getAuthHeaders();
         const response = await requestWithRetry(
-            `${API_BASE_URL}/api/medical-forms/responses/${formId}?userId=${userId}`, 
+            `${API_BASE_URL}/api/medical-forms/responses/${formId}`, 
             {
                 method: 'GET',
                 headers,
@@ -83,15 +70,9 @@ export async function getFormResponse(formId) {
  */
 export async function getNeurologistFormResponse(formId) {
     try {
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         const headers = await getAuthHeaders();
         const response = await requestWithRetry(
-            `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`, 
+            `${API_BASE_URL}/api/neurologue/form-response/${formId}`, 
             {
                 method: 'GET',
                 headers,
@@ -113,15 +94,9 @@ export async function getNeurologistFormResponse(formId) {
  */
 export async function submitFormResponse(responseData) {
     try {
-        // Get userId from AsyncStorage
-        const userId = await AsyncStorage.getItem('userId');
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         const headers = await getAuthHeaders();
         const response = await fetch(
-            `${API_BASE_URL}/api/neurologue/form-response?userId=${userId}`, 
+            `${API_BASE_URL}/api/neurologue/form-response`, 
             {
                 method: 'POST',
                 headers,

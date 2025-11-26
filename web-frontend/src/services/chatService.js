@@ -1,18 +1,6 @@
 import { API_BASE_URL } from '../utils/constants';
 import { parseJSONResponse } from '../utils/jsonUtils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-/**
- * Get user ID from AsyncStorage
- */
-const getUserId = async () => {
-    try {
-        return await AsyncStorage.getItem('userId');
-    } catch (error) {
-        console.error('Error getting user ID:', error);
-        return null;
-    }
-};
+import { getAuthHeaders } from './authService';
 
 /**
  * Send a chat message
@@ -21,26 +9,20 @@ const getUserId = async () => {
  */
 export const sendChatMessage = async (messageData) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/chat/send?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/chat/send`;
         console.log('Sending chat message to URL:', url);
-        console.log('With userId:', userId);
         console.log('Message data:', messageData);
         
         const requestBody = JSON.stringify(messageData);
         console.log('Request body:', requestBody);
+
+        const headers = await getAuthHeaders();
+        headers['Content-Type'] = 'application/json';
+        headers['Accept'] = 'application/json';
         
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'userId': userId.toString()
-            },
+            headers,
             credentials: 'include',
             body: requestBody
         });
@@ -65,21 +47,16 @@ export const sendChatMessage = async (messageData) => {
  */
 export const getMessagesForForm = async (formId) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/chat/messages/${formId}?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/chat/messages/${formId}`;
         console.log('Getting messages from URL:', url);
+
+        const headers = await getAuthHeaders();
+        headers['Accept'] = 'application/json';
+        headers['Content-Type'] = 'application/json';
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId.toString()
-            },
+            headers,
             credentials: 'include'
         });
         
@@ -97,20 +74,15 @@ export const getMessagesForForm = async (formId) => {
  */
 export const countUnreadMessagesForForm = async (formId) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/chat/unread-count/${formId}?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/chat/unread-count/${formId}`;
+
+        const headers = await getAuthHeaders();
+        headers['Accept'] = 'application/json';
+        headers['Content-Type'] = 'application/json';
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'userId': userId.toString()
-            },
+            headers,
             credentials: 'include'
         });
         
@@ -129,11 +101,6 @@ export const countUnreadMessagesForForm = async (formId) => {
  */
 export const sendVoiceMessage = async (voiceData) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         const formData = new FormData();
         formData.append('formId', voiceData.formId.toString());
         formData.append('audioFile', voiceData.audioFile);
@@ -141,13 +108,15 @@ export const sendVoiceMessage = async (voiceData) => {
             formData.append('receiverId', voiceData.receiverId.toString());
         }
         
-        const url = `${API_BASE_URL}/api/chat/send-voice?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/chat/send-voice`;
+
+        const headers = await getAuthHeaders();
+        // Remove content-type to allow multipart boundary
+        delete headers['Content-Type'];
         
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'userId': userId.toString()
-            },
+            headers,
             credentials: 'include',
             body: formData
         });

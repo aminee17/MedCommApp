@@ -5,10 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const getAuthHeaders = async () => {
     try {
         const token = await AsyncStorage.getItem('token');
-        const userId = await AsyncStorage.getItem('userId');
         
         console.log('Auth headers - Token exists:', !!token);
-        console.log('Auth headers - User ID:', userId);
         
         const headers = {
             'Accept': 'application/json'
@@ -16,10 +14,6 @@ export const getAuthHeaders = async () => {
         
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        if (userId) {
-            headers['userId'] = userId;
         }
         
         return headers;

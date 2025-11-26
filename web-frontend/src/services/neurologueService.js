@@ -1,6 +1,5 @@
 import {API_BASE_URL} from '../utils/constants';
 import { fetchWithErrorHandling } from '../utils/errorMessages';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuthHeaders } from './authService';
 
 // Internal helper: robust fetch with one retry on 403
@@ -14,16 +13,6 @@ const requestWithRetry = async (url, options = {}) => {
         res = await fetch(url, { ...options, headers: { ...(options.headers || {}), ...headers } });
     }
     return res;
-};
-
-// Get user ID from AsyncStorage
-const getUserId = async () => {
-    try {
-        return await AsyncStorage.getItem('userId');
-    } catch (error) {
-        console.error('Error getting user ID:', error);
-        return null;
-    }
 };
 
 // Cache for forms data to prevent unnecessary API calls
@@ -40,11 +29,6 @@ export const clearFormsCache = () => {
 // ✅ FIXED: Fetch all forms for neurologist with proper error handling
 export const fetchAllFormsForNeurologue = async (forceRefresh = false) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('Session expirée. Veuillez vous reconnecter.');
-        }
-        
         // Check cache if not forcing refresh
         const now = Date.now();
         if (!forceRefresh && formsCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
@@ -52,8 +36,7 @@ export const fetchAllFormsForNeurologue = async (forceRefresh = false) => {
             return formsCache;
         }
         
-        // Build URL with userId parameter
-        const url = `${API_BASE_URL}/api/neurologue/all-forms?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/neurologue/all-forms`;
         
         const headers = await getAuthHeaders();
         const response = await requestWithRetry(url, {
@@ -131,14 +114,9 @@ export const fetchCompletedFormsForNeurologue = async () => {
 // Submit form response from neurologist
 export const submitFormResponse = async (formResponseData) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         console.log('📤 Submitting form response:', formResponseData);
         
-        const url = `${API_BASE_URL}/api/neurologue/form-response?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/neurologue/form-response`;
         
         // Get auth headers and ensure Content-Type is set
         const headers = await getAuthHeaders();
@@ -183,13 +161,8 @@ export const submitFormResponse = async (formResponseData) => {
 // Fetch a specific form by ID
 export const fetchFormById = async (formId) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
         // Use the correct endpoint from the NeurologueController
-        const url = `${API_BASE_URL}/api/neurologue/form-response/${formId}?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/neurologue/form-response/${formId}`;
         
         const headers = await getAuthHeaders();
         const response = await fetch(url, {
@@ -216,12 +189,7 @@ export const fetchFormById = async (formId) => {
 // Fetch attachments for a form with JWT authentication
 export const fetchAttachmentsForForm = async (formId) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/neurologue/forms/${formId}/attachments?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/neurologue/forms/${formId}/attachments`;
         
         const headers = await getAuthHeaders();
         const response = await fetch(url, {
@@ -245,12 +213,7 @@ export const fetchAttachmentsForForm = async (formId) => {
 // Fetch a specific attachment with JWT authentication
 export const fetchAttachment = async (attachmentId) => {
     try {
-        const userId = await getUserId();
-        if (!userId) {
-            throw new Error('User ID not found. Please log in again.');
-        }
-        
-        const url = `${API_BASE_URL}/api/neurologue/attachments/${attachmentId}?userId=${userId}`;
+        const url = `${API_BASE_URL}/api/neurologue/attachments/${attachmentId}`;
         
         const headers = await getAuthHeaders();
         const response = await fetch(url, {
