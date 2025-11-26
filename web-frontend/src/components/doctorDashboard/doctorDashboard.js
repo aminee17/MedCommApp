@@ -209,11 +209,6 @@ const DoctorDashboard = () => {
                     return form.status !== 'COMPLETED';
                 case 'completed':
                     return form.status === 'COMPLETED';
-                case 'recent':
-                    // Show forms from last 7 days
-                    const oneWeekAgo = new Date();
-                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                    return new Date(form.createdAt) > oneWeekAgo;
                 case 'all':
                 default:
                     return true;
@@ -261,7 +256,6 @@ const DoctorDashboard = () => {
             <View style={styles.filterContainer}>
                 {renderFilterButton('Actifs', 'active')}
                 {renderFilterButton('Complétés', 'completed')}
-                {renderFilterButton('Récents', 'recent')}
                 {renderFilterButton('Tous', 'all')}
             </View>
 
@@ -292,8 +286,7 @@ const DoctorDashboard = () => {
                     <Ionicons name="document-text-outline" size={64} color={COLORS.lightGray} />
                     <Text style={styles.emptyText}>
                         Aucun formulaire {activeFilter === 'active' ? 'actif' : 
-                                         activeFilter === 'completed' ? 'complété' : 
-                                         activeFilter === 'recent' ? 'récent' : ''} trouvé
+                                         activeFilter === 'completed' ? 'complété' : ''} trouvé
                     </Text>
                     <TouchableOpacity
                         style={styles.refreshButton}
