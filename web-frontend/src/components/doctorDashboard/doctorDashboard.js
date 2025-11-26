@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from './styles';
 import FormCard from './FormCard';
@@ -8,7 +8,6 @@ import FormPreviewModal from './FormPreviewModal';
 import ResponseModal from './ResponseModal';
 import { COLORS } from '../../utils/theme';
 import { useLogout } from '../../hooks/useLogout';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import services
 import { fetchMedicalFormsForDoctor } from '../../services/dashboardService';
 import { checkFormResponse, getFormResponse, debugFormResponse } from '../../services/medicalFormService';
@@ -25,54 +24,9 @@ const DoctorDashboard = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [activeFilter, setActiveFilter] = useState('active');
     const [unreadNotifications, setUnreadNotifications] = useState(0);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false);
     const navigation = useNavigation();
     const route = useRoute();
     const handleLogout = useLogout();
-
-    // Check authentication status on component mount
-    useFocusEffect(
-        React.useCallback(() => {
-            checkAuthentication();
-        }, [])
-    );
-
-    const checkAuthentication = async () => {
-        try {
-            console.log('🔐 Checking doctor authentication...');
-            
-            // Check if we have valid authentication tokens
-            const token = await AsyncStorage.getItem('authToken');
-            const userId = await AsyncStorage.getItem('userId');
-            const userRole = await AsyncStorage.getItem('userRole');
-            
-            console.log('🔐 Doctor auth check - Token:', !!token, 'UserID:', userId, 'Role:', userRole);
-            
-            if (!token || !userId || (userRole !== 'MEDECIN' && userRole !== 'ADMIN')) {
-                // No valid authentication, redirect to login
-                console.log('❌ No valid doctor authentication, redirecting to login...');
-                setIsAuthenticated(false);
-                setAuthChecked(true);
-                await handleLogout(false);
-                return;
-            }
-            
-            console.log('✅ Doctor authentication valid');
-            setIsAuthenticated(true);
-            setAuthChecked(true);
-            
-            // Only now start loading data
-            fetchForms(activeFilter);
-            loadUnreadNotifications();
-            
-        } catch (error) {
-            console.error('❌ Doctor auth check error:', error);
-            setIsAuthenticated(false);
-            setAuthChecked(true);
-            await handleLogout(false);
-        }
-    };
 
     // Handle logout from header
     useEffect(() => {
@@ -84,13 +38,10 @@ const DoctorDashboard = () => {
         }
     }, [route.params?.forceLogout, handleLogout, navigation]);
 
-    // Load data when authenticated and tab changes
     useEffect(() => {
-        if (isAuthenticated && authChecked) {
-            fetchForms(activeFilter);
-            loadUnreadNotifications();
-        }
-    }, [activeFilter, isAuthenticated, authChecked]);
+        fetchForms(activeFilter);
+        loadUnreadNotifications();
+    }, [activeFilter]);
 
     // Load unread notifications count
     const loadUnreadNotifications = async () => {
@@ -147,8 +98,6 @@ const DoctorDashboard = () => {
     };
 
     const fetchForms = async (filter) => {
-        if (!isAuthenticated) return;
-        
         try {
             setLoading(true);
             console.log('🔄 Fetching forms with filter:', filter);
@@ -162,13 +111,15 @@ const DoctorDashboard = () => {
             
         } catch (error) {
             console.error('❌ Error fetching forms:', error);
+            Alert.alert('Erreur', error.message || 'Impossible de récupérer les formulaires');
             
-            if (error.message?.includes('Unauthorized') || error.message?.includes('Invalid token') || error.message?.includes('401')) {
-                await handleLogout(false);
+            // Handle session expiry
+            if (error.message?.includes('Session expirée') || error.message?.includes('User ID not found')) {
+                Alert.alert('Session expirée', 'Veuillez vous reconnecter.', [
+                    { text: 'OK', onPress: () => navigation.replace('RoleSelection') }
+                ]);
                 return;
             }
-            
-            Alert.alert('Erreur', error.message || 'Impossible de récupérer les formulaires');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -176,7 +127,6 @@ const DoctorDashboard = () => {
     };
 
     const onRefresh = () => {
-        if (!isAuthenticated) return;
         setRefreshing(true);
         fetchForms(activeFilter);
         loadUnreadNotifications();
@@ -251,7 +201,7 @@ const DoctorDashboard = () => {
         </TouchableOpacity>
     );
 
-    // Filter forms based on active filter (REMOVED 'recent' case)
+    // Filter forms based on active filter
     const getFilteredForms = () => {
         return formsWithResponses.filter(form => {
             switch (activeFilter) {
@@ -259,43 +209,17 @@ const DoctorDashboard = () => {
                     return form.status !== 'COMPLETED';
                 case 'completed':
                     return form.status === 'COMPLETED';
-
+                case 'recent':
+                    // Show forms from last 7 days
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    return new Date(form.createdAt) > oneWeekAgo;
                 case 'all':
                 default:
                     return true;
             }
         });
     };
-
-    // Show loading while checking authentication
-    if (!authChecked) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                    <Text style={styles.loadingText}>Vérification de l'authentification...</Text>
-                </View>
-            </View>
-        );
-    }
-
-    // Show login prompt if not authenticated
-    if (!isAuthenticated) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.authContainer}>
-                    <Text style={styles.authTitle}>Session expirée</Text>
-                    <Text style={styles.authMessage}>Veuillez vous reconnecter</Text>
-                    <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={() => handleLogout(false)}
-                    >
-                        <Text style={styles.loginButtonText}>Se connecter</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    }
 
     const filteredForms = getFilteredForms();
 
@@ -330,14 +254,14 @@ const DoctorDashboard = () => {
                         <Text style={styles.newFormButtonText}>+ Nouveau formulaire</Text>
                     </TouchableOpacity>
 
+                    
                 </View>
             </View>
             
-            {/* REMOVED 'Récents' filter button */}
             <View style={styles.filterContainer}>
                 {renderFilterButton('Actifs', 'active')}
                 {renderFilterButton('Complétés', 'completed')}
-                
+                {renderFilterButton('Récents', 'recent')}
                 {renderFilterButton('Tous', 'all')}
             </View>
 
@@ -369,7 +293,7 @@ const DoctorDashboard = () => {
                     <Text style={styles.emptyText}>
                         Aucun formulaire {activeFilter === 'active' ? 'actif' : 
                                          activeFilter === 'completed' ? 'complété' : 
-                                         ''} trouvé
+                                         activeFilter === 'recent' ? 'récent' : ''} trouvé
                     </Text>
                     <TouchableOpacity
                         style={styles.refreshButton}
